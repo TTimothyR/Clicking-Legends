@@ -1,0 +1,2 @@
+local LegendaryChatHandler = {}
+return LegendaryChatHandler

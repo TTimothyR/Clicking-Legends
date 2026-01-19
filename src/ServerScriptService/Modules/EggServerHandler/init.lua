@@ -1,0 +1,2 @@
+local EggHandler = {}
+return EggHandler

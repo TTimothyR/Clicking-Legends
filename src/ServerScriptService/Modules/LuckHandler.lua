@@ -1,0 +1,2 @@
+local LuckHandler = {}
+return LuckHandler
