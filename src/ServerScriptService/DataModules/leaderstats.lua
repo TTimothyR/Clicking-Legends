@@ -2,6 +2,7 @@ local module = {}
 
 -- Services
 local rs = game:GetService("ReplicatedStorage")
+local workspace = game:GetService("Workspace")
 
 -- Variables
 local framework = rs:WaitForChild("Framework")
