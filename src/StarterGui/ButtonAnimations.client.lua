@@ -22,11 +22,15 @@ local function animateButton(button: ImageButton)
 		local originalPosition: UDim2 = button.Position
 		local originalRotation: UDim2 = button.Rotation
 
-		local hoverSize: UDim2 = UDim2.new(originalSize.X.Scale * 1.15, originalSize.X.Offset, originalSize.Y.Scale * 1.15, originalSize.Y.Offset)
-		local clickSize = UDim2.new(originalSize.X.Scale * .85, originalSize.X.Offset, originalSize.Y.Scale * .85, originalSize.Y.Offset)
+		local hoverScale: number = button:GetAttribute("Scale") or 1;
+		local clickScale: number = 1 - (hoverScale - 1) or 1;
+		local rotation: number = button:GetAttribute("Rotation") or 0;
+
+		local hoverSize: UDim2 = UDim2.new(originalSize.X.Scale * hoverScale, originalSize.X.Offset, originalSize.Y.Scale * hoverScale, originalSize.Y.Offset)
+		local clickSize = UDim2.new(originalSize.X.Scale * clickScale, originalSize.X.Offset, originalSize.Y.Scale * clickScale, originalSize.Y.Offset)
 
 		local isHovering: boolean = false
-		local rotateTween: Tween = ts:Create(button, tweenInfo, {Rotation = button:GetAttribute("AnimateAngle")})
+		local rotateTween: Tween = ts:Create(button, tweenInfo, {Rotation = rotation})
 		local rotateTween2: Tween = ts:Create(button, tweenInfo, {Rotation = originalRotation})
 
 
@@ -61,14 +65,16 @@ local function animateButton(button: ImageButton)
 	end)
 end
 
-for _, descendant in playerGui:GetDescendants() do
-	if descendant:IsA("ImageButton") and descendant:GetAttribute("AnimateAngle") then
+local function InitializeAnimation(descendant)
+	if descendant:IsA("ImageButton") and next(descendant:GetAttributes()) then
 		animateButton(descendant)
 	end
 end
 
+for _, descendant in playerGui:GetDescendants() do
+	InitializeAnimation(descendant)
+end
+
 playerGui.DescendantAdded:Connect(function(descendant)
-	if descendant:IsA("ImageButton") and descendant:GetAttribute("AnimateAngle") then
-		animateButton(descendant)
-	end
+	InitializeAnimation(descendant)
 end)

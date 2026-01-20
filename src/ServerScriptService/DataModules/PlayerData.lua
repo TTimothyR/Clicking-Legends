@@ -6,9 +6,8 @@ local sss = game:GetService("ServerScriptService")
 local PlayerDataTemplate = require(rs.PlayerData)
 local ProfileStore = require(sss.DataModules.ProfileStore)
 local leaderstats = require(sss.DataModules.leaderstats)
-local potionHandler = require(sss.Modules.PotionServerHandler)
 
-local v = "86"
+local v = "1"
 local dataKey = "OfficialV"..v
 if runService:IsStudio() then
 	dataKey = "TestV"..v
@@ -23,12 +22,10 @@ local Shared = {}
 function Local.OnStart()
 	for _, player: Player in Players:GetPlayers() do
 		task.spawn(Local.LoadProfile, player)
-		task.spawn(potionHandler.InitializePlayerData, Shared)
 	end
 	
 	Players.PlayerAdded:Connect(function(player: Player)
 		task.spawn(Local.LoadProfile, player)
-		task.spawn(potionHandler.InitializePlayerData, Shared)
 	end)
 	Players.PlayerRemoving:Connect(Local.RemoveProfile)
 end
@@ -65,7 +62,6 @@ end
 function Local.RemoveProfile(player: Player)
 	local profile = Profiles[player]
 	if profile ~= nil then
-		potionHandler.SaveRemainingTime(player, profile.Data)
 		profile:EndSession()
 	end
 end
