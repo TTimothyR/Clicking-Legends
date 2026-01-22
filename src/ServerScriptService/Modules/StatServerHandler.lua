@@ -27,7 +27,7 @@ function StatHandler.Click(player: Player, debounce: number)
 
     profile.ClickDebounce = true;
 
-    local increment = 1;
+    local increment = 100;
 
     profile.Clicks = infMath.new(profile.Clicks + increment);
     player.leaderstats.Clicks.Value = infMath.new(profile.Clicks):GetSuffix(true);

@@ -11,6 +11,7 @@ repeat task.wait() until players.LocalPlayer;
 local plr: Player = players.LocalPlayer;
 
 local framework: Folder = rs:WaitForChild('Framework');
+local tweenNumer: NumberValue = script:WaitForChild('TweenNumber');
 
 -- UI
 local playerGui: PlayerGui = plr:WaitForChild('PlayerGui');
@@ -32,6 +33,10 @@ local infMath = require(framework.InfiniteMath);
 local rotationTime = 15;
 local animationTime = 0.5;
 local debounceTime = 0.05;
+
+-- Globals
+local g_CurrentClicksValue
+local g_CurrentGemsValue
 
 local function AnimateShine()
     while true do
@@ -58,9 +63,30 @@ local function PopUp()
     -- TODO
 end
 
-local function UpdateStatDisplay(currencyStr: string, newValue)
+local function UpdateStatDisplay(currencyStr: string)
+    local profile = network:InvokeServer('GetData');
+    if not profile then print('Could not fetch profile') return end;
+    
     local currencyFrame: Frame = statsFrame[currencyStr]
-    currencyFrame.Background.Amount.Text = infMath.new(newValue):GetSuffix(true);
+    local goalValue = 1;
+
+    local newValue = profile.Clicks;
+    local oldValue = g_CurrentClicksValue;
+    local delta = infMath.new(newValue - oldValue);
+
+    local tween: Tween = ts:Create(tweenNumer, TweenInfo.new(0.15), {Value = goalValue});
+    tween:Play();
+
+    local tweenConnection: RBXScriptConnection
+    
+    tweenConnection = tweenNumer.Changed:Connect(function(value)
+        currencyFrame.Background.Amount.Text = infMath.new(oldValue + (delta * value)):GetSuffix(true);
+    end)
+    
+    tween.Completed:Wait();
+    tweenConnection:Disconnect();
+    tweenNumer.Value = 0;
+    g_CurrentClicksValue = newValue;
 end
 
 local function Click()
@@ -76,6 +102,9 @@ function ClickHandler.LoadStatDisplay(profile)
     for _, currency: string in ipairs(currencies) do
         statsFrame[currency].Background.Amount.Text = infMath.new(profile[currency]):GetSuffix(true);
     end
+
+    g_CurrentClicksValue = profile.Clicks;
+    g_CurrentGemsValue = profile.Gems;
 end
 
 function ClickHandler.Initialize()
@@ -89,11 +118,11 @@ function ClickHandler.Initialize()
         end
     end)
 
-    plr:WaitForChild('leaderstats').Clicks.Changed:Connect(function(newValue)
-        UpdateStatDisplay('Clicks', newValue);
+    plr:WaitForChild('leaderstats').Clicks.Changed:Connect(function()
+        UpdateStatDisplay('Clicks');
     end)
-    plr:WaitForChild('leaderstats').Gems.Changed:Connect(function(newValue)
-        UpdateStatDisplay('Gems', newValue);
+    plr:WaitForChild('leaderstats').Gems.Changed:Connect(function()
+        UpdateStatDisplay('Gems');
     end)
 end
 
