@@ -6,7 +6,9 @@ Shared.DEFAULT_PLAYER_DATA = {
     Rebirths = 0,
     Eggs = 0,
 
-    ClickDebounce = false;
+    AutoClickerStatus = false,
+
+    ClickDebounce = false
 }
 
 export type PlayerData = typeof(Shared.DEFAULT_PLAYER_DATA)
