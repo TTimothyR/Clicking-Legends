@@ -30,7 +30,7 @@ local left: Frame = hud:WaitForChild('Left');
 local statsFrame: Frame = left:WaitForChild('Stats');
 
 local popUpArea: Frame = hud:WaitForChild('PopUpArea');
-local popUps: Folder = hud:WaitForChild('PopUps');
+local popUps: Frame = hud:WaitForChild('PopUps');
 local popUpTemplate: Frame = hud:WaitForChild('PopUpTemplate');
 
 local shine: ImageLabel = clickButton:WaitForChild('Shine');
@@ -51,7 +51,6 @@ local textEndSize: UDim2 = UDim2.new(1,0,0.5,0);
 
 -- Globals
 local g_CurrentClicksValue
-local g_CurrentGemsValue
 local currentVisualValue = infMath.new(0);
 local activeTween: Tween = nil;
 local activeConnection: RBXScriptConnection = nil;
@@ -143,14 +142,11 @@ local function PopUp(increment)
     clone:Destroy();
 end
 
-local function UpdateStatDisplay(currencyStr: string)
-    local profile = network:InvokeServer('GetData');
-    if not profile then print('Could not fetch profile') return end;
-    
+local function UpdateStatDisplay(currencyStr: string)    
     local currencyFrame: Frame = statsFrame[currencyStr]
     local goalValue: number = 1;
 
-    local targetValue = profile.Clicks;
+    local targetValue = infMath.new(http:JSONDecode(plr:GetAttribute('RawClicksData')));
 
     if activeTween then
         activeTween:Cancel();
@@ -253,7 +249,7 @@ local function AutoClick()
 end
 
 function ClickHandler.LoadStatDisplay(profile)
-    local currencies = {'Clicks', 'Gems'};
+    local currencies = {'Clicks'};
 
     for _, currency: string in ipairs(currencies) do
         statsFrame[currency].Background.Amount.Text = infMath.new(profile[currency]):GetSuffix(true);
@@ -262,7 +258,6 @@ function ClickHandler.LoadStatDisplay(profile)
     autoClickStatus = profile.AutoClickerStatus;
 
     g_CurrentClicksValue = profile.Clicks;
-    g_CurrentGemsValue = profile.Gems;
     currentVisualValue = profile.Clicks
 end
 

@@ -26,11 +26,13 @@ local framework: Folder = rs:WaitForChild('Framework');
 -- UI
 local playerGui: PlayerGui = player:WaitForChild('PlayerGui');
 local hud: ScreenGui = playerGui:WaitForChild('HUD');
+local hatchOverlay: ScreenGui = playerGui:WaitForChild('HatchOverlay');
 local testButton: ImageButton = hud:WaitForChild('test');
 local left: Frame = hud:WaitForChild('Left');
 local boost: Frame = hud:WaitForChild('Boost');
 local autoClicker: Frame = hud:WaitForChild('AutoClicker');
 local clickButton: ImageButton = hud:WaitForChild('Click');
+local popUps: Frame = hud:WaitForChild('PopUps');
 
 -- Modules
 local modelUtil = require(framework.ModelUtility);
@@ -104,6 +106,7 @@ local function HideUI()
     autoClicker:TweenPosition(UDim2.new(0.218,0,1,0), dir, style, animTime);
     clickButton:TweenPosition(UDim2.new(0.517,0,1.2,0), dir, style, animTime);
     boost:TweenPosition(UDim2.new(0.292,0,-0.3,0), dir, style, animTime);
+    popUps.Visible = false;
 
     if closedFrame then
         menuHandler.openFrame(closedFrame);
@@ -113,9 +116,10 @@ end
 
 local function UnHideUI()
     left:TweenPosition(UDim2.new(0.006,0,0.162,0), dir, style, animTime);
-    autoClicker:TweenPosition(UDim2.new(0.218,0,891,0), dir, style, animTime);
+    autoClicker:TweenPosition(UDim2.new(0.218,0,0.891,0), dir, style, animTime);
     clickButton:TweenPosition(UDim2.new(0.517,0,0.91,0), dir, style, animTime);
     boost:TweenPosition(UDim2.new(0.292,0,0.013,0), dir, style, animTime);
+    popUps.Visible = true;
 
     if menuHandler.activeFrame then
         closedFrame = menuHandler.activeFrame;
@@ -214,6 +218,7 @@ function EggHandler.EggAnimation(eggName: string, amount: number)
 
     local petData = {};
     local petAnimationConnections = {};
+    local petUIConnections = {};
     local petDestroyConnections = {};
 
     for i, data in ipairs(eggData) do
@@ -228,17 +233,51 @@ function EggHandler.EggAnimation(eggName: string, amount: number)
         petPos.Value = data.endPos * CFrame.new(0,0,2);
         petRot.Value = CFrame.Angles(0,0,0);
 
+        local nameLabel: TextLabel = script.PetName:Clone();
+        nameLabel.Name = petName;
+        nameLabel.Text = petName;
+        nameLabel.Parent = hatchOverlay;
+        nameLabel.Visible = true        
+        
+        local rarityLabel: TextLabel = script.Rarity:Clone();
+        rarityLabel.Name = "Common";
+        rarityLabel.Text = "Common";
+        rarityLabel.Parent = hatchOverlay;
+        rarityLabel.Visible = true
+
+        local miscLabel: TextLabel = script.Misc:Clone();
+        miscLabel.Text = "";
+        miscLabel.Parent = hatchOverlay;
+        miscLabel.Visible = true
+
         table.insert(petData, {
             pet = pet,
             pos = petPos,
             rot = petRot,
-            endPos = data.endPos
+            endPos = data.endPos,
+            nameLabel = nameLabel,
+            rarityLabel = rarityLabel,
+            miscLabel = miscLabel
         })
 
         local petConnection: RBXScriptConnection = runService.RenderStepped:Connect(function(deltaTime)
             pet:PivotTo(CFrame.new((camera.CFrame * cameraOffset * petPos.Value).Position, camera.CFrame.Position) * petRot.Value);
         end)
         table.insert(petAnimationConnections, petConnection);
+
+        local uiConnection: RBXScriptConnection = runService.Heartbeat:Connect(function(deltaTime)
+			local screenPoint, onScreen = camera:WorldToScreenPoint(pet.PrimaryPart.Position - pet.PrimaryPart.CFrame.UpVector * pet.PrimaryPart.Size.Y/2)
+            nameLabel.Visible = onScreen;
+            rarityLabel.Visible = onScreen;
+            miscLabel.Visible = onScreen;
+            
+            if onScreen then
+                nameLabel.Position = UDim2.new(screenPoint.X/camera.ViewportSize.X, 0, (screenPoint.Y+100)/camera.ViewportSize.Y, 0)
+				rarityLabel.Position = UDim2.new(screenPoint.X/camera.ViewportSize.X, 0, (screenPoint.Y + 150)/camera.ViewportSize.Y, 0)
+				miscLabel.Position = UDim2.new(screenPoint.X/camera.ViewportSize.X, 0, (screenPoint.Y - 100)/camera.ViewportSize.Y, 0)
+            end
+        end)
+        table.insert(petUIConnections, uiConnection);
 
         local petDestroyConnection: RBXScriptConnection = pet:GetPropertyChangedSignal('Parent'):Once(function()
             petConnection:Disconnect();
@@ -254,6 +293,11 @@ function EggHandler.EggAnimation(eggName: string, amount: number)
     end
 
     task.wait(1.85/speed);
+    for _, data in ipairs(petData) do
+        data.nameLabel:Destroy();
+        data.rarityLabel:Destroy();
+        data.miscLabel:Destroy();
+    end
 
     local removeTweens = {};
     local removeTime = 0.75/speed;
@@ -289,6 +333,11 @@ function EggHandler.EggAnimation(eggName: string, amount: number)
         end
     end
     for _, con: RBXScriptConnection in ipairs(petAnimationConnections) do
+        if con.Connected then
+            con:Disconnect();
+        end
+    end
+    for _, con: RBXScriptConnection in ipairs(petUIConnections) do
         if con.Connected then
             con:Disconnect();
         end
