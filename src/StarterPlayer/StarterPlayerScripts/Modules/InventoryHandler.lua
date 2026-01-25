@@ -64,13 +64,19 @@ function InventoryHandler.LoadInventory()
         local row = math.floor((i-1)/maxColSecret);
         lastRow = (row+1)*2
         local column = math.floor((i-1)%maxColSecret);
-        lastColumn = ((column+1)*2)%maxColSecret;
+        lastColumn = ((column+1)%maxColSecret)*2;
 
         local clone: ImageButton = secretTemplate:Clone();
         clone.Name = petData.fullName;
         clone.Parent = holder;
+        clone.Frame.PetName.Text = petData.petName;
         
-        clone.Position = UDim2.new(clone.Size.X.Scale*column, 0, clone.Size.Y.Scale*row, 0);
+        clone.Position = UDim2.new(
+            clone.Size.X.Scale*column + clone.Size.X.Scale/2, 
+            0, 
+            clone.Size.Y.Scale*row + clone.Size.Y.Scale/2, 
+            0
+        );
 
         clone.Visible = true;
     end
@@ -79,6 +85,7 @@ function InventoryHandler.LoadInventory()
     local rowsFilled = 0;
     local finalIndex = 0;
     local secretRows = math.ceil(#secretTbl/maxColSecret);
+    local yPaddingCorrection = 0.043;
 
     for i, petData in ipairs(normalTbl) do
         if lastColumn > 0 and rowsFilled < 2 then
@@ -97,23 +104,28 @@ function InventoryHandler.LoadInventory()
             clone.Name = petData.fullName;
             clone.Parent = holder;
             clone.Position = UDim2.new(
-                clone.Size.X.Scale*(targetColumn-1), 
+                clone.Size.X.Scale*(targetColumn-1) + clone.Size.X.Scale/2, 
                 0, 
-                secretTemplate.Size.Y.Scale*(secretRows-1) + clone.Size.Y.Scale*row, 
+                secretTemplate.Size.Y.Scale*(secretRows-1) + (clone.Size.Y.Scale-yPaddingCorrection)*row + clone.Size.Y.Scale/2, 
                 0
             );
             
             clone.Visible = true;
             finalIndex = i;
         else
-            local targetRow = lastRow + math.floor((i-finalIndex-1)/maxColNormal);
+            local targetRow = secretRows * 2 + math.floor((i-finalIndex-1)/maxColNormal);
             local targetColumn = math.floor((i-finalIndex-1)%maxColNormal);
 
             local clone: ImageButton = normalTemplate:Clone();
             clone.Name = petData.fullName;
             clone.Parent = holder;
 
-            clone.Position = UDim2.new(clone.Size.X.Scale*targetColumn, 0, clone.Size.Y.Scale*targetRow, 0);
+            clone.Position = UDim2.new(
+                clone.Size.X.Scale*targetColumn + clone.Size.X.Scale/2, 
+                0, 
+                secretTemplate.Size.Y.Scale*secretRows + (clone.Size.Y.Scale-yPaddingCorrection)*(targetRow-secretRows*2) + clone.Size.Y.Scale/2, 
+                0
+            );
             
             clone.Visible = true;
         end

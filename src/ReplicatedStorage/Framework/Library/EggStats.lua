@@ -3,8 +3,8 @@ return{
         Price = {'Clicks', 100},
         World = 'Spawn',
         Pets = {
-            ["Doggy"] = {100, 1},
-            ["Kitty"] = {0, 2},
+            ["Doggy"] = {0, 1},
+            ["Kitty"] = {100, 2},
         },
     }
 }
