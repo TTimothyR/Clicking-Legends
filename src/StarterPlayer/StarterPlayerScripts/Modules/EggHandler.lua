@@ -38,6 +38,7 @@ local popUps: Frame = hud:WaitForChild('PopUps');
 local modelUtil = require(framework.ModelUtility);
 local menuHandler = require(script.Parent.MenuHandler);
 local soundHandler = require(script.Parent.SoundHandler);
+local network = require(framework.Network);
 
 -- Constants
 local dir, style, animTime = Enum.EasingDirection.Out, Enum.EasingStyle.Sine, 0.3;
@@ -127,8 +128,8 @@ local function UnHideUI()
     end
 end
 
-function EggHandler.EggAnimation(eggName: string, amount: number)
-    local speed = 2
+function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
+    local speed = 1
 
     local eggData = {};
     local eggAnimationConnections = {};
@@ -186,7 +187,27 @@ function EggHandler.EggAnimation(eggName: string, amount: number)
     task.wait(0.65/speed);
 
     local startWait, endWait, direction, alpha = 0.5/speed, 0.01/speed, 1, 30;
+    local rotationCount, trigger = 0, 2
     local currentWait = startWait
+    local originalFOV = camera.FieldOfView;
+
+    local zoomIn = function()
+        ts:Create(camera, TweenInfo.new((currentWait/2), Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {FieldOfView = camera.FieldOfView-3}):Play();
+    end
+    local zoomOut = function(waitTime)
+        ts:Create(camera, TweenInfo.new(waitTime, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {FieldOfView = camera.FieldOfView+1}):Play();
+    end
+    local zoomPop = function()
+        local popFactor = 1.3;
+        local speed = startWait/2;
+        
+        local tween1: Tween = ts:Create(camera, TweenInfo.new(speed*0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {FieldOfView = originalFOV / popFactor});
+        tween1:Play();
+        tween1.Completed:Wait();
+        
+        local tween2: Tween = ts:Create(camera, TweenInfo.new(speed*0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {FieldOfView = originalFOV});
+        tween2:Play();
+    end
     repeat
         local hatchTweens = {};
         for _, data in ipairs(eggData) do
@@ -194,6 +215,13 @@ function EggHandler.EggAnimation(eggName: string, amount: number)
                 ts:Create(data.rot, TweenInfo.new(currentWait, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {Value = CFrame.Angles(0,0,direction*math.rad(alpha))}):Play();
             end)
         end
+        
+        if rotationCount <= 1 then
+            zoomIn();
+        else
+            zoomOut(currentWait);
+        end
+        
         for _, func in ipairs(hatchTweens) do
             func();
             soundHandler.PlaySound(sounds.Turn);
@@ -201,8 +229,11 @@ function EggHandler.EggAnimation(eggName: string, amount: number)
         task.wait(currentWait)
         currentWait /= 1.25;
         direction *= -1;
+        rotationCount += 1;
     until currentWait <= endWait
-
+    
+    task.spawn(zoomPop);
+    
     for _, data in ipairs(eggData) do
         for _, descendant in ipairs(data.egg:GetDescendants()) do
             if descendant:IsA('BasePart') then
@@ -222,7 +253,16 @@ function EggHandler.EggAnimation(eggName: string, amount: number)
     local petDestroyConnections = {};
 
     for i, data in ipairs(eggData) do
-        local petName: string = 'Doggy';
+        local petName: string = petsData[i].fullName;
+
+        if petsData[i].shiny and not petModels:FindFirstChild(petName) then
+            warn('Shiny model for pet', petName,'not found, falling back to regular model.');
+            petName = petsData[i].petName;
+        end
+        if not petModels:FindFirstChild(petName) then
+            warn('Model for pet', petName, 'not found, falling back to Doggy.');
+            petName = 'Doggy';
+        end
         
         local pet: Model = petModels:FindFirstChild(petName):Clone();
         pet.Parent = eggOpens
@@ -240,8 +280,8 @@ function EggHandler.EggAnimation(eggName: string, amount: number)
         nameLabel.Visible = true        
         
         local rarityLabel: TextLabel = script.Rarity:Clone();
-        rarityLabel.Name = "Common";
-        rarityLabel.Text = "Common";
+        rarityLabel.Name = petsData[i].rarity;
+        rarityLabel.Text = petsData[i].rarity;
         rarityLabel.Parent = hatchOverlay;
         rarityLabel.Visible = true
 
@@ -354,7 +394,7 @@ function EggHandler.Initialize()
 
     testButton.MouseButton1Click:Connect(function()
         if not db then db = true task.delay(.15, function() db = false end)
-            EggHandler.EggAnimation('Common Egg', 3);
+            network:FireServer('OpenEgg','Common Egg', 1);
         end
     end)
 end

@@ -6,6 +6,11 @@ Shared.DEFAULT_PLAYER_DATA = {
     Rebirths = 0,
     Eggs = 0,
 
+    LuckPercentage = 0,
+
+    Pets = {},
+    PetIndex = {},
+
     AutoClickerStatus = false,
 
     ClickDebounce = false

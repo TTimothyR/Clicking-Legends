@@ -146,7 +146,7 @@ local function UpdateStatDisplay(currencyStr: string)
     local currencyFrame: Frame = statsFrame[currencyStr]
     local goalValue: number = 1;
 
-    local targetValue = infMath.new(http:JSONDecode(plr:GetAttribute('RawClicksData')));
+    local targetValue = infMath.new(http:JSONDecode(plr:GetAttribute('Clicks')));
 
     if activeTween then
         activeTween:Cancel();
@@ -193,7 +193,7 @@ local function StartCPSTrack()
     cpsText.Text = "0/s";
 
     local lastClickTable;
-    local startJSON = util.WaitForAttribute(plr, 'RawClicksData');
+    local startJSON = util.WaitForAttribute(plr, 'Clicks');
     if startJSON then
         local tbl = http:JSONDecode(startJSON);
         lastClickTable = tbl;
@@ -210,7 +210,7 @@ local function StartCPSTrack()
     while true do
         task.wait(updateTime);
 
-        local jsonString = plr:GetAttribute('RawClicksData');
+        local jsonString = plr:GetAttribute('Clicks');
         if currentTween then
             currentTween:Cancel();
         end
@@ -254,7 +254,6 @@ function ClickHandler.LoadStatDisplay(profile)
     for _, currency: string in ipairs(currencies) do
         statsFrame[currency].Background.Amount.Text = infMath.new(profile[currency]):GetSuffix(true);
     end
-
     autoClickStatus = profile.AutoClickerStatus;
 
     g_CurrentClicksValue = profile.Clicks;

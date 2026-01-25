@@ -30,6 +30,9 @@ local left: Frame = hud:WaitForChild('Left');
 local buttons: Frame = left:WaitForChild('Buttons');
 local inventoryButton: ImageButton = buttons:WaitForChild('Pets');
 
+-- Modules
+local inventoryHandler = require(script.Parent.InventoryHandler);
+
 -- Constants
 local sizePos = {
     ["Inventory"] = {UDim2.new(0.588,0,0.658,0), UDim2.new(0.5,0,0.5,0)}
@@ -57,6 +60,7 @@ end
 
 function ButtonHandler.handleOpenClose(frame, func)
 	if not db then db = true task.delay(.15, function() db = false end)
+		if func then func() end
 		if frame == ButtonHandler.activeFrame then 
 			ButtonHandler.closeFrame(frame) 
 			return 
@@ -65,7 +69,6 @@ function ButtonHandler.handleOpenClose(frame, func)
 			ButtonHandler.closeFrame(ButtonHandler.activeFrame) 
 		end
 		ButtonHandler.openFrame(frame)
-		if func then func() end
 	end
 end
 
@@ -73,7 +76,7 @@ function ButtonHandler.Initialize()
     if not game.Loaded then game.Loaded:Wait() end;
     
     inventoryButton.MouseButton1Click:Connect(function()
-        ButtonHandler.handleOpenClose(inventoryFrame);
+        ButtonHandler.handleOpenClose(inventoryFrame, inventoryHandler.LoadInventory);
     end)
 end
 

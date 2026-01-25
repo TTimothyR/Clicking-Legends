@@ -20,7 +20,7 @@ local clickDebounce = 0.15;
 
 local function sendStatsToClient(player: Player)
     local profile = playerData.GetData(player);
-    player:SetAttribute('RawClicksData', http:JSONEncode(profile.Clicks));
+    player:SetAttribute('Clicks', http:JSONEncode(profile.Clicks));
 
     network:FireClient(player, 'LoadStatDisplay', profile);
 end
@@ -32,12 +32,12 @@ function StatHandler.Click(player: Player)
 
     profile.ClickDebounce = true;
 
-    local increment = infMath.new(23156345);
+    local increment = infMath.new(100);
 
     profile.Clicks = infMath.new(profile.Clicks + increment);
     player.leaderstats.Clicks.Value = infMath.new(profile.Clicks):GetSuffix(true);
 
-    player:SetAttribute("RawClicksData", http:JSONEncode(profile.Clicks));
+    player:SetAttribute("Clicks", http:JSONEncode(profile.Clicks));
 
     task.delay(clickDebounce, function()
         profile.ClickDebounce = false;
@@ -48,7 +48,7 @@ end
 
 function StatHandler.ToggleAutoClicker(player: Player)
     local profile = playerData.GetData(player);
-    if not profile or profile.ClickDebounce then return false end;
+    if not profile then return false end;
 
     profile.AutoClickerStatus = not profile.AutoClickerStatus;
 
