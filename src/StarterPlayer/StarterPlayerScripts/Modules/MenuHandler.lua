@@ -78,6 +78,16 @@ function ButtonHandler.Initialize()
     inventoryButton.MouseButton1Click:Connect(function()
         ButtonHandler.handleOpenClose(inventoryFrame, inventoryHandler.LoadInventory);
     end)
+
+	for _, frame: Frame in ipairs(frames:GetChildren()) do
+		if frame:FindFirstChild('Close') then
+			frame:FindFirstChild('Close').MouseButton1Click:Connect(function()
+				if not db then db = true task.delay(.15, function() db = false end)
+					ButtonHandler.closeFrame(frame);
+				end
+			end)
+		end
+	end
 end
 
 return ButtonHandler;

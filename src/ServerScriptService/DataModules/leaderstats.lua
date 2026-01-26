@@ -29,6 +29,10 @@ function module:CreateLeaderstats(player: Player, profile)
 	local eggs = Instance.new("StringValue", leaderstats)
 	eggs.Name = "Eggs"
 	eggs.Value = infMath.new(profile.Data.Eggs):GetSuffix(true)
+
+	local uiLock = Instance.new("BoolValue", player)
+	uiLock.Name = "UILock"
+	uiLock.Value = false
 end
 
 return module

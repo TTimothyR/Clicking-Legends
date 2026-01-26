@@ -27,7 +27,6 @@ local framework: Folder = rs:WaitForChild('Framework');
 local playerGui: PlayerGui = player:WaitForChild('PlayerGui');
 local hud: ScreenGui = playerGui:WaitForChild('HUD');
 local hatchOverlay: ScreenGui = playerGui:WaitForChild('HatchOverlay');
-local testButton: ImageButton = hud:WaitForChild('test');
 local left: Frame = hud:WaitForChild('Left');
 local boost: Frame = hud:WaitForChild('Boost');
 local autoClicker: Frame = hud:WaitForChild('AutoClicker');
@@ -38,7 +37,6 @@ local popUps: Frame = hud:WaitForChild('PopUps');
 local modelUtil = require(framework.ModelUtility);
 local menuHandler = require(script.Parent.MenuHandler);
 local soundHandler = require(script.Parent.SoundHandler);
-local network = require(framework.Network);
 
 -- Constants
 local dir, style, animTime = Enum.EasingDirection.Out, Enum.EasingStyle.Sine, 0.3;
@@ -216,11 +214,11 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
             end)
         end
         
-        if rotationCount <= 1 then
-            zoomIn();
-        else
-            zoomOut(currentWait);
-        end
+        -- if rotationCount <= 1 then
+        --     zoomIn();
+        -- else
+        --     zoomOut(currentWait);
+        -- end
         
         for _, func in ipairs(hatchTweens) do
             func();
@@ -232,7 +230,7 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
         rotationCount += 1;
     until currentWait <= endWait
     
-    task.spawn(zoomPop);
+    -- task.spawn(zoomPop);
     
     for _, data in ipairs(eggData) do
         for _, descendant in ipairs(data.egg:GetDescendants()) do
@@ -289,6 +287,12 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
         miscLabel.Text = "";
         miscLabel.Parent = hatchOverlay;
         miscLabel.Visible = true
+
+        if petsData[i].autoDeleted then
+            miscLabel.Text = 'Auto Deleted';
+        elseif petsData[i].new then
+            miscLabel.Text = 'New Pet Discovered!'
+        end
 
         table.insert(petData, {
             pet = pet,
@@ -387,16 +391,8 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
             con:Disconnect();
         end
     end
-end
 
-function EggHandler.Initialize()
-    if not game.Loaded then game.Loaded:Wait() end;
-
-    testButton.MouseButton1Click:Connect(function()
-        if not db then db = true task.delay(.15, function() db = false end)
-            network:FireServer('OpenEgg','Common Egg', 1);
-        end
-    end)
+    return true;
 end
 
 return EggHandler;

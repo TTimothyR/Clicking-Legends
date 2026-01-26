@@ -10,10 +10,12 @@ Shared.DEFAULT_PLAYER_DATA = {
 
     Pets = {},
     PetIndex = {},
+    AutoDeletedPets = {},
 
     AutoClickerStatus = false,
 
-    ClickDebounce = false
+    ClickDebounce = false,
+    HatchDebounce = false,
 }
 
 export type PlayerData = typeof(Shared.DEFAULT_PLAYER_DATA)

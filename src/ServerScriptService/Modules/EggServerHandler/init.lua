@@ -1,6 +1,7 @@
 local EggHandler = {}
 
 -- Services
+local players = game:GetService('Players')
 local rs = game:GetService('ReplicatedStorage');
 local sss = game:GetService('ServerScriptService');
 local http = game:GetService('HttpService');
@@ -19,7 +20,27 @@ local generateID = require(framework.GenerateID);
 local network = require(framework.Network);
 local luckHandler = require(script.Parent.LuckHandler);
 
+local function ValidateDistance(player: Player, eggName: string)
+    local maxDistance = 15;
+
+    local view = workspace.Eggs[eggName].View;
+
+    local distance = (player.Character.HumanoidRootPart.Position - view.Position).Magnitude;
+    return distance <= maxDistance;
+end
+
+local function RemoveDebounce(player: Player)
+	local profile = playerData.GetData(player)
+	if not profile then warn("Could not fetch profile.") return end
+	
+	profile.HatchDebounce = false
+end
+
 function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
+    if not ValidateDistance(player, eggName) then
+        print('Too far away from egg.')
+        return
+    end
     if not eggStats[eggName] then
         warn('Invalid egg name', eggName);
         return;
@@ -31,6 +52,11 @@ function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
         return;
     end
 
+    if profile.HatchDebounce then
+        print('Hatching on cooldown.');
+        return;
+    end
+
     local clicks = infMath.new(profile.Clicks);
     local price = infMath.new(eggStats[eggName].Price[2] * amount);
 
@@ -38,6 +64,8 @@ function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
         warn('Not enough currency');
         return;
     end
+
+    profile.HatchDebounce = true;
 
     profile.Clicks = infMath.new(profile.Clicks - price);
     player.leaderstats.Clicks.Value = profile.Clicks:GetSuffix(true);
@@ -55,7 +83,7 @@ function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
         local fullName = shiny and 'Shiny '..petName or petName;
         local id = generateID.NewID();
 
-        local autoDeleted = false;
+        local autoDeleted = profile.AutoDeletedPets[petName];
         local new = false;
 
         if not profile.PetIndex[fullName] then
@@ -73,19 +101,36 @@ function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
             new = new,
         })
 
-        table.insert(profile.Pets,{
-            petName = petName,
-            fullName = fullName,
-            shiny = shiny,
-            id = id,
-            level = 1,
-            xp = 0,
-            date = os.time();
-            locked = false,
-            equipped = false,
-        })
+        if not autoDeleted then
+            table.insert(profile.Pets,{
+                petName = petName,
+                fullName = fullName,
+                shiny = shiny,
+                id = id,
+                level = 1,
+                xp = 0,
+                date = os.time();
+                locked = false,
+                equipped = false,
+            })
+        end
+
     end
-    network:FireClient(player, 'EggAnimation', eggName, amount, petData);
+    player.UILock.Value = true;
+    network:InvokeClient(player, 'EggAnimation', eggName, amount, petData);
+    task.delay(.5, function()
+        profile.HatchDebounce = false;
+    end)
+    player.UILock.Value = false;
+end
+
+function EggHandler.Initialize()
+    for _, player: Player in ipairs(players:GetPlayers()) do
+        task.spawn(RemoveDebounce, player);
+    end
+    players.PlayerAdded:Connect(function(player)
+        task.spawn(RemoveDebounce, player);
+    end)
 end
 
 return EggHandler
