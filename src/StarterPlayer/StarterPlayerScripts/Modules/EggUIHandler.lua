@@ -189,11 +189,23 @@ local function ConfigureEggUI(egg: Model)
     for petName, data in pairs(currentStats.Pets) do
         local petClone: ImageButton = petTemplate:Clone();
         local chance = globals.GetPetChance(luckPercentage, petName, egg.Name, false);
+        local rarity = petStats[petName].Rarity
 
         petClone.Parent = holder;
         petClone.Name = petName;
 
         petClone.Chance.Text = tostring(chance)..'%';
+        petClone.Chance.TextColor3 = globals.RarityColors[rarity];
+        if rarity == 'Legendary' then
+            local colorConnection = runService.Heartbeat:Connect(function()
+                local t = tick() * 0.4 % 1
+                local color = Color3.fromHSV(t, 0.55, 1);
+                petClone.Chance.TextColor3 = color
+            end)
+            local destroyConnection = petClone:GetPropertyChangedSignal("Parent"):Once(function()
+                colorConnection:Disconnect()
+            end)
+        end
         petClone.LayoutOrder = data[2];
 
         local discovered = index[petName];

@@ -1,4 +1,5 @@
 local InventoryHandler = {};
+local db = false;
 
 -- Services
 local players = game:GetService('Players');
@@ -11,6 +12,9 @@ local player: Player = players.LocalPlayer;
 local framework = rs:WaitForChild('Framework');
 local library = framework:WaitForChild('Library');
 
+local selectedPetID: string = nil;
+local clickConnections = {};
+
 -- UI
 local playerGui = player:WaitForChild('PlayerGui');
 local frames: ScreenGui = playerGui:WaitForChild('Frames');
@@ -22,9 +26,14 @@ local main: Frame = inventoryFrame:WaitForChild('Main');
 local inventory: Frame = main:WaitForChild('Inventory');
 local holder: ScrollingFrame = inventory:WaitForChild('ScrollingFrame');
 
+local petInfo: Frame = main:WaitForChild('PetInfo');
+local petInfoHolder: Frame = petInfo:WaitForChild('Holder');
+
 -- Modules
 local network = require(framework.Network);
+local infMath = require(framework.InfiniteMath);
 local petStats = require(library.PetStats);
+local globals = require(framework.Globals);
 
 -- Constants
 local maxColSecret = 3;
@@ -45,17 +54,67 @@ local function SeperatePets(petsTbl)
     return normalTbl, secretTbl
 end
 
+local function SortPets(petA, petB)
+    local rarityA = petStats[petA.petName].Rarity;
+    local rarityB = petStats[petB.petName].Rarity;
+
+    local rarityOrderA = globals.RarityOrder[rarityA] or 0;
+    local rarityOrderB = globals.RarityOrder[rarityB] or 0;
+
+    if rarityOrderA ~= rarityOrderB then
+        return rarityOrderA > rarityOrderB;
+    end
+end
+
+local function GetPetData(id: string)
+    local profile = network:InvokeServer('GetData');
+
+    local pets = profile.Pets;
+
+    for i, data in ipairs(pets) do
+        if data.id == id then
+            return data;
+        end
+    end
+    return nil;
+end
+
+local function LoadPetInfo(id: string)
+    local petData = GetPetData(id);
+    if not petData then
+        warn('Player does not own pet with ID:', id);
+    end
+
+    local date = os.date('*t', petData.date);
+
+    petInfoHolder.PetName.Text = petData.fullName;
+    petInfoHolder.FoundDate.Text = 'Found on '..date.day..'/'..date.month..'/'..(date.year-2000);
+    petInfoHolder.Level.Text = 'Level '..petData.level;
+
+    local petStat = petStats[petData.petName];
+
+    petInfoHolder.Stats.Clicks.Amount.Text = infMath.new(petStat.Clicks):GetSuffix(true);
+    petInfoHolder.Stats.Gems.Amount.Text = petStat.GemMulti;
+
+    petInfoHolder.Visible = true;
+end
+
 function InventoryHandler.LoadInventory()
     local profile = network:InvokeServer('GetData');
     if not profile then
         warn('Failed to load player profile');
         return;
     end
-
     holder:ClearAllChildren();
+    for _, con: RBXScriptConnection in ipairs(clickConnections) do
+        if con.Connected then
+            con:Disconnect();
+        end
+    end
 
     local pets = profile.Pets;
     local normalTbl, secretTbl = SeperatePets(pets);
+    table.sort(normalTbl, SortPets);
 
     local lastRow = 0;
     local lastColumn = 0;
@@ -70,6 +129,19 @@ function InventoryHandler.LoadInventory()
         clone.Name = petData.fullName;
         clone.Parent = holder;
         clone.Frame.PetName.Text = petData.petName;
+
+        local clickCon: RBXScriptConnection
+        clickCon = clone.MouseButton1Click:Connect(function()
+            if not db then db = true task.delay(.15, function() db = false end)
+                if selectedPetID == petData.id then
+                    selectedPetID = nil;
+                    petInfoHolder.Visible = false;
+                else
+                    LoadPetInfo(petData.id);
+                end
+            end
+        end)
+        table.insert(clickConnections, clickCon);
         
         clone.Position = UDim2.new(
             clone.Size.X.Scale*column + clone.Size.X.Scale/2, 
@@ -89,7 +161,6 @@ function InventoryHandler.LoadInventory()
 
     for i, petData in ipairs(normalTbl) do
         if lastColumn > 0 and rowsFilled < 2 then
-            local targetRow = lastRow - 1;
             local targetColumn = lastColumn + 1;
             local row = math.floor((i-1)/(maxColNormal-savedColumn))
             
@@ -109,6 +180,26 @@ function InventoryHandler.LoadInventory()
                 secretTemplate.Size.Y.Scale*(secretRows-1) + (clone.Size.Y.Scale-yPaddingCorrection)*row + clone.Size.Y.Scale/2, 
                 0
             );
+
+            local rarity = petData.rarity;
+            clone.Frame.BackgroundColor3 = globals.RarityColors[rarity];
+            if rarity == 'Legendary' then
+                clone.Glow.Visible = true;
+                clone.Frame.Legendary.Enabled = true;
+            end
+
+            local clickCon: RBXScriptConnection
+            clickCon = clone.MouseButton1Click:Connect(function()
+                if not db then db = true task.delay(.15, function() db = false end)
+                    if selectedPetID == petData.id then
+                        selectedPetID = nil;
+                        petInfoHolder.Visible = false;
+                    else
+                        LoadPetInfo(petData.id);
+                    end
+                end
+            end)
+            table.insert(clickConnections, clickCon);
             
             clone.Visible = true;
             finalIndex = i;
@@ -126,6 +217,26 @@ function InventoryHandler.LoadInventory()
                 secretTemplate.Size.Y.Scale*secretRows + (clone.Size.Y.Scale-yPaddingCorrection)*(targetRow-secretRows*2) + clone.Size.Y.Scale/2, 
                 0
             );
+
+            local rarity = petStats[petData.petName].Rarity;
+            clone.Frame.BackgroundColor3 = globals.RarityColors[rarity];
+            if rarity == 'Legendary' then
+                clone.Glow.Visible = true;
+                clone.Frame.Legendary.Enabled = true;
+            end
+
+            local clickCon: RBXScriptConnection
+            clickCon = clone.MouseButton1Click:Connect(function()
+                if not db then db = true task.delay(.15, function() db = false end)
+                    if selectedPetID == petData.id then
+                        selectedPetID = nil;
+                        petInfoHolder.Visible = false;
+                    else
+                        LoadPetInfo(petData.id);
+                    end
+                end
+            end)
+            table.insert(clickConnections, clickCon);
             
             clone.Visible = true;
         end

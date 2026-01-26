@@ -37,6 +37,7 @@ local popUps: Frame = hud:WaitForChild('PopUps');
 local modelUtil = require(framework.ModelUtility);
 local menuHandler = require(script.Parent.MenuHandler);
 local soundHandler = require(script.Parent.SoundHandler);
+local globals = require(framework.Globals);
 
 -- Constants
 local dir, style, animTime = Enum.EasingDirection.Out, Enum.EasingStyle.Sine, 0.3;
@@ -249,6 +250,7 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
     local petAnimationConnections = {};
     local petUIConnections = {};
     local petDestroyConnections = {};
+    local petColorConnections = {};
 
     for i, data in ipairs(eggData) do
         local petName: string = petsData[i].fullName;
@@ -280,8 +282,21 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
         local rarityLabel: TextLabel = script.Rarity:Clone();
         rarityLabel.Name = petsData[i].rarity;
         rarityLabel.Text = petsData[i].rarity;
+        rarityLabel.TextColor3 = globals.RarityColors[petsData[i].rarity];
         rarityLabel.Parent = hatchOverlay;
-        rarityLabel.Visible = true
+        rarityLabel.Visible = true;
+
+        if petsData[i].rarity == 'Legendary' then
+            local colorConnection = runService.Heartbeat:Connect(function()
+                local t = tick() * 0.4 % 1
+                local color = Color3.fromHSV(t, 0.55, 1);
+                rarityLabel.TextColor3 = color
+            end)
+            local destroyConnection = pet:GetPropertyChangedSignal("Parent"):Once(function()
+                colorConnection:Disconnect()
+                print('Legendary animation disconnected');
+            end)
+        end
 
         local miscLabel: TextLabel = script.Misc:Clone();
         miscLabel.Text = "";

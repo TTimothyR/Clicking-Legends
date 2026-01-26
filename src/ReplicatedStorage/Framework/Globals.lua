@@ -11,6 +11,22 @@ local library = framework:WaitForChild('Library');
 local eggStats = require(library.EggStats);
 local petStats = require(library.PetStats);
 
+Globals.RarityColors = {
+	["Common"] = Color3.fromRGB(255, 214, 133),
+	["Uncommon"] = Color3.fromRGB(173, 255, 135),
+	["Rare"] = Color3.fromRGB(255, 130, 130),
+	["Epic"] = Color3.fromRGB(201, 126, 255),
+	["Legendary"] = Color3.fromRGB(255, 255, 255),
+}
+
+Globals.RarityOrder = {
+	["Legendary"] = 5,
+	["Epic"] = 4,
+	["Rare"] = 3,
+	["Uncommon"] = 2,
+	["Common"] = 1,
+}
+
 function Globals.GetPetChance(luckPercentage, petName: string, eggName: string, shiny: boolean)
     local tbl = eggStats[eggName].Pets;
     local boosted = {['Epic'] = true, ['Legendary'] = true};
