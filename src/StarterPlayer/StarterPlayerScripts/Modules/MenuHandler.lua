@@ -23,19 +23,34 @@ local framework = rs:WaitForChild('Framework');
 local playerGui = plr:WaitForChild('PlayerGui');
 
 local frames: ScreenGui = playerGui:WaitForChild('Frames');
+local indexFrame: Frame = frames:WaitForChild('Index');
 local inventoryFrame: Frame = frames:WaitForChild('Inventory');
+local prizesFrame: Frame = frames:WaitForChild('Prizes');
+local rebirthsFrame: Frame = frames:WaitForChild('Rebirths');
+local shopFrame: Frame = frames:WaitForChild('Shop');
+local playerListFrame: Frame = frames:WaitForChild('PlayerList');
 
 local hud: ScreenGui = playerGui:WaitForChild('HUD');
 local left: Frame = hud:WaitForChild('Left');
 local buttons: Frame = left:WaitForChild('Buttons');
+local indexButton: ImageButton = buttons:WaitForChild('Index');
 local inventoryButton: ImageButton = buttons:WaitForChild('Pets');
+local prizesButton: ImageButton = buttons:WaitForChild('Prizes');
+local rebirthButton: ImageButton = buttons:WaitForChild('Rebirth');
+local shopButton: ImageButton = buttons:WaitForChild('Shop');
+local tradeButton: ImageButton = buttons:WaitForChild('Trading');
 
 -- Modules
 local inventoryHandler = require(script.Parent.InventoryHandler);
 
 -- Constants
 local sizePos = {
-    ["Inventory"] = {UDim2.new(0.588,0,0.658,0), UDim2.new(0.5,0,0.5,0)}
+    ["Index"] = {UDim2.new(0.497,0,0.6,0), UDim2.new(0.5,0,0.5,0)},
+    ["Inventory"] = {UDim2.new(0.588,0,0.658,0), UDim2.new(0.5,0,0.5,0)},
+    ["Prizes"] = {UDim2.new(0.5,0,0.5,0), UDim2.new(0.5,0,0.5,0)},
+    ["Rebirths"] = {UDim2.new(0.6,0,0.6,0), UDim2.new(0.5,0,0.5,0)},
+    ["Shop"] = {UDim2.new(0.588,0,0.658,0), UDim2.new(0.5,0,0.5,0)},
+    ["PlayerList"] = {UDim2.new(0.6,0,0.6,0), UDim2.new(0.5,0,0.5,0)},
 };
 local animationTime = .15;
 local fov = camera.FieldOfView;
@@ -75,8 +90,23 @@ end
 function ButtonHandler.Initialize()
     if not game.Loaded then game.Loaded:Wait() end;
     
-    inventoryButton.MouseButton1Click:Connect(function()
+    indexButton.MouseButton1Click:Connect(function()
+        ButtonHandler.handleOpenClose(indexFrame);
+    end)
+	inventoryButton.MouseButton1Click:Connect(function()
         ButtonHandler.handleOpenClose(inventoryFrame, inventoryHandler.LoadInventory);
+    end)
+	prizesButton.MouseButton1Click:Connect(function()
+        ButtonHandler.handleOpenClose(prizesFrame);
+    end)
+	rebirthButton.MouseButton1Click:Connect(function()
+        ButtonHandler.handleOpenClose(rebirthsFrame);
+    end)
+	shopButton.MouseButton1Click:Connect(function()
+        ButtonHandler.handleOpenClose(shopFrame);
+    end)
+	tradeButton.MouseButton1Click:Connect(function()
+        ButtonHandler.handleOpenClose(playerListFrame);
     end)
 
 	for _, frame: Frame in ipairs(frames:GetChildren()) do
