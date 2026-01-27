@@ -11,6 +11,10 @@ local library = framework:WaitForChild('Library');
 local eggStats = require(library.EggStats);
 local petStats = require(library.PetStats);
 
+Globals.RebirthBasePrice = 2250
+Globals.CostCoefficient = 5
+Globals.MultiplierCoefficient = 0.8
+
 Globals.RarityColors = {
 	["Common"] = Color3.fromRGB(255, 214, 133),
 	["Uncommon"] = Color3.fromRGB(173, 255, 135),
@@ -26,6 +30,31 @@ Globals.RarityOrder = {
 	["Uncommon"] = 2,
 	["Common"] = 1,
 }
+
+Globals.ButtonPresets = {
+	['Green'] = {
+		StrokeColor = Color3.fromRGB(0,131,0),
+		Gradient = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.new(0, 1, 0)),
+			ColorSequenceKeypoint.new(1, Color3.new(0.6666667, 1, 0))
+		})
+	},	
+	['Red'] = {
+		StrokeColor = Color3.fromRGB(131,0,2),
+		Gradient = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.new(1, 0, 0)),
+			ColorSequenceKeypoint.new(1, Color3.new(1, 0.4, 0.41))
+		})
+	},	
+	['Purple'] = {
+		StrokeColor = Color3.fromRGB(91,0,136),
+		Gradient = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.new(0.6666667, 0, 1)),
+			ColorSequenceKeypoint.new(1, Color3.new(0.6666667, 0.3333333, 1))
+		})
+	},
+}
+
 
 function Globals.GetPetChance(luckPercentage, petName: string, eggName: string, shiny: boolean)
     local tbl = eggStats[eggName].Pets;

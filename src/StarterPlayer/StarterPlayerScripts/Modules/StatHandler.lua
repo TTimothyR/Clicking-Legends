@@ -13,10 +13,13 @@ repeat task.wait() until players.LocalPlayer;
 local plr: Player = players.LocalPlayer;
 
 local framework: Folder = rs:WaitForChild('Framework');
-local tweenNumer: NumberValue = script:WaitForChild('TweenNumber');
+local library: Folder = framework:WaitForChild('Library');
+-- local tweenClicks: NumberValue = script:WaitForChild('TweenClicks');
+-- local tweenGems: NumberValue = script:WaitForChild('TweenGems');
 local cpsNumber: NumberValue = script:WaitForChild('CPSNumber');
 
 local rng = Random.new();
+local statsLoaded = false;
 
 -- UI
 local playerGui: PlayerGui = plr:WaitForChild('PlayerGui');
@@ -41,6 +44,8 @@ local animationFrames: Folder = clickButton:WaitForChild('AnimationFrames');
 local network = require(framework.Network);
 local infMath = require(framework.InfiniteMath);
 local util = require(framework.Utility);
+local globals = require(framework.Globals);
+local imageService = require(library.ImageService);
 
 -- Constants
 local rotationTime: number = 15;
@@ -48,12 +53,10 @@ local animationTime: number = 0.5;
 local debounceTime: number = 0.15;
 local popUpEndSize: UDim2 = UDim2.new(0.042, 0, 0.065, 0);
 local textEndSize: UDim2 = UDim2.new(1,0,0.5,0);
+local currencies = {'Clicks', 'Gems'};
 
 -- Globals
-local g_CurrentClicksValue
-local currentVisualValue = infMath.new(0);
-local activeTween: Tween = nil;
-local activeConnection: RBXScriptConnection = nil;
+local animationData = {};
 local autoClickStatus = false;
 
 local function AnimateShine()
@@ -80,7 +83,7 @@ end
 local function EffectAtClickPos(position)
 end
 
-local function PopUp(increment)
+local function PopUp(increment, currencyStr: string)
     if not increment then
         return
     end
@@ -88,6 +91,7 @@ local function PopUp(increment)
     local clone: Frame = popUpTemplate:Clone();
     local extraImgFrames: Folder = clone.ExtraImgFrames;
     clone.Parent = popUps;
+    clone.Icon.Image = imageService[currencyStr];
 
     local randomX = rng:NextNumber(popUpArea.Position.X.Scale, popUpArea.Position.X.Scale + popUpArea.Size.Width.Scale);
     local randomY = rng:NextNumber(popUpArea.Position.Y.Scale, popUpArea.Position.Y.Scale + popUpArea.Size.Width.Scale);
@@ -119,7 +123,7 @@ local function PopUp(increment)
     
     for i = 0, amount do
         task.spawn(function()
-            local imgClone: ImageLabel = clone.Image:Clone();
+            local imgClone: ImageLabel = clone.Icon:Clone();
             imgClone.Parent = extraImgFrames;
 
             imgClone:TweenSize(UDim2.new(1.75,0,1.75,0), Enum.EasingDirection.Out, Enum.EasingStyle.Linear, animTime);
@@ -142,48 +146,52 @@ local function PopUp(increment)
     clone:Destroy();
 end
 
-local function UpdateStatDisplay(currencyStr: string)    
+local function UpdateStatDisplay(currencyStr: string)
+    if not statsLoaded then return end;
     local currencyFrame: Frame = statsFrame[currencyStr]
     local goalValue: number = 1;
 
-    local targetValue = infMath.new(http:JSONDecode(plr:GetAttribute('Clicks')));
+    local targetValue = infMath.new(http:JSONDecode(plr:GetAttribute(currencyStr)));
 
-    if activeTween then
-        activeTween:Cancel();
-    end
-    if activeConnection then
-        activeConnection:Disconnect();
-    end
-    if not currentVisualValue then
-        currentVisualValue = infMath.new(g_CurrentClicksValue);
+    local data = animationData[currencyStr];
+
+    if data.activeTween then
+        data.activeTween:Cancel();
     end
 
-    local startValue = currentVisualValue;
+    if data.activeConnection then
+        data.activeConnection:Disconnect();
+    end
+    data.currentAnimValue = infMath.new(data.currentValue);
+
+    local startValue = data.currentValue;
     local delta = infMath.new(targetValue - startValue);
 
-    tweenNumer.Value = 0
+    if currencyStr == 'Gems' then
+        task.spawn(PopUp, delta, currencyStr)
+    end
 
-    activeTween = ts:Create(tweenNumer, TweenInfo.new(0.3), {Value = goalValue});
-
-    activeConnection = tweenNumer.Changed:Connect(function(value)
-        currentVisualValue = infMath.new(startValue + (delta * value));
-        currencyFrame.Background.Amount.Text = currentVisualValue:GetSuffix(true);
+    data.tweenNumber.Value = 0;
+    data.activeTween = ts:Create(data.tweenNumber, TweenInfo.new(0.3), {Value = goalValue});
+    data.activeConnection = data.tweenNumber.Changed:Connect(function(value)
+        data.currentAnimValue = infMath.new(startValue + (delta * value));
+        currencyFrame.Background.Amount.Text = data.currentAnimValue:GetSuffix(true);
     end)
-    activeTween:Play();
-    g_CurrentClicksValue = targetValue;
+    data.activeTween:Play();
+    data.currentValue = targetValue;
 end
 
 local function ClickByButton()
     local increment = network:InvokeServer('Click');
     
     task.spawn(ClickAnimation);
-    task.spawn(PopUp, increment);
+    task.spawn(PopUp, increment, 'Clicks');
 end
 
 local function ClickByScreen(inputPosition)
     local increment = network:InvokeServer('Click');
     
-    task.spawn(PopUp, increment);
+    task.spawn(PopUp, increment, 'Clicks');
     task.spawn(EffectAtClickPos, inputPosition);
 end
 
@@ -226,6 +234,11 @@ local function StartCPSTrack()
 
             local startValue = currentCPS;
             local delta = infMath.new(cps - startValue);
+
+            if delta < infMath.new(0) then
+                delta = infMath.new(0);
+            end
+
             cpsNumber.Value = 0
             currentTween = ts:Create(cpsNumber, TweenInfo.new(0.3), {Value = goalValue});
 
@@ -244,20 +257,45 @@ local function AutoClick()
         if not autoClickStatus then continue end
         
         local increment = network:InvokeServer('Click');
-        task.spawn(PopUp, increment);
+        task.spawn(PopUp, increment, 'Clicks');
     end
 end
 
-function ClickHandler.LoadStatDisplay(profile)
-    local currencies = {'Clicks'};
+local function UpdateAutoClickButton(status: boolean)
+    local color = '';
+    local text = '';
+    if status then
+        color = 'Green';
+        text = 'On';
+    else
+        color = 'Red';
+        text = 'Off';
+    end
+    toggleButton.Frame.UIGradient.Color = globals.ButtonPresets[color].Gradient;
+    toggleButton.Frame.UIStroke.Color = globals.ButtonPresets[color].StrokeColor;
+    toggleButton.Title.UIStroke.Color = globals.ButtonPresets[color].StrokeColor;
+    toggleButton.Title.Text = text;
+end
 
+function ClickHandler.LoadStatDisplay(profile)
     for _, currency: string in ipairs(currencies) do
         statsFrame[currency].Background.Amount.Text = infMath.new(profile[currency]):GetSuffix(true);
+
+        local numValue = Instance.new('NumberValue', script);
+        numValue.Name = currency;
+        numValue.Value = 0;
+
+        animationData[currency] = {
+            currentValue = infMath.new(profile[currency]),
+            currentAnimValue = infMath.new(0),
+            activeTween = ts:Create(numValue, TweenInfo.new(0),{Value = 0}),
+            activeConnection = nil,
+            tweenNumber = numValue
+        };
     end
     autoClickStatus = profile.AutoClickerStatus;
-
-    g_CurrentClicksValue = profile.Clicks;
-    currentVisualValue = profile.Clicks
+    UpdateAutoClickButton(autoClickStatus);
+    statsLoaded = true;
 end
 
 function ClickHandler.Initialize()
@@ -283,15 +321,16 @@ function ClickHandler.Initialize()
     toggleButton.MouseButton1Click:Connect(function()
         if not db then db = true task.delay(debounceTime, function() db = false end)
             autoClickStatus = network:InvokeServer('ToggleAutoClicker');
+            UpdateAutoClickButton(autoClickStatus);
         end
     end)
-   
-    plr:WaitForChild('leaderstats').Clicks.Changed:Connect(function()
-        UpdateStatDisplay('Clicks');
+
+    plr:GetAttributeChangedSignal('Clicks'):Connect(function()
+        task.spawn(UpdateStatDisplay, 'Clicks');
     end)
-    
-    plr:WaitForChild('leaderstats').Gems.Changed:Connect(function()
-        UpdateStatDisplay('Gems');
+
+    plr:GetAttributeChangedSignal('Gems'):Connect(function()
+        task.spawn(UpdateStatDisplay, 'Gems');
     end)
 end
 

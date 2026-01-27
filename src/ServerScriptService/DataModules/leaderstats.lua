@@ -2,7 +2,7 @@ local module = {}
 
 -- Services
 local rs = game:GetService("ReplicatedStorage")
-local workspace = game:GetService("Workspace")
+local http = game:GetService('HttpService');
 
 -- Variables
 local framework = rs:WaitForChild("Framework")
@@ -33,6 +33,10 @@ function module:CreateLeaderstats(player: Player, profile)
 	local uiLock = Instance.new("BoolValue", player)
 	uiLock.Name = "UILock"
 	uiLock.Value = false
+
+	player:SetAttribute('Clicks', http:JSONEncode(profile.Data.Clicks));
+	player:SetAttribute('Gems', http:JSONEncode(profile.Data.Gems));
+	player:SetAttribute('Rebirths', http:JSONEncode(profile.Data.Rebirths));
 end
 
 return module

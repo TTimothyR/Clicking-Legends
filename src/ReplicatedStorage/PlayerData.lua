@@ -3,7 +3,7 @@ local Shared = {}
 Shared.DEFAULT_PLAYER_DATA = {
     Clicks = 0,
     Gems = 0,
-    Rebirths = 0,
+    Rebirths = 1,
     Eggs = 0,
 
     LuckPercentage = 0,
@@ -13,6 +13,8 @@ Shared.DEFAULT_PLAYER_DATA = {
     AutoDeletedPets = {},
 
     AutoClickerStatus = false,
+    AutoRebirthStatus = false,
+    AutoRebirthIndex = 0,
 
     ClickDebounce = false,
     HatchDebounce = false,
