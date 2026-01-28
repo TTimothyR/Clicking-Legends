@@ -9,4 +9,15 @@ function TableUtility.FindIndexWithId(pets, id)
 	return nil, nil
 end
 
+function TableUtility.FindEgg(eggStats, petName)
+	for egg, data in pairs(eggStats) do
+		for pet, petData in pairs(data.Pets) do
+			if pet == petName then
+				return egg
+			end
+		end
+	end
+	return nil
+end
+
 return TableUtility

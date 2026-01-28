@@ -365,7 +365,7 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
         table.insert(removeTweens, function()
             modelUtil.AnimateScale(data.pet:GetScale(), 0.00001, TweenInfo.new(removeTime, Enum.EasingStyle.Back, Enum.EasingDirection.In), data.pet);
             for _, descendant in ipairs(data.pet:GetDescendants()) do
-                if descendant.Transparency then
+                if descendant:IsA('BasePart') then
                     ts:Create(descendant, TweenInfo.new(removeTime*1.15, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {Transparency = 1}):Play();
                 end
             end

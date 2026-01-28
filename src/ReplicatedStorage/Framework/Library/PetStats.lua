@@ -33,5 +33,12 @@ return{
         Clicks = 500,
         GemMulti = 1.05,
         Secret = false
+    },    
+    ['Grand Patriotic Overlord'] = {
+        Rarity = 'Legendary',
+        State = 'Walk',
+        Clicks = 23165456,
+        GemMulti = 105,
+        Secret = true
     },
 }
