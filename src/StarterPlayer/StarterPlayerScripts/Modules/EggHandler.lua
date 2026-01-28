@@ -22,6 +22,7 @@ local eggModels: Folder = assets:WaitForChild('EggModels');
 local sounds: Folder = assets:WaitForChild('Sounds');
 
 local framework: Folder = rs:WaitForChild('Framework');
+local library: Folder = framework:WaitForChild('Library');
 
 -- UI
 local playerGui: PlayerGui = player:WaitForChild('PlayerGui');
@@ -34,6 +35,7 @@ local clickButton: ImageButton = hud:WaitForChild('Click');
 local popUps: Frame = hud:WaitForChild('PopUps');
 
 -- Modules
+local petStats = require(library.PetStats);
 local modelUtil = require(framework.ModelUtility);
 local menuHandler = require(script.Parent.MenuHandler);
 local soundHandler = require(script.Parent.SoundHandler);
@@ -128,11 +130,13 @@ local function UnHideUI()
 end
 
 function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
-    local speed = 1
+    local speed = 2
 
     local eggData = {};
     local eggAnimationConnections = {};
     local eggDestroyConnections = {};
+    local legendaries = 0;
+    local legendaryEggData = {};
 
     HideUI();
 
@@ -144,6 +148,23 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
         local smoke: ParticleEmitter = script.Smoke:Clone();
         smoke.Parent = attach;
         smoke.Name = 'Smoke';
+
+        local stats = petStats[petsData[i].petName]
+        local rarity = stats and stats.Rarity or 'Common';
+
+        if rarity == 'Legendary' then
+            speed = 1;
+        end
+
+        for _, particle: ParticleEmitter in ipairs(script.Confetti:GetChildren()) do
+            local clone: ParticleEmitter = particle:Clone();
+            clone.Parent = attach;
+            clone.Name = 'Confetti';
+        end
+
+        local hightlight: Highlight = Instance.new('Highlight', egg);
+        hightlight.Enabled = false;
+        hightlight.DepthMode = Enum.HighlightDepthMode.Occluded;
 
         smoke.Lifetime = NumberRange.new(smoke.Lifetime.Min/speed, smoke.Lifetime.Max/speed);
         
@@ -159,12 +180,29 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
         local positions = CalculatePositions(amount);
         pos.Value = positions[i].pos1;
 
+
+        if rarity == 'Legendary' then 
+            legendaries += 1 
+            hightlight.Enabled = true;
+            local colorConnection = runService.Heartbeat:Connect(function()
+                local t = tick() * 0.4 % 1
+                local color = Color3.fromHSV(t, 0.55, 1);
+                hightlight.FillColor = color;
+                hightlight.OutlineColor = color;
+            end)
+            egg:GetPropertyChangedSignal("Parent"):Once(function()
+                colorConnection:Disconnect()
+            end)
+        end;
+
         table.insert(eggData, {
             egg = egg,
+            petData = petsData[i],
             pos = pos,
             rot = rot,
             endScale = originalScale,
-            endPos = positions[i].pos1
+            endPos = positions[i].pos1,
+            special = (rarity == 'Legendary')
         })
 
         local eggConnection: RBXScriptConnection = runService.RenderStepped:Connect(function(deltaTime)
@@ -185,8 +223,35 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
     end
     task.wait(0.65/speed);
 
+    if legendaries > 0 then
+        for i, data in ipairs(eggData) do
+            if not data.special then
+                task.spawn(function()
+                    modelUtil.AnimateScale(data.egg:GetScale(), 0.00001, TweenInfo.new(0.35/speed, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), data.egg);
+                end)
+            else
+                table.insert(legendaryEggData, data);
+            end
+        end
+        local specialPosValues = CalculatePositions(legendaries);
+        for i, data in ipairs(legendaryEggData) do
+            data.endPos = specialPosValues[i].pos1;
+        end
+        eggData = legendaryEggData;
+        speed = 1;
+    end
+	
+    if legendaries > 0 then
+		local adjustTweens = {}
+		for _, data in ipairs(legendaryEggData) do
+			table.insert(adjustTweens, ts:Create(data.pos, TweenInfo.new(0.4/speed, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Value = data.endPos}))
+		end
+		for _, t in ipairs(adjustTweens) do
+			t:Play()
+		end
+	end
+
     local startWait, endWait, direction, alpha = 0.5/speed, 0.01/speed, 1, 30;
-    local rotationCount, trigger = 0, 2
     local currentWait = startWait
     local originalFOV = camera.FieldOfView;
 
@@ -215,23 +280,14 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
             end)
         end
         
-        -- if rotationCount <= 1 then
-        --     zoomIn();
-        -- else
-        --     zoomOut(currentWait);
-        -- end
-        
         for _, func in ipairs(hatchTweens) do
             func();
-            soundHandler.PlaySound(sounds.Turn);
         end
+        soundHandler.PlaySound(sounds.Turn);
         task.wait(currentWait)
         currentWait /= 1.25;
         direction *= -1;
-        rotationCount += 1;
     until currentWait <= endWait
-    
-    -- task.spawn(zoomPop);
     
     for _, data in ipairs(eggData) do
         for _, descendant in ipairs(data.egg:GetDescendants()) do
@@ -243,21 +299,37 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
     
     for _, data in ipairs(eggData) do
         runService.Heartbeat:Wait();
-        data.egg.PrimaryPart.Particle.Smoke:Emit(17);
+        if legendaries > 0 then
+            for _, particle: ParticleEmitter in ipairs(data.egg.PrimaryPart.Particle:GetChildren()) do
+                if particle.Name == 'Confetti' then
+                    particle:Emit(40);
+                else
+                    particle:Emit(17);
+                end
+            end
+        else
+            data.egg.PrimaryPart.Particle.Smoke:Emit(17);
+        end
     end
 
     local petData = {};
     local petAnimationConnections = {};
     local petUIConnections = {};
     local petDestroyConnections = {};
-    local petColorConnections = {};
+
+    if legendaries > 0 then
+        soundHandler.PlaySound(sounds.Legendary)
+    else
+        soundHandler.PlaySound(sounds.Normal);
+    end
 
     for i, data in ipairs(eggData) do
-        local petName: string = petsData[i].fullName;
+        local activePetData = data.petData
+        local petName: string = activePetData.fullName;
 
-        if petsData[i].shiny and not petModels:FindFirstChild(petName) then
+        if activePetData.shiny and not petModels:FindFirstChild(petName) then
             warn('Shiny model for pet', petName,'not found, falling back to regular model.');
-            petName = petsData[i].petName;
+            petName = activePetData.petName;
         end
         if not petModels:FindFirstChild(petName) then
             warn('Model for pet', petName, 'not found, falling back to Doggy.');
@@ -280,21 +352,20 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
         nameLabel.Visible = true        
         
         local rarityLabel: TextLabel = script.Rarity:Clone();
-        rarityLabel.Name = petsData[i].rarity;
-        rarityLabel.Text = petsData[i].rarity;
-        rarityLabel.TextColor3 = globals.RarityColors[petsData[i].rarity];
+        rarityLabel.Name = activePetData.rarity;
+        rarityLabel.Text = activePetData.rarity;
+        rarityLabel.TextColor3 = globals.RarityColors[activePetData.rarity];
         rarityLabel.Parent = hatchOverlay;
         rarityLabel.Visible = true;
 
-        if petsData[i].rarity == 'Legendary' then
+        if activePetData.rarity == 'Legendary' then
             local colorConnection = runService.Heartbeat:Connect(function()
                 local t = tick() * 0.4 % 1
                 local color = Color3.fromHSV(t, 0.55, 1);
                 rarityLabel.TextColor3 = color
             end)
-            local destroyConnection = pet:GetPropertyChangedSignal("Parent"):Once(function()
+            pet:GetPropertyChangedSignal("Parent"):Once(function()
                 colorConnection:Disconnect()
-                print('Legendary animation disconnected');
             end)
         end
 
@@ -303,9 +374,9 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
         miscLabel.Parent = hatchOverlay;
         miscLabel.Visible = true
 
-        if petsData[i].autoDeleted then
+        if activePetData.autoDeleted then
             miscLabel.Text = 'Auto Deleted';
-        elseif petsData[i].new then
+        elseif activePetData.new then
             miscLabel.Text = 'New Pet Discovered!'
         end
 
@@ -342,13 +413,17 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
             petConnection:Disconnect();
         end)
         table.insert(petDestroyConnections, petDestroyConnection);
-
-        soundHandler.PlaySound(sounds.Normal);
     end
     for _, data in ipairs(eggData) do
-        task.delay(data.egg.PrimaryPart.Particle.Smoke.Lifetime.Max, function()
-            data.egg:Destroy();
-        end);
+        if legendaries > 0 then
+            task.delay(data.egg.PrimaryPart.Particle.Confetti.Lifetime.Max, function()
+                data.egg:Destroy();
+            end);
+        else
+            task.delay(data.egg.PrimaryPart.Particle.Smoke.Lifetime.Max, function()
+                data.egg:Destroy();
+            end);
+        end
     end
 
     task.wait(1.85/speed);
