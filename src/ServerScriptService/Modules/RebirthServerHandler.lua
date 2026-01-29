@@ -13,8 +13,19 @@ local library: Folder = framework:WaitForChild('Library');
 -- Modules
 local playerData = require(dataModules.PlayerData);
 local rebirthStats = require(library.RebirthStats);
+local petStats = require(library.PetStats);
 local infMath = require(framework.InfiniteMath);
 local globals = require(framework.Globals);
+
+local function GetPetGems(pets)
+    local totalGems = 0
+
+    for _, petData in ipairs(pets) do
+        if not petData.equipped then continue end
+        totalGems += globals.GetPetGems(petData)
+    end
+    return totalGems;
+end
 
 function RebirthHandler.AttemptRebirth(player: Player, rebirthIndex: number)
     local profile = playerData.GetData(player);
@@ -25,7 +36,8 @@ function RebirthHandler.AttemptRebirth(player: Player, rebirthIndex: number)
     local rebirths = infMath.new(profile.Rebirths);
     local price = infMath.new(globals.RebirthBasePrice * rebirthAmount * rebirths);
 
-    local gemsPerRebirth = 10;
+    local petGems = GetPetGems(profile.Pets);
+    local gemsPerRebirth = petGems < 1 and 10 or 10 * petGems;
 
     if clicks >= price then
         profile.Clicks = infMath.new(0);

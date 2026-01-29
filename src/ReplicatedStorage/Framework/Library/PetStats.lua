@@ -36,7 +36,7 @@ return{
     },    
     ['Grand Patriotic Overlord'] = {
         Rarity = 'Legendary',
-        State = 'Walk',
+        State = 'Fly',
         Clicks = 23165456,
         GemMulti = 105,
         Secret = true

@@ -9,11 +9,15 @@ local http = game:GetService('HttpService');
 -- Variables
 local dataModules: Folder = sss:WaitForChild('DataModules');
 local framework: Folder = rs:WaitForChild('Framework');
+local library: Folder = framework:WaitForChild('Library');
 
 -- Modules
 local playerData = require(dataModules.PlayerData);
 local infMath = require(framework.InfiniteMath);
 local network = require(framework.Network);
+local petStats = require(library.PetStats);
+local globals = require(framework.Globals);
+local petHandler = require(script.Parent.PetServerHandler);
 
 -- Constants
 local clickDebounce = 0.15;
@@ -25,6 +29,17 @@ local function sendStatsToClient(player: Player)
     network:FireClient(player, 'LoadStatDisplay', profile);
 end
 
+local function GetPetClicks(pets)
+    local totalClicks = 0
+
+    for _, petData in ipairs(pets) do
+        if not petData.equipped then continue end
+        totalClicks += globals.GetPetClicks(petData);
+    end
+
+    return totalClicks;
+end
+
 function StatHandler.Click(player: Player)
     local profile = playerData.GetData(player);
 
@@ -32,7 +47,21 @@ function StatHandler.Click(player: Player)
 
     profile.ClickDebounce = true;
 
-    local increment = infMath.new(100 * profile.Rebirths);
+    task.spawn(function()
+        for _, petData in ipairs(profile.Pets) do
+            if petData.equipped and petData.level < 50 then
+                petData.xp += 1;
+                local xpForNextLevel = globals.XPForNextLevel(petData.level, petData.shiny)
+
+                if petData.xp >= xpForNextLevel then
+                    petHandler.LevelUp(player, petData.id);
+                end
+            end
+        end
+    end)
+
+    local petIncrement = GetPetClicks(profile.Pets);
+    local increment = infMath.new((100+petIncrement) * profile.Rebirths);
 
     profile.Clicks = infMath.new(profile.Clicks + increment);
     player.leaderstats.Clicks.Value = infMath.new(profile.Clicks):GetSuffix(true);

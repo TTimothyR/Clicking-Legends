@@ -12,8 +12,12 @@ local eggStats = require(library.EggStats);
 local petStats = require(library.PetStats);
 
 Globals.RebirthBasePrice = 2250
-Globals.CostCoefficient = 5
-Globals.MultiplierCoefficient = 0.8
+-- Globals.CostCoefficient = 5
+-- Globals.MultiplierCoefficient = 0.8
+Globals.BaseXP = 20;
+Globals.XPMulti = 2.1;
+Globals.MaxLevel = 50;
+Globals.ShinyMulti = 1.5;
 
 Globals.RarityColors = {
 	["Common"] = Color3.fromRGB(255, 214, 133),
@@ -55,6 +59,43 @@ Globals.ButtonPresets = {
 	},
 }
 
+function Globals.XPForNextLevel(currentLevel, shiny: boolean)
+	if currentLevel < 50 then
+		local xpNeeded
+		if currentLevel == 1 then
+			xpNeeded = Globals.BaseXP;
+		else
+			xpNeeded = Globals.BaseXP * ((currentLevel - 1) * Globals.XPMulti);
+		end
+		if shiny then
+			xpNeeded *= Globals.ShinyMulti;
+		end
+		return xpNeeded
+	end
+	return 0
+end
+
+function Globals.GetPetClicks(petData)
+	local stats = petStats[petData.petName];
+	
+	local clicks = stats.Clicks;
+	local total = clicks * (1+(2*(petData.level-1))/49);
+	if petData.shiny then
+		total *= 1.5;
+	end
+	return total;
+end
+
+function Globals.GetPetGems(petData)
+	local stats = petStats[petData.petName];
+	
+	local gems = stats.GemMulti;
+	local total = gems * (1+(2*(petData.level-1))/49);
+	if petData.shiny then
+		total *= 1.5;
+	end
+	return total;
+end
 
 function Globals.GetPetChance(luckPercentage, petName: string, eggName: string, shiny: boolean)
     local tbl = eggStats[eggName].Pets;

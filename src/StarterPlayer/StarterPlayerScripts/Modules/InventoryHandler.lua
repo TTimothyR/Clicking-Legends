@@ -116,14 +116,18 @@ local function LoadPetInfo(id: string)
 
     local date = os.date('*t', petData.date);
 
+    local xpNeeded = globals.XPForNextLevel(petData.level, petData.shiny);
+
     petInfoHolder.PetName.Text = petData.fullName;
     petInfoHolder.FoundDate.Text = 'Found on '..date.day..'/'..date.month..'/'..(date.year-2000);
     petInfoHolder.Level.Text = 'Level '..petData.level;
+    petInfoHolder.XP.Progress.Text = petData.xp..' / '..infMath.new(xpNeeded):GetSuffix(true)..' XP'
 
-    local petStat = petStats[petData.petName];
+    local clicks = globals.GetPetClicks(petData);
+    local gems = globals.GetPetGems(petData);
 
-    petInfoHolder.Stats.Clicks.Amount.Text = infMath.new(petStat.Clicks):GetSuffix(true);
-    petInfoHolder.Stats.Gems.Amount.Text = petStat.GemMulti;
+    petInfoHolder.Stats.Clicks.Amount.Text = infMath.new(clicks):GetSuffix(true);
+    petInfoHolder.Stats.Gems.Amount.Text = infMath.new(gems):GetSuffix(true);
 
     SetEquipButtonColor(petData.equipped);
 
@@ -148,6 +152,7 @@ local function LoadPetInfo(id: string)
     end)
     table.insert(petInfoConnections, equipCon);
 
+    selectedPetID = id;
     petInfoHolder.Visible = true;
 end
 
@@ -163,6 +168,10 @@ function InventoryHandler.LoadInventory()
         if con.Connected then
             con:Disconnect();
         end
+    end
+
+    if selectedPetID then
+        LoadPetInfo(selectedPetID);
     end
 
     local pets = profile.Pets;
@@ -313,5 +322,17 @@ function InventoryHandler.LoadInventory()
     end
 end
 
+function InventoryHandler.Initialize()
+    if not game.Loaded then game.Loaded:Wait() end;
+
+    task.spawn(function()
+        while task.wait(1) do
+            if not selectedPetID then continue end;
+            if not inventoryFrame.Visible then continue end;
+
+            LoadPetInfo(selectedPetID);
+        end
+    end)
+end
 
 return InventoryHandler;

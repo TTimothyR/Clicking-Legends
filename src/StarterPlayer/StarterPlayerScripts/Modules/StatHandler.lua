@@ -235,10 +235,6 @@ local function StartCPSTrack()
             local startValue = currentCPS;
             local delta = infMath.new(cps - startValue);
 
-            if delta < infMath.new(0) then
-                delta = infMath.new(0);
-            end
-
             cpsNumber.Value = 0
             currentTween = ts:Create(cpsNumber, TweenInfo.new(0.3), {Value = goalValue});
 
