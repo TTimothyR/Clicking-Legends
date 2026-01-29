@@ -43,6 +43,7 @@ local tradeButton: ImageButton = buttons:WaitForChild('Trading');
 -- Modules
 local inventoryHandler = require(script.Parent.InventoryHandler);
 local rebirthHandler = require(script.Parent.RebirthHandler);
+local indexHandler = require(script.Parent.IndexHandler);
 
 -- Constants
 local sizePos = {
@@ -92,7 +93,7 @@ function ButtonHandler.Initialize()
     if not game.Loaded then game.Loaded:Wait() end;
     
     indexButton.MouseButton1Click:Connect(function()
-        ButtonHandler.handleOpenClose(indexFrame);
+        ButtonHandler.handleOpenClose(indexFrame, indexHandler.LoadIndex);
     end)
 	inventoryButton.MouseButton1Click:Connect(function()
         ButtonHandler.handleOpenClose(inventoryFrame, inventoryHandler.LoadInventory);
