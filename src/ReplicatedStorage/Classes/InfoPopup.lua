@@ -11,9 +11,9 @@ function Popup.new(title, message, confirmCallback, frame)
 	self.connections = {}
 
 	self.frame = frame
-	self.frame.Inside.Title.Text = self.title
-	self.frame.Inside.Message.Text = self.message
-	self.confirmButton = self.frame.Inside.Confirm
+	self.frame.Title.Text = self.title
+	self.frame.Message.Text = self.message
+	self.confirmButton = self.frame.Main.Buttons.Yes
 
 	table.insert(self.connections, self.confirmButton.MouseButton1Click:Connect(function()
 		if type(self.confirmCallback) == "function" then

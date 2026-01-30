@@ -49,6 +49,13 @@ Globals.ButtonPresets = {
 			ColorSequenceKeypoint.new(0, Color3.new(1, 0, 0)),
 			ColorSequenceKeypoint.new(1, Color3.new(1, 0.4, 0.41))
 		})
+	},		
+	['Orange'] = {
+		StrokeColor = Color3.fromRGB(131, 70, 0),
+		Gradient = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.new(1, 0.533333, 0)),
+			ColorSequenceKeypoint.new(1, Color3.new(1, 0.729411, 0.4))
+		})
 	},	
 	['Purple'] = {
 		StrokeColor = Color3.fromRGB(91,0,136),

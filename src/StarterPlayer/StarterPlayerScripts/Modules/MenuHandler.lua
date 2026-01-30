@@ -29,6 +29,7 @@ local prizesFrame: Frame = frames:WaitForChild('Prizes');
 local rebirthsFrame: Frame = frames:WaitForChild('Rebirths');
 local shopFrame: Frame = frames:WaitForChild('Shop');
 local playerListFrame: Frame = frames:WaitForChild('PlayerList');
+local tradeFrame: Frame = frames:WaitForChild('Trade');
 
 local hud: ScreenGui = playerGui:WaitForChild('HUD');
 local left: Frame = hud:WaitForChild('Left');
@@ -46,6 +47,7 @@ local rebirthHandler = require(script.Parent.RebirthHandler);
 local indexHandler = require(script.Parent.IndexHandler);
 
 -- Constants
+-- Size, position;
 local sizePos = {
     ["Index"] = {UDim2.new(0.497,0,0.6,0), UDim2.new(0.5,0,0.5,0)},
     ["Inventory"] = {UDim2.new(0.588,0,0.658,0), UDim2.new(0.5,0,0.5,0)},
@@ -53,6 +55,8 @@ local sizePos = {
     ["Rebirths"] = {UDim2.new(0.6,0,0.6,0), UDim2.new(0.5,0,0.5,0)},
     ["Shop"] = {UDim2.new(0.588,0,0.658,0), UDim2.new(0.5,0,0.5,0)},
     ["PlayerList"] = {UDim2.new(0.6,0,0.6,0), UDim2.new(0.5,0,0.5,0)},
+    ["Trade"] = {UDim2.new(0.7,0,0.7,0), UDim2.new(0.5,0,0.5,0)},
+    ["Info"] = {UDim2.new(0.45,0,0.45,0), UDim2.new(0.5,0,0.5,0)},
 };
 local animationTime = .15;
 local fov = camera.FieldOfView;
@@ -77,7 +81,6 @@ end
 
 function ButtonHandler.handleOpenClose(frame, func)
 	if not db then db = true task.delay(.15, function() db = false end)
-		if func then func() end
 		if frame == ButtonHandler.activeFrame then 
 			ButtonHandler.closeFrame(frame) 
 			return 
@@ -85,6 +88,7 @@ function ButtonHandler.handleOpenClose(frame, func)
 		if ButtonHandler.activeFrame then 
 			ButtonHandler.closeFrame(ButtonHandler.activeFrame) 
 		end
+		if func then func() end
 		ButtonHandler.openFrame(frame)
 	end
 end
