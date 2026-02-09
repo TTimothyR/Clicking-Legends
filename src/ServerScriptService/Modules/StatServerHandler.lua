@@ -11,6 +11,8 @@ local dataModules: Folder = sss:WaitForChild('DataModules');
 local framework: Folder = rs:WaitForChild('Framework');
 local library: Folder = framework:WaitForChild('Library');
 
+local rng = Random.new();
+
 -- Modules
 local playerData = require(dataModules.PlayerData);
 local infMath = require(framework.InfiniteMath);
@@ -63,6 +65,13 @@ function StatHandler.Click(player: Player)
     local petIncrement = GetPetClicks(profile.Pets);
     local increment = infMath.new((100+petIncrement) * profile.Rebirths);
 
+    local criticalRoll = rng:NextInteger(1, 25);
+    local critical = false;
+    if criticalRoll == 1 then
+        increment *= 1.5;
+        critical = true;
+    end
+
     profile.Clicks = infMath.new(profile.Clicks + increment);
     player.leaderstats.Clicks.Value = infMath.new(profile.Clicks):GetSuffix(true);
 
@@ -72,7 +81,7 @@ function StatHandler.Click(player: Player)
         profile.ClickDebounce = false;
     end)
 
-    return increment
+    return increment, critical
 end
 
 function StatHandler.ToggleAutoClicker(player: Player)

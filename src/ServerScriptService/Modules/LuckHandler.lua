@@ -18,7 +18,7 @@ local petStats = require(library.PetStats);
 local function RollShiny()
     local shinyChance = 40;
 
-    local roll = rng:NextNumber(1, shinyChance);
+    local roll = rng:NextInteger(1, shinyChance);
     if roll == 1 then
         return true;
     else

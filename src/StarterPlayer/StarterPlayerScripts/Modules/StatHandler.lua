@@ -7,12 +7,17 @@ local ts = game:GetService('TweenService');
 local rs = game:GetService('ReplicatedStorage');
 local http = game:GetService('HttpService');
 local uis = game:GetService('UserInputService');
+local guiService = game:GetService('GuiService');
+local debris = game:GetService('Debris');
 
 -- Variables
 repeat task.wait() until players.LocalPlayer;
 local plr: Player = players.LocalPlayer;
 
 local framework: Folder = rs:WaitForChild('Framework');
+local assets: Folder = rs:WaitForChild('Assets');
+local clickModels: Folder = assets:WaitForChild('ClickModels');
+local criticalModel: Model = clickModels:WaitForChild('CriticalClick');
 local library: Folder = framework:WaitForChild('Library');
 -- local tweenClicks: NumberValue = script:WaitForChild('TweenClicks');
 -- local tweenGems: NumberValue = script:WaitForChild('TweenGems');
@@ -80,12 +85,16 @@ local function ClickAnimation()
     clone:Destroy();
 end
 
-local function EffectAtClickPos(position)
-end
-
-local function PopUp(increment, currencyStr: string)
+local function PopUp(increment, currencyStr: string, critical: boolean, position: UDim2)
     if not increment then
         return
+    end
+
+    if not position then
+        local randomX = rng:NextNumber(popUpArea.Position.X.Scale, popUpArea.Position.X.Scale + popUpArea.Size.Width.Scale);
+        local randomY = rng:NextNumber(popUpArea.Position.Y.Scale, popUpArea.Position.Y.Scale + popUpArea.Size.Width.Scale);
+
+        position = UDim2.new(randomX, 0, randomY, 0);
     end
 
     local clone: Frame = popUpTemplate:Clone();
@@ -93,10 +102,11 @@ local function PopUp(increment, currencyStr: string)
     clone.Parent = popUps;
     clone.Icon.Image = imageService[currencyStr];
 
-    local randomX = rng:NextNumber(popUpArea.Position.X.Scale, popUpArea.Position.X.Scale + popUpArea.Size.Width.Scale);
-    local randomY = rng:NextNumber(popUpArea.Position.Y.Scale, popUpArea.Position.Y.Scale + popUpArea.Size.Width.Scale);
+    if critical then
+        clone.Icon.ImageColor3 = Color3.fromRGB(237,98,255);
+    end
 
-    clone.Position = UDim2.new(randomX, 0, randomY, 0);
+    clone.Position = position;
     clone.Size = UDim2.new(0,0,0,0);
     clone.Visible = true;
 
@@ -146,6 +156,40 @@ local function PopUp(increment, currencyStr: string)
     clone:Destroy();
 end
 
+local function CriticalHitEffect()
+    local character = plr.Character;
+    local root = character.HumanoidRootPart;
+
+    if not root then return end;
+
+    for i = 1, 10 do
+        task.spawn(function()
+            local clone: Model = criticalModel:Clone();
+
+            if not clone.PrimaryPart then
+                clone:Destroy();
+            end
+
+            clone:PivotTo(root.CFrame * CFrame.new(0,2,0));
+            clone.Parent = workspace;
+            local force = 15
+            local xForce = rng:NextNumber(-force, force);
+            local zForce = rng:NextNumber(-force, force);
+            local yForce = rng:NextNumber(30, 60);
+
+            local jumpVector = Vector3.new(xForce,yForce,zForce);
+
+            clone.PrimaryPart:ApplyImpulse(jumpVector * clone.PrimaryPart.AssemblyMass);
+            
+            local randomRot = Vector3.new(rng:NextNumber(-10, 10),rng:NextNumber(-10, 10),rng:NextNumber(-10, 10));
+            
+            clone.PrimaryPart:ApplyAngularImpulse(randomRot * clone.PrimaryPart.AssemblyMass);
+
+            debris:AddItem(clone, 5);
+        end)
+    end
+end
+
 local function UpdateStatDisplay(currencyStr: string)
     if not statsLoaded then return end;
     local currencyFrame: Frame = statsFrame[currencyStr]
@@ -182,17 +226,28 @@ local function UpdateStatDisplay(currencyStr: string)
 end
 
 local function ClickByButton()
-    local increment = network:InvokeServer('Click');
+    local increment, critical = network:InvokeServer('Click');
+
+    if critical then
+        task.spawn(CriticalHitEffect);
+    end
     
     task.spawn(ClickAnimation);
-    task.spawn(PopUp, increment, 'Clicks');
+    task.spawn(PopUp, increment, 'Clicks', critical);
 end
 
 local function ClickByScreen(inputPosition)
-    local increment = network:InvokeServer('Click');
+    local increment, critical = network:InvokeServer('Click');
+    local guiInset = guiService:GetGuiInset();
+
+    if critical then
+        task.spawn(CriticalHitEffect);
+    end
     
-    task.spawn(PopUp, increment, 'Clicks');
-    task.spawn(EffectAtClickPos, inputPosition);
+    task.spawn(PopUp, increment, 'Clicks', critical, UDim2.fromOffset(
+        inputPosition.X,
+        inputPosition.Y + guiInset.Y
+    ));
 end
 
 local function StartCPSTrack()
@@ -252,8 +307,11 @@ local function AutoClick()
     while task.wait(debounceTime) do
         if not autoClickStatus then continue end
         
-        local increment = network:InvokeServer('Click');
-        task.spawn(PopUp, increment, 'Clicks');
+        local increment, critical = network:InvokeServer('Click');
+        if critical then
+            task.spawn(CriticalHitEffect);
+        end
+        task.spawn(PopUp, increment, 'Clicks', critical);
     end
 end
 
