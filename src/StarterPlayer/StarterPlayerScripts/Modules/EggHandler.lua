@@ -19,15 +19,26 @@ local cameraOffset = CFrame.new(0, 0, -4.5) * CFrame.Angles(0, math.rad(180), 0)
 local assets: Folder = rs:WaitForChild('Assets');
 local petModels: Folder = assets:WaitForChild('PetModels');
 local eggModels: Folder = assets:WaitForChild('EggModels');
+local clickModels: Folder = assets:WaitForChild('ClickModels');
 local sounds: Folder = assets:WaitForChild('Sounds');
 
 local framework: Folder = rs:WaitForChild('Framework');
 local library: Folder = framework:WaitForChild('Library');
 
+local secretAnimation: Folder = workspace:WaitForChild('SecretAnimation');
+local technical: Model = secretAnimation:WaitForChild('Technical');
+local ground: Part = technical:WaitForChild('Ground');
+local cameraPos: Part = technical:WaitForChild('CameraPos');
+local cursors: Folder = secretAnimation:WaitForChild('Cursors');
+
+local rng = Random.new();
+
 -- UI
 local playerGui: PlayerGui = player:WaitForChild('PlayerGui');
 local hud: ScreenGui = playerGui:WaitForChild('HUD');
 local hatchOverlay: ScreenGui = playerGui:WaitForChild('HatchOverlay');
+local blackOut: Frame = hatchOverlay:WaitForChild('Blackout');
+local whiteOut: Frame = hatchOverlay:WaitForChild('Whiteout');
 local left: Frame = hud:WaitForChild('Left');
 local boost: Frame = hud:WaitForChild('Boost');
 local autoClicker: Frame = hud:WaitForChild('AutoClicker');
@@ -40,6 +51,7 @@ local modelUtil = require(framework.ModelUtility);
 local menuHandler = require(script.Parent.MenuHandler);
 local soundHandler = require(script.Parent.SoundHandler);
 local globals = require(framework.Globals);
+local interfaceUtility = require(framework.InterfaceUtility);
 
 -- Constants
 local dir, style, animTime = Enum.EasingDirection.Out, Enum.EasingStyle.Sine, 0.3;
@@ -137,6 +149,8 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
     local eggDestroyConnections = {};
     local legendaries = 0;
     local legendaryEggData = {};
+    local secrets = 0;
+    local secretEggData = {};
 
     HideUI();
 
@@ -180,9 +194,13 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
         local positions = CalculatePositions(amount);
         pos.Value = positions[i].pos1;
 
-
-        if rarity == 'Legendary' then 
+        if stats.Secret then
+            secrets += 1;
+        elseif rarity == 'Legendary' then
             legendaries += 1 
+        end
+
+        if stats.Secret or rarity == 'Legendary' then
             hightlight.Enabled = true;
             local colorConnection = runService.Heartbeat:Connect(function()
                 local t = tick() * 0.4 % 1
@@ -193,7 +211,7 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
             egg:GetPropertyChangedSignal("Parent"):Once(function()
                 colorConnection:Disconnect()
             end)
-        end;
+        end
 
         table.insert(eggData, {
             egg = egg,
@@ -202,7 +220,8 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
             rot = rot,
             endScale = originalScale,
             endPos = positions[i].pos1,
-            special = (rarity == 'Legendary')
+            special = (rarity == 'Legendary'),
+            secret = stats.Secret
         })
 
         local eggConnection: RBXScriptConnection = runService.RenderStepped:Connect(function(deltaTime)
@@ -223,7 +242,23 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
     end
     task.wait(0.65/speed);
 
-    if legendaries > 0 then
+    if secrets > 0 then
+        for i, data in ipairs(eggData) do
+            if not data.secret then
+                task.spawn(function()
+                    modelUtil.AnimateScale(data.egg:GetScale(), 0.00001, TweenInfo.new(0.35/speed, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), data.egg);
+                end)
+            else
+                table.insert(secretEggData, data);
+            end
+        end
+        local specialPosValues = CalculatePositions(secrets);
+        for i, data in ipairs(secretEggData) do
+            data.endPos = specialPosValues[i].pos1;
+        end
+        eggData = secretEggData;
+        speed = 1;
+    elseif legendaries > 0 then
         for i, data in ipairs(eggData) do
             if not data.special then
                 task.spawn(function()
@@ -240,8 +275,16 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
         eggData = legendaryEggData;
         speed = 1;
     end
-	
-    if legendaries > 0 then
+
+    if secrets > 0 then
+        local adjustTweens = {}
+		for _, data in ipairs(secretEggData) do
+			table.insert(adjustTweens, ts:Create(data.pos, TweenInfo.new(0.4/speed, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Value = data.endPos}))
+		end
+		for _, t in ipairs(adjustTweens) do
+			t:Play()
+		end
+    elseif legendaries > 0 then
 		local adjustTweens = {}
 		for _, data in ipairs(legendaryEggData) do
 			table.insert(adjustTweens, ts:Create(data.pos, TweenInfo.new(0.4/speed, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Value = data.endPos}))
@@ -288,15 +331,111 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
         currentWait /= 1.25;
         direction *= -1;
     until currentWait <= endWait
-    
-    for _, data in ipairs(eggData) do
-        for _, descendant in ipairs(data.egg:GetDescendants()) do
-            if descendant:IsA('BasePart') then
-                descendant.Transparency = 1;
+
+    if secrets > 0 then
+        local cursorAmount = 50;
+
+        blackOut.BackgroundTransparency = 0;
+        blackOut.Visible = true;
+
+        for _, data in ipairs(eggData) do
+            for _, descendant in ipairs(data.egg:GetDescendants()) do
+                if descendant:IsA('BasePart') then
+                    descendant.Transparency = 1;
+                end
             end
         end
+        
+        camera.FieldOfView = 100;
+        task.wait(1);
+        
+        camera.CameraType = Enum.CameraType.Scriptable;
+        camera.CFrame = cameraPos.CFrame;
+
+        for i = 1, cursorAmount do
+            task.spawn(function()
+                local clone: Model = clickModels.GoldenClick:Clone();
+                clone.Parent = cursors;
+
+                local randomX = (rng:NextNumber() - 0.5) * 75;
+                local randomZ = (rng:NextNumber() - 0.5) * 75;
+                local yPos = ground.Size.Y/2;
+
+                local worldCFrame = ground.CFrame * CFrame.new(randomX, yPos, randomZ);
+
+                clone:PivotTo(worldCFrame);
+            end)
+        end
+
+        local blackOutFade = ts:Create(blackOut, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {BackgroundTransparency = 1});
+        blackOutFade:Play();
+        blackOutFade.Completed:Wait();
+
+        local newEggModel: Model = eggModels[eggName]:Clone();
+        local pos = Instance.new('CFrameValue');
+        local size = newEggModel:GetExtentsSize();
+        newEggModel.PrimaryPart.CFrame -= Vector3.new(0, size.Y/2, 0);
+        local endPos = CFrame.new(ground.CFrame.X, ground.CFrame.Y+ground.Size.Y/2, ground.CFrame.Z);
+        local startPos = CFrame.new(endPos.X, endPos.Y + 30, endPos.Z);
+        pos.Value = startPos;
+
+        newEggModel.Parent = secretAnimation;
+
+        local eggConnection: RBXScriptConnection
+        eggConnection = runService.RenderStepped:Connect(function(deltaTime)
+            newEggModel:PivotTo(pos.Value);
+        end)
+
+        local eggDrop = ts:Create(pos, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {Value = endPos});
+        eggDrop:Play();
+        eggDrop.Completed:Wait();
+        
+        interfaceUtility.ShakeCamera(camera, 0.2, 0.01, 10);
+
+        for _, model: Model in ipairs(cursors:GetChildren()) do
+            task.spawn(function()
+                local newCFrame = CFrame.new(model:GetPivot() * Vector3.new(0, rng:NextInteger(3, 10), 0));
+
+                ts:Create(model.PrimaryPart, TweenInfo.new(0.5), {CFrame = newCFrame}):Play();
+            end)
+        end
+
+        task.wait(0.5);
+        
+        for _, model: Model in ipairs(cursors:GetChildren()) do
+            task.spawn(function()
+                local lookAt = CFrame.lookAt(
+                    model.PrimaryPart.Position,
+                    newEggModel:GetPivot().Position
+                )
+
+                ts:Create(model.PrimaryPart, TweenInfo.new(0.5), {CFrame = lookAt * CFrame.Angles(0, 2.6415, 0)}):Play();
+            end)
+        end
+
+        task.wait(0.5);
+
+        local waitTime = 0.35;
+
+        for i, model: Model in ipairs(cursors:GetChildren()) do
+            if i == cursorAmount - 10 then
+                ts:Create(whiteOut, TweenInfo.new(0.5), {BackgroundTransparency = 0}):Play();
+            end
+            local targetCFrame = newEggModel:GetPivot() + Vector3.new(0, size.Y/2, 0);
+            
+            local go = ts:Create(model.PrimaryPart, TweenInfo.new(waitTime), {CFrame = targetCFrame});
+            go:Play();
+            go.Completed:Wait();
+            modelUtil.AnimateScale(newEggModel:GetScale(), newEggModel:GetScale()+0.05, TweenInfo.new(waitTime), newEggModel);
+            waitTime/=1.04
+            model:Destroy();
+        end
+        camera.FieldOfView = 70;
+        camera.CameraType = Enum.CameraType.Custom;
+        task.wait(1)
+        ts:Create(whiteOut, TweenInfo.new(0.35), {BackgroundTransparency = 1}):Play();
     end
-    
+
     for _, data in ipairs(eggData) do
         runService.Heartbeat:Wait();
         if legendaries > 0 then
@@ -317,7 +456,7 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
     local petUIConnections = {};
     local petDestroyConnections = {};
 
-    if legendaries > 0 then
+    if legendaries > 0 or secrets > 0 then
         soundHandler.PlaySound(sounds.Legendary)
     else
         soundHandler.PlaySound(sounds.Normal);

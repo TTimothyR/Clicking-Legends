@@ -31,6 +31,29 @@ function interfaceUtility.ShakeUI(object, duration, strength, speed)
 	object.Position = originalPos
 end
 
+function interfaceUtility.ShakeCamera(camera, duration, strength, speed)	
+	local start = camera.CFrame;
+
+	local startTime = tick()
+	local timeOffset = 0
+	
+	while tick() - startTime < duration do
+		local dt = runService.RenderStepped:Wait()
+		
+		timeOffset += dt * speed
+		local noiseX = math.noise(timeOffset, 0, 0)
+		local noiseY = math.noise(0, timeOffset, 0)
+		local noiseZ = math.noise(0, 0, timeOffset)
+		camera.CFrame = camera.CFrame * CFrame.Angles(
+			noiseX * strength,
+			noiseY * strength,
+			noiseZ * strength
+		)
+	end
+
+	camera.CFrame = start;
+end
+
 function interfaceUtility.RotateGradient(gradient: UIGradient)
 	local connection: RBXScriptConnection
 	
