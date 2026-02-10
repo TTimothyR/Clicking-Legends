@@ -335,6 +335,7 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
     if secrets > 0 then
         local cursorAmount = 50;
 
+        soundHandler.PlaySound(sounds.Blackout);
         blackOut.BackgroundTransparency = 0;
         blackOut.Visible = true;
 
@@ -374,6 +375,25 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
         local newEggModel: Model = eggModels[eggName]:Clone();
         local pos = Instance.new('CFrameValue');
         local size = newEggModel:GetExtentsSize();
+        local cframe, _ = newEggModel:GetBoundingBox();
+
+        local highlight: Highlight = Instance.new('Highlight', newEggModel);
+        highlight.DepthMode = Enum.HighlightDepthMode.Occluded;
+        highlight.FillColor = Color3.fromRGB(255,255,255);
+        highlight.OutlineColor = Color3.fromRGB(255,255,255);
+        highlight.FillTransparency = 1;
+        highlight.OutlineTransparency = 1;
+        
+        local effectPart = Instance.new('Part', newEggModel);
+        effectPart.Name = 'Effect';
+        effectPart.Anchored = true;
+        effectPart.Transparency = 1;
+        effectPart.CanCollide = false;
+        effectPart.CFrame = cframe;
+        effectPart.Size = size;
+        local splat: ParticleEmitter = script.Splat:Clone();
+        splat.Parent = effectPart;
+        
         newEggModel.PrimaryPart.CFrame -= Vector3.new(0, size.Y/2, 0);
         local endPos = CFrame.new(ground.CFrame.X, ground.CFrame.Y+ground.Size.Y/2, ground.CFrame.Z);
         local startPos = CFrame.new(endPos.X, endPos.Y + 30, endPos.Z);
@@ -387,6 +407,7 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
         end)
 
         local eggDrop = ts:Create(pos, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {Value = endPos});
+        soundHandler.PlaySound(sounds.Impact);
         eggDrop:Play();
         eggDrop.Completed:Wait();
         
@@ -415,10 +436,21 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
 
         task.wait(0.5);
 
-        local waitTime = 0.35;
+        local waitTime = 0.25;
+        local startAngle = cameraPos.CFrame.Rotation.X;
 
         for i, model: Model in ipairs(cursors:GetChildren()) do
+            if i == cursorAmount - 20 then
+                local targetCameraCFrame = camera.CFrame - Vector3.new(0, 0, 5);
+                ts:Create(camera, TweenInfo.new(0.25), {CFrame = targetCameraCFrame}):Play();
+                ts:Create(highlight, TweenInfo.new(0.75), {
+                    FillTransparency = 0,
+                    OutlineTransparency = 0
+                }):Play();
+            end
             if i == cursorAmount - 10 then
+                local targetCameraCFrame = camera.CFrame + Vector3.new(0, 0, 10);
+                ts:Create(camera, TweenInfo.new(0.5), {CFrame = targetCameraCFrame}):Play();
                 ts:Create(whiteOut, TweenInfo.new(0.5), {BackgroundTransparency = 0}):Play();
             end
             local targetCFrame = newEggModel:GetPivot() + Vector3.new(0, size.Y/2, 0);
@@ -426,6 +458,9 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
             local go = ts:Create(model.PrimaryPart, TweenInfo.new(waitTime), {CFrame = targetCFrame});
             go:Play();
             go.Completed:Wait();
+            soundHandler.PlaySound(sounds.Click);
+            camera.CFrame *= CFrame.Angles(startAngle/cursorAmount, 0, 0);
+            splat:Emit(50);
             modelUtil.AnimateScale(newEggModel:GetScale(), newEggModel:GetScale()+0.05, TweenInfo.new(waitTime), newEggModel);
             waitTime/=1.04
             model:Destroy();
@@ -434,11 +469,12 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
         camera.CameraType = Enum.CameraType.Custom;
         task.wait(1)
         ts:Create(whiteOut, TweenInfo.new(0.35), {BackgroundTransparency = 1}):Play();
+        newEggModel:Destroy();
     end
 
     for _, data in ipairs(eggData) do
         runService.Heartbeat:Wait();
-        if legendaries > 0 then
+        if legendaries > 0 or secrets > 0 then
             for _, particle: ParticleEmitter in ipairs(data.egg.PrimaryPart.Particle:GetChildren()) do
                 if particle.Name == 'Confetti' then
                     particle:Emit(40);
@@ -446,9 +482,8 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
                     particle:Emit(17);
                 end
             end
-        else
-            data.egg.PrimaryPart.Particle.Smoke:Emit(17);
         end
+        data.egg.PrimaryPart.Particle.Smoke:Emit(17);
     end
 
     local petData = {};
