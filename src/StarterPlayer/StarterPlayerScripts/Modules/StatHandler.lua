@@ -199,6 +199,7 @@ local function CriticalHitEffect()
 
             for _, part in ipairs(clone:GetDescendants()) do
                 if part:IsA('BasePart') then
+                    part.CanQuery = false;
                     part.CollisionGroup = debrisGroup;
                 end
             end
