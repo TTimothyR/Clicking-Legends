@@ -5,11 +5,16 @@ local players = game:GetService('Players');
 local sss = game:GetService('ServerScriptService');
 local rs = game:GetService('ReplicatedStorage');
 local http = game:GetService('HttpService');
+local physicsService = game:GetService('PhysicsService');
+
 
 -- Variables
 local dataModules: Folder = sss:WaitForChild('DataModules');
 local framework: Folder = rs:WaitForChild('Framework');
 local library: Folder = framework:WaitForChild('Library');
+
+local characterGroup = "CHAR";
+local debrisGroup = 'DEBRIS';
 
 local rng = Random.new();
 
@@ -23,6 +28,18 @@ local petHandler = require(script.Parent.PetServerHandler);
 
 -- Constants
 local clickDebounce = 0.15;
+
+local function SetupCollision()
+    pcall(function()
+        physicsService:RegisterCollisionGroup(characterGroup);
+    end)    
+    pcall(function()
+        physicsService:RegisterCollisionGroup(debrisGroup);
+    end)
+
+    physicsService:CollisionGroupSetCollidable(characterGroup, debrisGroup, false);
+    physicsService:CollisionGroupSetCollidable(debrisGroup, debrisGroup, false);
+end
 
 local function sendStatsToClient(player: Player)
     local profile = playerData.GetData(player);
@@ -95,6 +112,8 @@ end
 
 function StatHandler.Initialize()
     if not game.Loaded then game.Loaded:Wait() end;
+
+    SetupCollision();
 
     for _, player: Player in ipairs(players:GetPlayers()) do
         sendStatsToClient(player);

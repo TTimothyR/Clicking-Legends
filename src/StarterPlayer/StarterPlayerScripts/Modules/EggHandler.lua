@@ -440,18 +440,18 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
         local startAngle = cameraPos.CFrame.Rotation.X;
 
         for i, model: Model in ipairs(cursors:GetChildren()) do
-            if i == cursorAmount - 20 then
+            if i == cursorAmount - 26 then
                 local targetCameraCFrame = camera.CFrame - Vector3.new(0, 0, 5);
-                ts:Create(camera, TweenInfo.new(0.25), {CFrame = targetCameraCFrame}):Play();
-                ts:Create(highlight, TweenInfo.new(0.75), {
+                ts:Create(camera, TweenInfo.new(0.45), {CFrame = targetCameraCFrame}):Play();
+                ts:Create(highlight, TweenInfo.new(0.55), {
                     FillTransparency = 0,
                     OutlineTransparency = 0
                 }):Play();
             end
-            if i == cursorAmount - 10 then
+            if i == cursorAmount - 5 then
                 local targetCameraCFrame = camera.CFrame + Vector3.new(0, 0, 10);
-                ts:Create(camera, TweenInfo.new(0.5), {CFrame = targetCameraCFrame}):Play();
-                ts:Create(whiteOut, TweenInfo.new(0.5), {BackgroundTransparency = 0}):Play();
+                ts:Create(camera, TweenInfo.new(0.35), {CFrame = targetCameraCFrame}):Play();
+                ts:Create(whiteOut, TweenInfo.new(0.35), {BackgroundTransparency = 0}):Play();
             end
             local targetCFrame = newEggModel:GetPivot() + Vector3.new(0, size.Y/2, 0);
             

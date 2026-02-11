@@ -19,9 +19,8 @@ local assets: Folder = rs:WaitForChild('Assets');
 local clickModels: Folder = assets:WaitForChild('ClickModels');
 local criticalModel: Model = clickModels:WaitForChild('CriticalClick');
 local library: Folder = framework:WaitForChild('Library');
--- local tweenClicks: NumberValue = script:WaitForChild('TweenClicks');
--- local tweenGems: NumberValue = script:WaitForChild('TweenGems');
 local cpsNumber: NumberValue = script:WaitForChild('CPSNumber');
+local criticalEffects: Folder = script:WaitForChild('Critical');
 
 local rng = Random.new();
 local statsLoaded = false;
@@ -56,13 +55,34 @@ local imageService = require(library.ImageService);
 local rotationTime: number = 15;
 local animationTime: number = 0.5;
 local debounceTime: number = 0.15;
-local popUpEndSize: UDim2 = UDim2.new(0.042, 0, 0.065, 0);
 local textEndSize: UDim2 = UDim2.new(1,0,0.5,0);
 local currencies = {'Clicks', 'Gems'};
+local characterGroup = "CHAR";
+local debrisGroup = 'DEBRIS';
 
 -- Globals
 local animationData = {};
 local autoClickStatus = false;
+
+
+
+local function SetupCharacter(character)
+    for _, effect: ParticleEmitter in ipairs(criticalEffects:GetChildren()) do
+        local clone: ParticleEmitter = effect:Clone();
+        clone.Parent = character.HumanoidRootPart;
+    end
+    for _, part in ipairs(character:GetDescendants()) do
+        if part:IsA('BasePart') then
+            part.CollisionGroup = characterGroup;
+        end
+    end
+
+    character.DescendantAdded:Connect(function(part)
+        if part:IsA('BasePart') then
+            part.CollisionGroup = characterGroup;
+        end
+    end)
+end
 
 local function AnimateShine()
     while true do
@@ -116,6 +136,8 @@ local function PopUp(increment, currencyStr: string, critical: boolean, position
     local direction = Enum.EasingDirection.Out;
     local direction2 = Enum.EasingDirection.In;
 
+    local popUpEndSize: UDim2 = critical and UDim2.new(2*0.042, 0, 2*0.065, 0) or UDim2.new(0.042, 0, 0.065, 0);
+
     clone:TweenSize(popUpEndSize, direction, style, animTime);
     local tween: Tween = ts:Create(clone, TweenInfo.new(animTime, style, direction), {Rotation = 0});
     tween:Play();
@@ -129,7 +151,7 @@ local function PopUp(increment, currencyStr: string, critical: boolean, position
     incrementText:TweenSize(textEndSize, direction2, style, animTime);
     textTween.Completed:Wait();
 
-    local amount: number = 10;
+    local amount: number = critical and 20 or 10;
     
     for i = 0, amount do
         task.spawn(function()
@@ -161,6 +183,11 @@ local function CriticalHitEffect()
     local root = character.HumanoidRootPart;
 
     if not root then return end;
+    for _, child: Instance in ipairs(root:GetChildren()) do
+        if child:IsA('ParticleEmitter') then
+            child:Emit(50);
+        end
+    end
 
     for i = 1, 10 do
         task.spawn(function()
@@ -168,6 +195,12 @@ local function CriticalHitEffect()
 
             if not clone.PrimaryPart then
                 clone:Destroy();
+            end
+
+            for _, part in ipairs(clone:GetDescendants()) do
+                if part:IsA('BasePart') then
+                    part.CollisionGroup = debrisGroup;
+                end
             end
 
             clone:PivotTo(root.CFrame * CFrame.new(0,2,0));
@@ -358,6 +391,8 @@ function ClickHandler.Initialize()
     task.spawn(AnimateShine);
     task.spawn(StartCPSTrack);
     task.spawn(AutoClick);
+
+    SetupCharacter(plr.Character);
 
     uis.InputBegan:Connect(function(input, gameProcessedEvent)
         if gameProcessedEvent then return end;
