@@ -74,6 +74,7 @@ function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
     player.leaderstats.Eggs.Value = profile.Eggs:GetSuffix(true);
 
     player:SetAttribute('Clicks', http:JSONEncode(profile.Clicks));
+    player:SetAttribute('Eggs', http:JSONEncode(profile.Eggs));
 
     local petData = {};
 

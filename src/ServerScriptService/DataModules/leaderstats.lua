@@ -37,6 +37,8 @@ function module:CreateLeaderstats(player: Player, profile)
 	player:SetAttribute('Clicks', http:JSONEncode(profile.Data.Clicks));
 	player:SetAttribute('Gems', http:JSONEncode(profile.Data.Gems));
 	player:SetAttribute('Rebirths', http:JSONEncode(profile.Data.Rebirths));
+	player:SetAttribute('Eggs', http:JSONEncode(profile.Data.Eggs));
+	player:SetAttribute('ActualClicks', http:JSONEncode(profile.Data.ActualClicks));
 end
 
 return module

@@ -44,6 +44,7 @@ end
 local function sendStatsToClient(player: Player)
     local profile = playerData.GetData(player);
     player:SetAttribute('Clicks', http:JSONEncode(profile.Clicks));
+    player:SetAttribute('ActualClicks', http:JSONEncode(profile.ActualClicks));
 
     network:FireClient(player, 'LoadStatDisplay', profile);
 end
@@ -91,8 +92,10 @@ function StatHandler.Click(player: Player)
 
     profile.Clicks = infMath.new(profile.Clicks + increment);
     player.leaderstats.Clicks.Value = infMath.new(profile.Clicks):GetSuffix(true);
+    profile.ActualClicks = infMath.new(profile.ActualClicks + infMath.new(1));
 
     player:SetAttribute("Clicks", http:JSONEncode(profile.Clicks));
+    player:SetAttribute("ActualClicks", http:JSONEncode(profile.ActualClicks));
 
     task.delay(clickDebounce, function()
         profile.ClickDebounce = false;

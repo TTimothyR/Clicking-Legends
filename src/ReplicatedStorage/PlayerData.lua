@@ -1,6 +1,7 @@
 local Shared = {}
 
 Shared.DEFAULT_PLAYER_DATA = {
+    ActualClicks = 0,
     Clicks = 0,
     Gems = 0,
     Rebirths = 1,

@@ -45,6 +45,7 @@ local tradeButton: ImageButton = buttons:WaitForChild('Trading');
 local inventoryHandler = require(script.Parent.InventoryHandler);
 local rebirthHandler = require(script.Parent.RebirthHandler);
 local indexHandler = require(script.Parent.IndexHandler);
+local prizeHandler = require(script.Parent.PrizeHandler);
 
 -- Constants
 -- Size, position;
@@ -103,7 +104,7 @@ function ButtonHandler.Initialize()
         ButtonHandler.handleOpenClose(inventoryFrame, inventoryHandler.LoadInventory);
     end)
 	prizesButton.MouseButton1Click:Connect(function()
-        ButtonHandler.handleOpenClose(prizesFrame);
+        ButtonHandler.handleOpenClose(prizesFrame, prizeHandler.LoadPrizes);
     end)
 	rebirthButton.MouseButton1Click:Connect(function()
         ButtonHandler.handleOpenClose(rebirthsFrame, rebirthHandler.LoadRebirthButtons);
