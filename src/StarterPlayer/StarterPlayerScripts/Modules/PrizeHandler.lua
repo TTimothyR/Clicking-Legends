@@ -35,6 +35,26 @@ local prizes = require(library.Prizes);
 local infMath = require(framework.InfiniteMath);
 local network = require(framework.Network);
 
+-- Constants
+local rewardFormat = {
+    Pet = function(data)
+        local fullName = data[3] and 'Shiny '..data[2] or data[2];
+        return fullName;
+    end,
+    Currency = function(data)
+        return infMath.new(data[3]):GetSuffix(true)..' '..data[2];
+    end,
+    Perk = function(data)
+        local perkFormat = {
+            EggHatches = '+'..data[3]..' Egg Hatches',
+            HatchSpeed = '+'..data[3]..'% Hatch Speed',
+            LuckPercentage = '+'..data[3]..'% Luck',
+            ClickMutliplier = '+'..data[3]..'% Click Multiplier'
+        }
+        return perkFormat[data[2]] or 'N/A';
+    end
+}
+
 local function IsPrizeClaimed(prizeData, prizeIndex)
     for i, idx in ipairs(prizeData) do
         if idx == prizeIndex then
@@ -45,7 +65,7 @@ local function IsPrizeClaimed(prizeData, prizeIndex)
 end
 
 local function UpdatePrizeProgress(clone: Frame, targetType: string, data, claimedPrizes)
-    local claimed: boolean = IsPrizeClaimed(claimedPrizes[targetType], clone.Name);
+    local claimed: boolean = IsPrizeClaimed(claimedPrizes[targetType], tonumber(clone.Name));
     
     local target = infMath.new(data.Target);
     local goal: string = (targetType == 'Eggs') and 'Hatch '..target:GetSuffix(true)..' Eggs' or 'Click '..target:GetSuffix(true)..' Times';
@@ -57,9 +77,16 @@ local function UpdatePrizeProgress(clone: Frame, targetType: string, data, claim
     clone.Progress.Level.Text = (currentProgress < target) and currentProgress:GetSuffix(true)..' / '..target:GetSuffix(true) or 'Completed';
     clone.Progress.Frame.Size = UDim2.new(math.min(tonumber(procentualProgress), 1), 0, 1, 0);
 
+    local rewardLabel = clone.Reward;
+    local rewardData = data.Reward;
+    
+    local func = rewardFormat[rewardData[1]];
+    rewardLabel.Text = func and 'Reward: '..func(rewardData) or 'Reward: N/A';
+
     clone.Accept.CantClaim.Visible = (currentProgress < target);
     if claimed then
         clone.Accept.Title.Text = 'Claimed';
+        clone.Accept.CantClaim.Visible = true;
     end
 end
 
@@ -93,13 +120,15 @@ function PrizeHandler.LoadPrizes(targetType: string)
         local clickConnection: RBXScriptConnection
         clickConnection = clone.Accept.MouseButton1Click:Connect(function()
             if not db then db = true task.delay(.15, function() db = false end)
-                local success = network:InvokeServer('ClaimPrize', targetType, clone.Name);
+                local success, warning = network:InvokeServer('ClaimPrize', targetType, tonumber(clone.Name));
+                if warning then warn(warning) end;
                 if not success then return end;
                 UpdatePrizes();
             end
         end)
         clone:GetPropertyChangedSignal('Parent'):Once(function()
             clickConnection:Disconnect();
+            print('Disconnected click connection for item '..i);
         end)
 
         clone.Visible = true;

@@ -8,6 +8,10 @@ Shared.DEFAULT_PLAYER_DATA = {
     Eggs = 0,
 
     LuckPercentage = 0,
+    EggHatches = 3,
+    HatchSpeed = 0,
+
+    ClickMultiplier = 0,
 
     Pets = {},
     PetIndex = {},

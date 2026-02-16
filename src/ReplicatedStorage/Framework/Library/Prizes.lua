@@ -2,29 +2,29 @@ return{
     ['Eggs'] = {
         [1] = {
             Target = 10,
-            Reward = {},
+            Reward = {"Pet", "Doggy", false},
         },        
         [2] = {
-            Target = 100,
-            Reward = {},
+            Target = 10,
+            Reward = {"Currency", "Gems", 1000},
         },        
         [3] = {
-            Target = 1000,
-            Reward = {},
+            Target = 10,
+            Reward = {"Perk", "EggHatches", 1},
         },        
         [4] = {
-            Target = 10000,
-            Reward = {},
+            Target = 10,
+            Reward = {"Perk", "HatchSpeed", 5},
         },        
         [5] = {
-            Target = 100000,
-            Reward = {},
+            Target = 10,
+            Reward = {"Perk", "LuckPercentage", 5},
         },
     },
     ['ActualClicks'] = {
         [1] = {
             Target = 10,
-            Reward = {},
+            Reward = {"Perk", "ClickMutliplier", 25},
         },        
         [2] = {
             Target = 100,
