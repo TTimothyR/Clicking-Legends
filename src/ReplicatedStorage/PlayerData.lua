@@ -12,6 +12,10 @@ Shared.DEFAULT_PLAYER_DATA = {
     Pets = {},
     PetIndex = {},
     AutoDeletedPets = {},
+    ClaimedPrizes = {
+        ['Eggs'] = {},
+        ['ActualClicks'] = {}
+    },
 
     AutoClickerStatus = false,
     AutoRebirthStatus = false,
