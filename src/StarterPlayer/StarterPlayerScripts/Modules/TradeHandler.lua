@@ -4,6 +4,7 @@ local db = false;
 -- Services
 local players = game:GetService('Players');
 local rs = game:GetService('ReplicatedStorage');
+local runService = game:GetService('RunService');
 
 -- Variables
 repeat task.wait() until players.LocalPlayer;
@@ -15,6 +16,7 @@ local classes: Folder = rs:WaitForChild('Classes');
 
 local playerConnections = {};
 local tradeConnections = {};
+local timerConnection: RBXScriptConnection = nil;
 local tradeRequestEndPos = UDim2.new(0.5,0,0.1,0);
 local tradeRequestStartPos = UDim2.new(0.5,0,-0.1,0);
 local requestWaitTime = 6;
@@ -38,6 +40,7 @@ local tradeTemplates: Folder = tradeFrame:WaitForChild('Templates');
 local petTemplate: ImageButton = tradeTemplates:WaitForChild('PetTemplate');
 local offerTemplate: ImageButton = tradeTemplates:WaitForChild('OfferTemplate');
 local tradeMain: Frame = tradeFrame:WaitForChild('Main');
+local timerLabel: TextLabel = tradeMain:WaitForChild('Timer');
 local tradeButtons: Frame = tradeMain:WaitForChild('Buttons');
 local youOffer: Frame = tradeMain:WaitForChild('YouOffer');
 local youPets: Frame = tradeMain:WaitForChild('YouPets');
@@ -149,6 +152,68 @@ function TradeHandler.DeclineTrade(me: Player)
     CleanUp();
 end
 
+function TradeHandler.Ready(me: Player)
+    if player == me then
+        meOffer.Ready.Visible = true;
+        tradeButtons.Ready.Visible = false;
+        tradeButtons.Unready.Visible = true;
+    else
+        youOffer.Ready.Visible = true;
+    end
+end
+
+function TradeHandler.Unready(me: Player)
+    if player == me then
+        meOffer.Ready.Visible = false;
+        tradeButtons.Ready.Visible = true;
+        tradeButtons.Unready.Visible = false;
+    else
+        youOffer.Ready.Visible = false;
+    end
+end
+
+function TradeHandler.LockTrade()
+    tradeButtons.Ready.Visible = false;
+    tradeButtons.Unready.Visible = false;
+    tradeButtons.Decline.Visible = false;
+end
+
+function TradeHandler.TradeFinished()
+    local popup = infoPopup.new(
+        nil,
+        'The trade has been completed.',
+        function()
+            menuHandler.handleOpenClose(infoFrame)
+        end,
+        infoFrame
+    )
+
+    menuHandler.handleOpenClose(infoFrame);
+    CleanUp();
+end
+
+function TradeHandler.StartTimer(totalTime: number)
+    timerLabel.Visible = true;
+
+    timerConnection = runService.RenderStepped:Connect(function(deltaTime)
+        totalTime -= deltaTime;
+
+        if totalTime <= 0 then
+            TradeHandler.StopTimer()
+        end
+
+        timerLabel.Text = totalTime..'s';
+    end)
+end
+
+function TradeHandler.StopTimer()
+    timerLabel.Visible = false;
+
+    if timerConnection.Connected then
+        timerConnection:Disconnect();
+    end
+end
+
 function TradeHandler.TogglePet(me: Player, data, state)
     if state == 'Removed' then
         if player == me then
@@ -165,6 +230,7 @@ function TradeHandler.TogglePet(me: Player, data, state)
             clickCon = clone.MouseButton1Click:Connect(function()
                 if not db then db = true task.delay(.15, function() db = false end)
                     network:FireServer('TogglePet', data.id);
+                    network:FireServer('Unready');
                 end
             end)
             clone:GetPropertyChangedSignal('Parent'):Once(function()
@@ -197,6 +263,7 @@ function TradeHandler.EnterTrade(me: Player, you: Player)
                 if not db then db = true task.delay(.15, function() db = false end)
                     if clone.Parent == mePets.ScrollingFrame then
                         network:FireServer('TogglePet', petData.id)
+                        network:FireServer('Unready');
                     end
                 end
             end)
@@ -204,12 +271,18 @@ function TradeHandler.EnterTrade(me: Player, you: Player)
         end
     end
 
-    local acceptCon: RBXScriptConnection;
+    local readyCon: RBXScriptConnection;
+    local unreadyCon: RBXScriptConnection
     local declineCon: RBXScriptConnection;
 
-    acceptCon = tradeButtons.Accept.MouseButton1Click:Connect(function()
+    readyCon = tradeButtons.Ready.MouseButton1Click:Connect(function()
         if not db then db = true task.delay(.15, function() db = false end)
-
+            network:FireServer('Ready');
+        end
+    end)
+    unreadyCon = tradeButtons.Unready.MouseButton1Click:Connect(function()
+        if not db then db = true task.delay(.15, function() db = false end)
+            network:FireServer('Unready')
         end
     end)
     declineCon = tradeButtons.Decline.MouseButton1Click:Connect(function()
@@ -217,7 +290,8 @@ function TradeHandler.EnterTrade(me: Player, you: Player)
             network:FireServer('DeclineTrade');
         end
     end)
-    table.insert(tradeConnections, acceptCon);
+    table.insert(tradeConnections, readyCon);
+    table.insert(tradeConnections, unreadyCon);
     table.insert(tradeConnections, declineCon);
 
     CreatePetButtons(myPets, mePets.ScrollingFrame);
@@ -245,7 +319,7 @@ function TradeHandler.TradeRequest(me: Player)
     end
     local image, ready = players:GetUserThumbnailAsync(me.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420);
 
-    requestMain.Title.Text = me.Name..' send you a trade request!';
+    requestMain.Title.Text = me.Name..' sent you a trade request!';
     requestMain.PlayerImg.Image = ready and image or '';
     ShowUI();
 
