@@ -7,7 +7,7 @@ local PlayerDataTemplate = require(rs.PlayerData)
 local ProfileStore = require(sss.DataModules.ProfileStore)
 local leaderstats = require(sss.DataModules.leaderstats)
 
-local v = "19"
+local v = "20"
 local dataKey = "OfficialV"..v
 if runService:IsStudio() then
 	dataKey = "TestV"..v

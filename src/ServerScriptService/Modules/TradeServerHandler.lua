@@ -11,9 +11,11 @@ local framework = rs:WaitForChild('Framework');
 local dataModules: Folder = sss:WaitForChild('DataModules');
 
 local trades = {};
+local pendingRequests = {};
 
 -- Modules
 local network = require(framework.Network);
+local generateID = require(framework.GenerateID);
 local playerData = require(dataModules.PlayerData);
 local tblUtil = require(framework.TableUtility);
 
@@ -21,17 +23,17 @@ local tblUtil = require(framework.TableUtility);
 local startTime = 7;
 local lockInTrigger = 3;
 
-local function FindTradeIndex(player: Player)
-    for index, trade in ipairs(trades) do
-        if trade[player.Name] then
-            return index;
+local function FindTradeID(player: Player)
+    for id, trade in pairs(trades) do
+        if trade.Players[player.Name] then
+            return id;
         end
     end
     return nil;
 end
 
-local function IsOtherPlayerReady(readiedPlayer: Player, tradeIndex)
-    for name, data in pairs(trades[tradeIndex]) do
+local function IsOtherPlayerReady(readiedPlayer: Player, tradeID)
+    for name, data in pairs(trades[tradeID].Players) do
         if name ~= readiedPlayer.Name then
             if data.Ready then
                 return true, name;
@@ -44,7 +46,7 @@ end
 local function GetPlayerNames(trade)
     local names = {};
 
-    for playerName, _ in pairs(trade) do
+    for playerName, _ in pairs(trade.Players) do
         if players:FindFirstChild(playerName) then
             table.insert(names, playerName);
         end
@@ -55,37 +57,49 @@ end
 local function RemovePet(pets, id: string)
     for i, data in ipairs(pets) do
         if data.id == id then
-            pets[i] = nil;
+            table.remove(pets, i);
+            break;
         end
     end
 end
 
-local function CompleteTrade(tradeIndex: number)
-    local trade = trades[tradeIndex];
+local function CompleteTrade(tradeID: string)
+    local trade = trades[tradeID];
+    if not trade then return end;
 
     local playerNames = GetPlayerNames(trade);
 
-    local profile1 = playerData.GetData(players:FindFirstChild(playerNames[1]));
-    local profile2 = playerData.GetData(players:FindFirstChild(playerNames[2]));
+    local player1: Player = players:FindFirstChild(playerNames[1]);
+    local player2: Player = players:FindFirstChild(playerNames[2]);
+
+    if not player1 or not player2 then
+        TradeHandler.DeclineTrade(player1);
+        return
+    end
+
+    local profile1 = playerData.GetData(player1);
+    local profile2 = playerData.GetData(player2);
 
     local pets1 = profile1.Pets;
     local pets2 = profile2.Pets
 
-    local petsTo2 = trade[playerNames[1]].Pets;
-    local petsTo1 = trade[playerNames[2]].Pets;
+    local petsTo2 = trade.Players[playerNames[1]].Pets;
+    local petsTo1 = trade.Players[playerNames[2]].Pets;
 
     for id, petData in pairs(petsTo2) do
-        petData.equipped = false;
-        table.insert(pets2, petData);
+        local clone = table.clone(petData);
+        clone.equipped = false;
+        table.insert(pets2, clone);
         RemovePet(pets1, id);
     end
     for id, petData in pairs(petsTo1) do
-        petData.equipped = false;
-        table.insert(pets1, petData);
+        local clone = table.clone(petData);
+        clone.equipped = false;
+        table.insert(pets1, clone);
         RemovePet(pets2, id);
     end
 
-    table.remove(trades, tradeIndex);
+    trades[tradeID] = nil;
 
 
     for _, playerName in ipairs(playerNames) do
@@ -94,82 +108,122 @@ local function CompleteTrade(tradeIndex: number)
     end
 end
 
-local function StartTimer(tradeIndex: number)
-    local trade = trades[tradeIndex];
+local function StopTimer(tradeID: string)
+    local trade = trades[tradeID];
 
-    for playerName, _ in pairs(trade) do
+    for playerName, _ in pairs(trade.Players) do
+        local plr: Player = players:FindFirstChild(playerName);
+        if not plr then continue end;
+        network:FireClient(plr, 'StopTimer');
+    end
+    if trade.Settings.TimerConnection then
+        trade.Settings.TimerConnection:Disconnect();
+        trade.Settings.TimerConnection = nil;
+    end
+    trade.Settings.TimerActive = false;
+    trade.Settings.Timer = startTime;
+end
+
+local function StartTimer(tradeID: string)
+    local trade = trades[tradeID];
+
+    for playerName, _ in pairs(trade.Players) do
         local plr: Player = players:FindFirstChild(playerName);
         network:FireClient(plr, 'StartTimer', startTime)
     end
-    trade.TimerActive = true;
+    trade.Settings.TimerActive = true;
 
-    local timerCon: RBXScriptConnection
-    timerCon = runService.Heartbeat:Connect(function(deltaTime)
-        trade.Timer -= deltaTime;
+    if trade.Settings.TimerConnection then
+        trade.Settings.TimerConnection:Disconnect();
+    end
+
+    trade.Settings.TimerConnection = runService.Heartbeat:Connect(function(deltaTime)
+        trade.Settings.Timer -= deltaTime;
         
-        if trade.Timer <= lockInTrigger and not trade.TradeLocked then
-            trade.TradeLocked = true;
+        if trade.Settings.Timer <= lockInTrigger and not trade.Settings.TradeLocked then
+            trade.Settings.TradeLocked = true;
            
-            for playerName, _ in pairs(trade) do
+            for playerName, _ in pairs(trade.Players) do
                 local plr: Player = players:FindFirstChild(playerName);
                 network:FireClient(plr, 'LockTrade');
             end
         end
         
-        if trade.Timer <= 0 then
-            timerCon:Disconnect();
-            CompleteTrade();
+        if trade.Settings.Timer <= 0 then
+            trade.Settings.TimerConnection:Disconnect();
+            trade.Settings.TimerConnection = nil;
+            StopTimer(tradeID);
+            CompleteTrade(tradeID);
         end
     end)
 end
 
-local function StopTimer(tradeIndex: number)
-    local trade = trades[tradeIndex];
-
-    for playerName, _ in pairs(trade) do
-        local plr: Player = players:FindFirstChild(playerName);
-        network:FireClient(plr, 'StopTimer');
-    end
-    trade.TimerActive = false;
-    trade.Timer = startTime;
-end
-
-function TradeHandler.SendTradeRequest(me: Player, you: Player)
-    local accepted: boolean = network:InvokeClient(you, 'TradeRequest', me);
-
-    if accepted then
-        network:FireClient(me, 'EnterTrade', me, you);
-        network:FireClient(you, 'EnterTrade', you, me);
-
-        table.insert(trades,{
-            [me.Name] = {
-                Pets = {},
-                Ready = false,
-            },
-            [you.Name] = {
-                Pets = {},
-                Ready = false,
-            },
-            Timer = startTime,
-            TimerActive = false,
-            TradeLocked = false
-        })
-        
-        
-        for _, plr: Player in ipairs(players:GetPlayers()) do
-            network:FireClient(plr, 'UpdateTradeButtons', me, you);
+function TradeHandler.RequestAnswer(you: Player, me: Player, choice: boolean)
+    print(you, me, choice);
+    
+    if not choice then
+        if pendingRequests[you.Name] then
+            pendingRequests[you.Name] = nil;
         end
     end
 
-    return accepted;
+    
+    if pendingRequests[you.Name] then
+        if pendingRequests[you.Name] == me.Name then
+            pendingRequests[you.Name] = nil;
+            
+            network:FireClient(me, 'EnterTrade', me, you);
+            network:FireClient(you, 'EnterTrade', you, me);
+
+            local id: string = generateID.NewID();
+
+            trades[id] = {
+                Players = {
+                    [me.Name] = {
+                        Pets = {},
+                        Ready = false,
+                    },
+                    [you.Name] = {
+                        Pets = {},
+                        Ready = false,
+                    },
+                },
+                Settings = {
+                    Timer = startTime,
+                    TimerActive = false,
+                    TradeLocked = false,
+                    TimerConnection = nil
+                }
+            }
+            
+            for _, plr: Player in ipairs(players:GetPlayers()) do
+                network:FireClient(plr, 'UpdateTradeButtons', me, you);
+            end
+        end
+    end
+end
+
+function TradeHandler.SendTradeRequest(me: Player, you: Player)
+    if FindTradeID(me) then return end;
+    if FindTradeID(you) then return end;
+
+    network:FireClient(you, 'TradeRequest', me);
+
+    pendingRequests[you.Name] = me.Name;
+
+    task.delay(10, function()
+        if pendingRequests[you.Name] and (pendingRequests[you.Name] == me.Name) then
+            pendingRequests[you.Name] = nil;
+        end
+    end)
 end
 
 function TradeHandler.TogglePet(me: Player, id: string)
-    local tradeIndex = FindTradeIndex(me);
-    if not tradeIndex then return end;
-    local trade = trades[tradeIndex];
+    local tradeID = FindTradeID(me);
+    if not tradeID then return end;
+    local trade = trades[tradeID];
 
-    if trade.TradeLocked then return end;
+    if trade.Settings.TradeLocked then return end;
 
     local profile = playerData.GetData(me);
     local pets = profile.Pets
@@ -178,84 +232,93 @@ function TradeHandler.TogglePet(me: Player, id: string)
     if not index then return end;
 
     local state = nil
-    if not trade[me.Name].Pets[id] then
-        trade[me.Name].Pets[id] = petData;
+    if not trade.Players[me.Name].Pets[id] then
+        trade.Players[me.Name].Pets[id] = petData;
         state = 'Added';
     else
-        trade[me.Name].Pets[id] = nil;
+        trade.Players[me.Name].Pets[id] = nil;
         state = 'Removed';
     end
 
-    for playerName, _ in pairs(trade) do
+    for playerName, _ in pairs(trade.Players) do
         local plr: Player = players:FindFirstChild(playerName);
         network:FireClient(plr, 'TogglePet', me, petData, state);
+        TradeHandler.Unready(me);
     end
 end
 
 function TradeHandler.DeclineTrade(me: Player)
-    local tradeIndex = FindTradeIndex(me);
-    if not tradeIndex then return end;
-    local trade = trades[tradeIndex];
+    local tradeID = FindTradeID(me);
+    if not tradeID then return end;
+    local trade = trades[tradeID];
 
     if trade.TradeLocked then return end;
 
-    if trade.TimerActive then
-        StopTimer(tradeIndex);
+    if trade.Settings.TimerActive then
+        StopTimer(tradeID);
     end
 
-    for playerName, _ in pairs(trade) do
+    for playerName, _ in pairs(trade.Players) do
         local plr: Player = players:FindFirstChild(playerName);
+        if not plr then continue end;
         network:FireClient(plr, 'DeclineTrade', me);
     end
 
-    table.remove(trades, tradeIndex);
+    trades[tradeID] = nil;
 end
 
 function TradeHandler.Ready(me: Player)
-    local tradeIndex = FindTradeIndex(me);
-    if not tradeIndex then return end;
-    local trade = trades[tradeIndex];
+    local tradeID = FindTradeID(me);
+    if not tradeID then return end;
+    local trade = trades[tradeID];
 
-    if trade[me.Name].Ready == true then return end;
+    if trade.Players[me.Name].Ready == true then return end;
 
-    trade[me.Name].Ready = true;
+    trade.Players[me.Name].Ready = true;
 
-    local bool, _ = IsOtherPlayerReady(me, tradeIndex);
+    local bool, _ = IsOtherPlayerReady(me, tradeID);
 
     if bool then
-        StartTimer(tradeIndex);
+        StartTimer(tradeID);
     end
 
-    for playerName, _ in pairs(trade) do
+    for playerName, _ in pairs(trade.Players) do
         local plr: Player = players:FindFirstChild(playerName);
         network:FireClient(plr, 'Ready', me);
     end
 end
 
 function TradeHandler.Unready(me: Player)
-    local tradeIndex = FindTradeIndex(me);
-    if not tradeIndex then return end;
-    local trade = trades[tradeIndex];
+    local tradeID = FindTradeID(me);
+    if not tradeID then return end;
+    local trade = trades[tradeID];
 
-    if trade.TradeLocked then return end;
+    if trade.Settings.TradeLocked then return end;
 
-    if trade[me.Name].Ready == false then return end;
+    if trade.Players[me.Name].Ready == false then return end;
 
     
-    trade[me.Name].Ready = false;
+    trade.Players[me.Name].Ready = false;
     
-    if trade.TimerActive then
-        StopTimer(tradeIndex);
-        local bool, otherName = IsOtherPlayerReady(me, tradeIndex);
+    if trade.Settings.TimerActive then
+        StopTimer(tradeID);
+        local bool, otherName = IsOtherPlayerReady(me, tradeID);
         if bool then
             TradeHandler.Unready(players:FindFirstChild(otherName))
         end
     end
     
-    for playerName, _ in pairs(trade) do
+    for playerName, _ in pairs(trade.Players) do
         local plr: Player = players:FindFirstChild(playerName);
+        if not plr then continue end;
         network:FireClient(plr, 'Unready', me);
     end
+end
+
+function TradeHandler.Initialize()
+    players.PlayerRemoving:Connect(function(player, reason)
+        TradeHandler.DeclineTrade(player);
+    end)
 end
 
 return TradeHandler;

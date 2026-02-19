@@ -74,10 +74,10 @@ local function CreatePlayerFrame(plr: Player)
     clickCon = inner.Trade.MouseButton1Click:Connect(function()
         if not db then db = true task.delay(.15, function() db = false end)
             UpdateTradeButton('Orange', 'Sent', inner.Trade);
-            local accepted = network:InvokeServer('SendTradeRequest', plr);
-            if not accepted then
-                UpdateTradeButton('Green', 'Send', inner.Trade);
-            end
+            network:FireServer('SendTradeRequest', plr);
+            -- if not accepted then
+            --     UpdateTradeButton('Green', 'Send', inner.Trade);
+            -- end
         end
     end)
     playerConnections[plr.Name] = clickCon;
@@ -125,6 +125,7 @@ local function CleanUp()
             con:Disconnect();
         end
     end
+    tradeConnections = {};
 end
 
 function TradeHandler.DeclineTrade(me: Player)
@@ -230,7 +231,7 @@ function TradeHandler.TogglePet(me: Player, data, state)
             clickCon = clone.MouseButton1Click:Connect(function()
                 if not db then db = true task.delay(.15, function() db = false end)
                     network:FireServer('TogglePet', data.id);
-                    network:FireServer('Unready');
+                    -- network:FireServer('Unready');
                 end
             end)
             clone:GetPropertyChangedSignal('Parent'):Once(function()
@@ -248,6 +249,12 @@ function TradeHandler.EnterTrade(me: Player, you: Player)
     local myPets = myProfile.Pets;
     local yourPets = yourProfile.Pets;
 
+    meOffer.Ready.Visible = false;
+    youOffer.Ready.Visible = false;
+    tradeButtons.Ready.Visible = true;
+    tradeButtons.Decline.Visible = true;
+    tradeButtons.Unready.Visible = false;
+
     CleanUp();
 
     youPets.PlayerName.Text = you.Name..'\'s Inventory';
@@ -263,7 +270,7 @@ function TradeHandler.EnterTrade(me: Player, you: Player)
                 if not db then db = true task.delay(.15, function() db = false end)
                     if clone.Parent == mePets.ScrollingFrame then
                         network:FireServer('TogglePet', petData.id)
-                        network:FireServer('Unready');
+                        -- network:FireServer('Unready');
                     end
                 end
             end)
@@ -356,7 +363,10 @@ function TradeHandler.TradeRequest(me: Player)
     if acceptCon.Connected then acceptCon:Disconnect() end;
     if declineCon.Connected then declineCon:Disconnect() end;
 
-    return choice or false;
+    print('sent')
+    network:FireServer('RequestAnswer', me, (choice or false));
+
+    -- return choice or false;
 end
 
 function TradeHandler.LoadPlayerList()
