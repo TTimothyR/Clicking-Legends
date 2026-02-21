@@ -333,20 +333,20 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
         direction *= -1;
     until currentWait <= endWait
 
+    for _, data in ipairs(eggData) do
+        for _, descendant in ipairs(data.egg:GetDescendants()) do
+            if descendant:IsA('BasePart') then
+                descendant.Transparency = 1;
+            end
+        end
+    end
+
     if secrets > 0 then
         local cursorAmount = 50;
 
         soundHandler.PlaySound(sounds.Blackout);
         blackOut.BackgroundTransparency = 0;
         blackOut.Visible = true;
-
-        for _, data in ipairs(eggData) do
-            for _, descendant in ipairs(data.egg:GetDescendants()) do
-                if descendant:IsA('BasePart') then
-                    descendant.Transparency = 1;
-                end
-            end
-        end
         
         camera.FieldOfView = 100;
         task.wait(1);

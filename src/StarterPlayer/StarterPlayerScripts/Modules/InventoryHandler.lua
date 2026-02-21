@@ -202,9 +202,13 @@ function InventoryHandler.LoadInventory()
         if clone.Frame:FindFirstChild('PetName') then
             local egg = tblUtil.FindEgg(eggStats, petData.petName);
             local chance = eggStats[egg].Pets[petData.petName][1]
-            local simplifiedChance = infMath.new((1/chance)*100);
+            if chance == 0 then
+                clone.Frame.Chance.Text = 'Unknown'
+            else
+                local simplifiedChance = infMath.new((1/chance)*100);
+                clone.Frame.Chance.Text = '1 in '..simplifiedChance:GetSuffix(true);
+            end
             clone.Frame.PetName.Text = petData.petName;
-            clone.Frame.Chance.Text = '1 in '..simplifiedChance:GetSuffix(true);
         else
             local rarity = petStats[petData.petName].Rarity;
             clone.Frame.BackgroundColor3 = globals.RarityColors[rarity];
@@ -257,8 +261,12 @@ function InventoryHandler.LoadInventory()
         
         local egg = tblUtil.FindEgg(eggStats, petData.petName);
         local chance = eggStats[egg].Pets[petData.petName][1]
-        local simplifiedChance = infMath.new((1/chance)*100);
-        clone.Frame.Chance.Text = '1 in '..simplifiedChance:GetSuffix(true);
+        if chance == 0 then
+            clone.Frame.Chance.Text = 'Unknown'
+        else
+            local simplifiedChance = infMath.new((1/chance)*100);
+            clone.Frame.Chance.Text = '1 in '..simplifiedChance:GetSuffix(true);
+        end
         
         clone.Position = UDim2.new(
             clone.Size.X.Scale*column + clone.Size.X.Scale/2,
