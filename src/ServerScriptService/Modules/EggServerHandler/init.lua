@@ -29,13 +29,6 @@ local function ValidateDistance(player: Player, eggName: string)
     return distance <= maxDistance;
 end
 
-local function RemoveDebounce(player: Player)
-	local profile = playerData.GetData(player)
-	if not profile then warn("Could not fetch profile.") return end
-	
-	profile.HatchDebounce = false
-end
-
 function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
     if not ValidateDistance(player, eggName) then
         print('Too far away from egg.')
@@ -118,19 +111,22 @@ function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
 
     end
     player.UILock.Value = true;
-    network:InvokeClient(player, 'EggAnimation', eggName, amount, petData);
-    task.delay(.5, function()
-        profile.HatchDebounce = false;
-    end)
+    network:FireClient(player, 'EggAnimation', eggName, amount, petData);
+end
+
+function EggHandler.ResetVariables(player: Player)
+    local profile = playerData.GetData(player);
+    if not profile then warn("Could not fetch profile.") return end
+    profile.HatchDebounce = false;
     player.UILock.Value = false;
 end
 
 function EggHandler.Initialize()
     for _, player: Player in ipairs(players:GetPlayers()) do
-        task.spawn(RemoveDebounce, player);
+        task.spawn(EggHandler.ResetVariables, player);
     end
     players.PlayerAdded:Connect(function(player)
-        task.spawn(RemoveDebounce, player);
+        task.spawn(EggHandler.ResetVariables, player);
     end)
 end
 

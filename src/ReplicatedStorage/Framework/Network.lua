@@ -19,6 +19,7 @@ do
 	end
 
 	function Network:InvokeClient(player, job, ...)
+		warn('YOU ARE USING A DANGEROUS REMOTE CALL. PLEASE DONT USE INVOKECLIENT');
 		return func:InvokeClient(player, job, ...)
 	end
 end

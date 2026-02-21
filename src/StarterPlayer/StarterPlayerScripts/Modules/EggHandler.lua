@@ -48,6 +48,7 @@ local popUps: Frame = hud:WaitForChild('PopUps');
 -- Modules
 local petStats = require(library.PetStats);
 local modelUtil = require(framework.ModelUtility);
+local network = require(framework.Network);
 local menuHandler = require(script.Parent.MenuHandler);
 local soundHandler = require(script.Parent.SoundHandler);
 local globals = require(framework.Globals);
@@ -656,7 +657,7 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
         end
     end
 
-    return true;
+    network:FireServer('ResetVariables');
 end
 
 return EggHandler;
