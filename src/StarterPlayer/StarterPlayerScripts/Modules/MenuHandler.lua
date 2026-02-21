@@ -82,7 +82,10 @@ end
 
 function ButtonHandler.handleOpenClose(frame, func)
 	if not db then db = true task.delay(.15, function() db = false end)
-		if frame == ButtonHandler.activeFrame then 
+		if (ButtonHandler.activeFrame == tradeFrame) and (frame ~= tradeFrame) then
+			return
+		end
+		if frame == ButtonHandler.activeFrame then
 			ButtonHandler.closeFrame(frame) 
 			return 
 		end

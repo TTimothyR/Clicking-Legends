@@ -21,6 +21,10 @@ Shared.DEFAULT_PLAYER_DATA = {
         ['ActualClicks'] = {}
     },
 
+    IsInTrade = false,
+    HasTradingDisabled = false,
+    TradeRequestFrom = '',
+
     AutoClickerStatus = false,
     AutoRebirthStatus = false,
     AutoRebirthIndex = 0,

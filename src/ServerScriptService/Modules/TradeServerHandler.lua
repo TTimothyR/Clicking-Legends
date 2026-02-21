@@ -106,6 +106,9 @@ local function CompleteTrade(tradeID: string)
         local plr: Player = players:FindFirstChild(playerName);
         network:FireClient(plr, 'TradeFinished');
     end
+    for _, player: Player in ipairs(players:GetPlayers()) do
+        network:FireClient(player, 'UpdateTradeButtons');
+    end
 end
 
 local function StopTimer(tradeID: string)
@@ -159,18 +162,24 @@ local function StartTimer(tradeID: string)
 end
 
 function TradeHandler.RequestAnswer(you: Player, me: Player, choice: boolean)
-    print(you, me, choice);
-    
+    local profile1 = playerData.GetData(you);
+    local profile2 = playerData.GetData(me);
     if not choice then
         if pendingRequests[you.Name] then
             pendingRequests[you.Name] = nil;
+            profile1.TradeRequestFrom = '';
+            network:FireClient(me, 'UpdateTradeButtons');
         end
     end
-
+    
     
     if pendingRequests[you.Name] then
         if pendingRequests[you.Name] == me.Name then
             pendingRequests[you.Name] = nil;
+            profile1.TradeRequestFrom = '';
+
+            profile1.IsInTrade = true;
+            profile2.IsInTrade = true;
             
             network:FireClient(me, 'EnterTrade', me, you);
             network:FireClient(you, 'EnterTrade', you, me);
@@ -206,14 +215,27 @@ end
 function TradeHandler.SendTradeRequest(me: Player, you: Player)
     if FindTradeID(me) then return end;
     if FindTradeID(you) then return end;
+    local profile = playerData.GetData(you);
+    if pendingRequests[you.Name] == me.Name then return end;
+    if pendingRequests[me.Name] == you.Name then return end;
 
+    if profile.IsInTrade or profile.HasTradingDisabled then return end;
+    
+    network:FireClient(me, 'UpdateTradeButtons')
+
+    
     network:FireClient(you, 'TradeRequest', me);
-
+    
+    profile.TradeRequestFrom = me.Name;
     pendingRequests[you.Name] = me.Name;
+
 
     task.delay(10, function()
         if pendingRequests[you.Name] and (pendingRequests[you.Name] == me.Name) then
             pendingRequests[you.Name] = nil;
+            profile.TradeRequestFrom = '';
+            network:FireClient(you, 'HideTradeRequest');
+            network:FireClient(me, 'UpdateTradeButtons')
         end
     end)
 end
@@ -243,7 +265,7 @@ function TradeHandler.TogglePet(me: Player, id: string)
     for playerName, _ in pairs(trade.Players) do
         local plr: Player = players:FindFirstChild(playerName);
         network:FireClient(plr, 'TogglePet', me, petData, state);
-        TradeHandler.Unready(me);
+        TradeHandler.Unready(plr);
     end
 end
 
@@ -262,6 +284,10 @@ function TradeHandler.DeclineTrade(me: Player)
         local plr: Player = players:FindFirstChild(playerName);
         if not plr then continue end;
         network:FireClient(plr, 'DeclineTrade', me);
+    end
+
+    for _, player: Player in ipairs(players:GetPlayers()) do
+        network:FireClient(player, 'UpdateTradeButtons');
     end
 
     trades[tradeID] = nil;

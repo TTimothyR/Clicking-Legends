@@ -73,11 +73,7 @@ local function CreatePlayerFrame(plr: Player)
     local clickCon: RBXScriptConnection
     clickCon = inner.Trade.MouseButton1Click:Connect(function()
         if not db then db = true task.delay(.15, function() db = false end)
-            UpdateTradeButton('Orange', 'Sent', inner.Trade);
             network:FireServer('SendTradeRequest', plr);
-            -- if not accepted then
-            --     UpdateTradeButton('Green', 'Send', inner.Trade);
-            -- end
         end
     end)
     playerConnections[plr.Name] = clickCon;
@@ -307,12 +303,32 @@ function TradeHandler.EnterTrade(me: Player, you: Player)
     menuHandler.handleOpenClose(tradeFrame);
 end
 
-function TradeHandler.UpdateTradeButtons(me: Player, you: Player)
-    if playerHolder:FindFirstChild(me.Name) then
-        UpdateTradeButton('Red', 'Busy', playerHolder:FindFirstChild(me.Name).Inner.Trade);
+function TradeHandler.UpdateTradeButtons()
+    for _, child in ipairs(playerHolder:GetChildren()) do
+        if child:IsA('Frame') then
+            local playerName: string = child.Name
+            local profile = network:InvokeServer('GetOtherData', playerName);
+            if profile.IsInTrade then
+                UpdateTradeButton('Red', 'Busy', child.Inner.Trade);
+            elseif profile.HasTradingDisabled then
+                UpdateTradeButton('Purple', 'Disabled', child.Inner.Trade);
+            elseif profile.TradeRequestFrom == player.Name then
+                UpdateTradeButton('Orange', 'Pending', child.Inner.Trade);
+            else
+                UpdateTradeButton('Green', 'Send', child.Inner.Trade);
+            end
+        end
     end
-    if playerHolder:FindFirstChild(you.Name) then
-        UpdateTradeButton('Red', 'Busy', playerHolder:FindFirstChild(you.Name).Inner.Trade);
+end
+
+function TradeHandler.HideTradeRequest()
+    local frameTime = 0.2;
+    local function HideUI()
+        tradeRequestFrame:TweenPosition(tradeRequestStartPos, Enum.EasingDirection.In, Enum.EasingStyle.Back, frameTime);
+    end
+
+    if tradeRequestFrame.Position == tradeRequestEndPos then
+        HideUI();
     end
 end
 
