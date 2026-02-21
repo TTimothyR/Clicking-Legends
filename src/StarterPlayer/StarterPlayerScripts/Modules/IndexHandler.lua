@@ -135,29 +135,31 @@ function IndexHandler.LoadIndex()
         end
     end
 
-    for eggName, _ in pairs(eggStats) do
-        local clone: ImageButton = eggTemplate:Clone();
-        clone.Name = eggName;
-        clone.Parent = eggHolder;
-        
-        local infoFrame: Frame = clone.Frame;
-        local petsInEgg = GetTotalPetCount(eggName);
-        local normal, shiny = GetPlayerPetCount(eggName);
-
-        infoFrame.EggName.Text = eggName;
-        infoFrame.LimitedTag.Visible = eggStats[eggName].Limited;
-        infoFrame.NormalCollected.Text = normal..'/'..petsInEgg;
-        infoFrame.ShinyCollected.Text = shiny..'/'..petsInEgg;
-
-        local clickCon = clone.MouseButton1Click:Connect(function()
-            if not db then db = true task.delay(.15, function() db = false end)
-                SelectEgg(eggName);
-            end
-        end)
-        table.insert(clickConnections, clickCon);
-
-        clone.Visible = true;
-    end
+    task.spawn(function()
+        for eggName, _ in pairs(eggStats) do
+            local clone: ImageButton = eggTemplate:Clone();
+            clone.Name = eggName;
+            clone.Parent = eggHolder;
+            
+            local infoFrame: Frame = clone.Frame;
+            local petsInEgg = GetTotalPetCount(eggName);
+            local normal, shiny = GetPlayerPetCount(eggName);
+    
+            infoFrame.EggName.Text = eggName;
+            infoFrame.LimitedTag.Visible = eggStats[eggName].Limited;
+            infoFrame.NormalCollected.Text = normal..'/'..petsInEgg;
+            infoFrame.ShinyCollected.Text = shiny..'/'..petsInEgg;
+    
+            local clickCon = clone.MouseButton1Click:Connect(function()
+                if not db then db = true task.delay(.15, function() db = false end)
+                    SelectEgg(eggName);
+                end
+            end)
+            table.insert(clickConnections, clickCon);
+    
+            clone.Visible = true;
+        end
+    end)
 end
 
 function IndexHandler.Initialize()

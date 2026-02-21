@@ -128,7 +128,6 @@ function PrizeHandler.LoadPrizes(targetType: string)
         end)
         clone:GetPropertyChangedSignal('Parent'):Once(function()
             clickConnection:Disconnect();
-            print('Disconnected click connection for item '..i);
         end)
 
         clone.Visible = true;
