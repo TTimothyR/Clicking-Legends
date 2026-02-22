@@ -27,6 +27,8 @@ local equippedSecretTemplate: ImageButton = templates:WaitForChild('EquippedSecr
 local main: Frame = inventoryFrame:WaitForChild('Main');
 local inventory: Frame = main:WaitForChild('Inventory');
 local holder: ScrollingFrame = inventory:WaitForChild('ScrollingFrame');
+local equippedHolder: Folder = holder:WaitForChild('Equipped');
+local notEquippedHolder: Folder = holder:WaitForChild('NotEquipped');
 
 local petInfo: Frame = main:WaitForChild('PetInfo');
 local petInfoHolder: Frame = petInfo:WaitForChild('Holder');
@@ -156,22 +158,83 @@ local function LoadPetInfo(id: string)
     petInfoHolder.Visible = true;
 end
 
+local function CreateClickConnection(clone, petData)
+    local clickCon: RBXScriptConnection = clone.MouseButton1Click:Connect(function()
+        if not db then db = true task.delay(.15, function() db = false end)
+            if selectedPetID == petData.id then
+                selectedPetID = nil;
+                petInfoHolder.Visible = false;
+            else
+                LoadPetInfo(petData.id);
+            end
+        end
+    end)
+    table.insert(clickConnections, clickCon);
+end
+
+local function CreateEquippedPet(petData, template)
+    local clone: ImageButton = template:Clone();
+    clone.Parent = equippedHolder;
+    clone.Name = petData.id;
+    if clone.Frame:FindFirstChild('PetName') then
+        local egg = tblUtil.FindEgg(eggStats, petData.petName);
+        local chance = eggStats[egg].Pets[petData.petName][1]
+        if chance == 0 then
+            clone.Frame.Chance.Text = 'Unknown'
+        else
+            local simplifiedChance = infMath.new((1/chance)*100);
+            clone.Frame.Chance.Text = '1 in '..simplifiedChance:GetSuffix(true);
+        end
+        clone.Frame.PetName.Text = petData.petName;
+    else
+        local rarity = petStats[petData.petName].Rarity;
+        clone.Frame.BackgroundColor3 = globals.RarityColors[rarity];
+        if rarity == 'Legendary' then
+            clone.Glow.Visible = true;
+            clone.Frame.Legendary.Enabled = true;
+        end
+    end
+    CreateClickConnection(clone, petData);
+end
+
+local function CreateNormalPet(petData)
+    local clone: ImageButton = normalTemplate:Clone();
+    clone.Parent = notEquippedHolder;
+    clone.Name = petData.id;
+    
+    local rarity = petStats[petData.petName].Rarity;
+    clone.Frame.BackgroundColor3 = globals.RarityColors[rarity];
+    if rarity == 'Legendary' then
+        clone.Glow.Visible = true;
+        clone.Frame.Legendary.Enabled = true;
+    end
+    
+    CreateClickConnection(clone, petData);
+end
+
+local function CreateSecretPet(petData)
+    local clone: ImageButton = secretTemplate:Clone();
+    clone.Name = petData.id;
+    clone.Parent = notEquippedHolder;
+    clone.Frame.PetName.Text = petData.petName;
+    
+    local egg = tblUtil.FindEgg(eggStats, petData.petName);
+    local chance = eggStats[egg].Pets[petData.petName][1]
+    if chance == 0 then
+        clone.Frame.Chance.Text = 'Unknown'
+    else
+        local simplifiedChance = infMath.new((1/chance)*100);
+        clone.Frame.Chance.Text = '1 in '..simplifiedChance:GetSuffix(true);
+    end
+
+    CreateClickConnection(clone, petData);
+end
+
 function InventoryHandler.LoadInventory()
     local profile = network:InvokeServer('GetData');
     if not profile then
         warn('Failed to load player profile');
         return;
-    end
-    
-    holder:ClearAllChildren();
-    for _, con: RBXScriptConnection in ipairs(clickConnections) do
-        if con.Connected then
-            con:Disconnect();
-        end
-    end
-
-    if selectedPetID then
-        LoadPetInfo(selectedPetID);
     end
 
     local pets = profile.Pets;
@@ -181,66 +244,71 @@ function InventoryHandler.LoadInventory()
     table.sort(normalTbl, SortPets);
     table.sort(equippedNormalTbl, SortPets);
 
-    local function createClickConnection(clone, petData)
-        local clickCon: RBXScriptConnection = clone.MouseButton1Click:Connect(function()
-            if not db then db = true task.delay(.15, function() db = false end)
-                if selectedPetID == petData.id then
-                    selectedPetID = nil;
-                    petInfoHolder.Visible = false;
-                else
-                    LoadPetInfo(petData.id);
-                end
-            end
-        end)
-        table.insert(clickConnections, clickCon);
+    for i, petData in ipairs(equippedSecretTbl) do
+        if notEquippedHolder:FindFirstChild(petData.id) then
+            notEquippedHolder:FindFirstChild(petData.id):Destroy();
+        end
+        if not equippedHolder:FindFirstChild(petData.id) then
+            CreateEquippedPet(petData, equippedSecretTemplate);
+        end
+    end
+    for i, petData in ipairs(equippedNormalTbl) do
+        if notEquippedHolder:FindFirstChild(petData.id) then
+            notEquippedHolder:FindFirstChild(petData.id):Destroy();
+        end
+        if not equippedHolder:FindFirstChild(petData.id) then
+            CreateEquippedPet(petData, normalTemplate)
+        end
     end
 
-    local function createEquippedPet(petData, template, row, col)
-        local clone: ImageButton = template:Clone();
-        clone.Parent = holder;
-        clone.Name = petData.fullName;
-        if clone.Frame:FindFirstChild('PetName') then
-            local egg = tblUtil.FindEgg(eggStats, petData.petName);
-            local chance = eggStats[egg].Pets[petData.petName][1]
-            if chance == 0 then
-                clone.Frame.Chance.Text = 'Unknown'
-            else
-                local simplifiedChance = infMath.new((1/chance)*100);
-                clone.Frame.Chance.Text = '1 in '..simplifiedChance:GetSuffix(true);
-            end
-            clone.Frame.PetName.Text = petData.petName;
-        else
-            local rarity = petStats[petData.petName].Rarity;
-            clone.Frame.BackgroundColor3 = globals.RarityColors[rarity];
-            if rarity == 'Legendary' then
-                clone.Glow.Visible = true;
-                clone.Frame.Legendary.Enabled = true;
-            end
+    for i, petData in ipairs(secretTbl) do
+        if equippedHolder:FindFirstChild(petData.id) then
+            equippedHolder:FindFirstChild(petData.id):Destroy();
         end
+        if not notEquippedHolder:FindFirstChild(petData.id) then
+            CreateSecretPet(petData);
+        end
+    end
+    for i, petData in ipairs(normalTbl) do
+        if equippedHolder:FindFirstChild(petData.id) then
+            equippedHolder:FindFirstChild(petData.id):Destroy();
+        end
+        if not notEquippedHolder:FindFirstChild(petData.id) then
+            CreateNormalPet(petData);
+        end
+    end
+
+    local lastEquippedRow = -1
+
+    for i, petData in ipairs(equippedSecretTbl) do
+        local row = math.floor((i-1)/maxColNormal);
+        local col = math.floor((i-1)%maxColNormal);
+
+        local clone: ImageButton = equippedHolder:FindFirstChild(petData.id);
         clone.Position = UDim2.new(
             clone.Size.X.Scale*col + clone.Size.X.Scale/2,
             0,
             clone.Size.Y.Scale*row + clone.Size.Y.Scale/2,
             0
         );
-        createClickConnection(clone, petData);
+
+        lastEquippedRow = row;
         clone.Visible = true;
     end
-
-    local lastEquippedRow = -1;
-
-    for i, petData in ipairs(equippedSecretTbl) do
-        local row = math.floor((i-1)/maxColNormal);
-        local col = math.floor((i-1)%maxColNormal);
-        createEquippedPet(petData, equippedSecretTemplate, row, col);
-        lastEquippedRow = row;
-    end
-
     for i, petData in ipairs(equippedNormalTbl) do
         local row = math.floor((i+#equippedSecretTbl-1)/maxColNormal);
         local col = math.floor((i+#equippedSecretTbl-1)%maxColNormal);
-        createEquippedPet(petData, normalTemplate, row, col);
+
+        local clone: ImageButton = equippedHolder:FindFirstChild(petData.id);
+        clone.Position = UDim2.new(
+            clone.Size.X.Scale*col + clone.Size.X.Scale/2,
+            0,
+            clone.Size.Y.Scale*row + clone.Size.Y.Scale/2,
+            0
+        );
+
         lastEquippedRow = row;
+        clone.Visible = true;
     end
 
     lastEquippedRow += 1;
@@ -254,19 +322,7 @@ function InventoryHandler.LoadInventory()
         local column = math.floor((i-1)%maxColSecret);
         lastColumn = ((column+1)%maxColSecret)*2;
 
-        local clone: ImageButton = secretTemplate:Clone();
-        clone.Name = petData.fullName;
-        clone.Parent = holder;
-        clone.Frame.PetName.Text = petData.petName;
-        
-        local egg = tblUtil.FindEgg(eggStats, petData.petName);
-        local chance = eggStats[egg].Pets[petData.petName][1]
-        if chance == 0 then
-            clone.Frame.Chance.Text = 'Unknown'
-        else
-            local simplifiedChance = infMath.new((1/chance)*100);
-            clone.Frame.Chance.Text = '1 in '..simplifiedChance:GetSuffix(true);
-        end
+        local clone: ImageButton = notEquippedHolder:FindFirstChild(petData.id);
         
         clone.Position = UDim2.new(
             clone.Size.X.Scale*column + clone.Size.X.Scale/2,
@@ -274,7 +330,7 @@ function InventoryHandler.LoadInventory()
             clone.Size.Y.Scale*row + clone.Size.Y.Scale/2 + normalTemplate.Size.Y.Scale * lastEquippedRow,
             0
         );
-        createClickConnection(clone, petData);
+
         clone.Visible = true;
     end
 
@@ -286,24 +342,9 @@ function InventoryHandler.LoadInventory()
     local equipCorrection = (totalEquipped == 0) and 0 or yPaddingCorrection*3;
     local finalCorrection = lastEquippedRow == 0 and normalTemplate.Size.Y.Scale/2 or 0;
 
-    local function createNormalPet(petData, xPos, yPos)
-        local clone: ImageButton = normalTemplate:Clone();
-        clone.Name = petData.fullName;
-        clone.Parent = holder;
-        clone.Position = UDim2.new(xPos, 0, yPos, 0);
-        
-        local rarity = petStats[petData.petName].Rarity;
-        clone.Frame.BackgroundColor3 = globals.RarityColors[rarity];
-        if rarity == 'Legendary' then
-            clone.Glow.Visible = true;
-            clone.Frame.Legendary.Enabled = true;
-        end
-        
-        createClickConnection(clone, petData);
-        clone.Visible = true;
-    end
-
     for i, petData in ipairs(normalTbl) do
+        local clone: ImageButton = notEquippedHolder:FindFirstChild(petData.id);
+
         if lastColumn > 0 and rowsFilled < 2 then
             local targetColumn = lastColumn + 1;
             local row = math.floor((i-1)/(maxColNormal-savedColumn));
@@ -317,7 +358,7 @@ function InventoryHandler.LoadInventory()
 
             local xPos = normalTemplate.Size.X.Scale*(targetColumn-1) + normalTemplate.Size.X.Scale/2;
             local yPos = secretTemplate.Size.Y.Scale*(secretRows-1) + (normalTemplate.Size.Y.Scale-yPaddingCorrection)*row + (normalTemplate.Size.Y.Scale * lastEquippedRow) + equipCorrection + finalCorrection;
-            createNormalPet(petData, xPos, yPos);
+            clone.Position = UDim2.new(xPos, 0, yPos, 0)
             finalIndex = i;
         else
             local targetRow = secretRows * 2 + math.floor((i-finalIndex-1)/maxColNormal);
@@ -325,10 +366,14 @@ function InventoryHandler.LoadInventory()
 
             local xPos = normalTemplate.Size.X.Scale*targetColumn + normalTemplate.Size.X.Scale/2;
             local yPos = secretTemplate.Size.Y.Scale*secretRows + (normalTemplate.Size.Y.Scale-yPaddingCorrection)*(targetRow-secretRows*2) + (normalTemplate.Size.Y.Scale * lastEquippedRow) + equipCorrection + finalCorrection;
-            createNormalPet(petData, xPos, yPos);
+            clone.Position = UDim2.new(xPos, 0, yPos, 0)
         end
+
+        clone.Visible = true;
     end
 end
+
+
 
 function InventoryHandler.Initialize()
     if not game.Loaded then game.Loaded:Wait() end;
@@ -337,7 +382,6 @@ function InventoryHandler.Initialize()
         while task.wait(1) do
             if not selectedPetID then continue end;
             if not inventoryFrame.Visible then continue end;
-
             LoadPetInfo(selectedPetID);
         end
     end)
