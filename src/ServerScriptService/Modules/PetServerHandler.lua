@@ -62,4 +62,25 @@ function PetHandler.UnequipPet(player: Player, id: string)
     return true;
 end
 
+function PetHandler.DeletePet(player: Player, id: string)
+    local profile = playerData.GetData(player);
+    if not profile then return false end;
+
+    if profile.IsInTrade then return false end;
+
+    local pets = profile.Pets
+    local index, petData = tblUtil.FindIndexWithId(pets, id);
+    if not index then return false end;
+
+    if petData.locked then return false end;
+
+    if petData.equipped then
+        PetHandler.UnequipPet(player, id);
+    end
+    table.remove(pets, index);
+
+
+    return true;
+end
+
 return PetHandler

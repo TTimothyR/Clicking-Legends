@@ -13,7 +13,7 @@ local framework = rs:WaitForChild('Framework');
 local library = framework:WaitForChild('Library');
 
 local selectedPetID: string = nil;
-local clickConnections = {};
+-- local clickConnections = {};
 local petInfoConnections = {};
 
 -- UI
@@ -109,6 +109,7 @@ local function LoadPetInfo(id: string)
     local petData = GetPetData(id);
     if not petData then
         warn('Player does not own pet with ID:', id);
+        return;
     end
     for _, con: RBXScriptConnection in ipairs(petInfoConnections) do
         if con.Connected then
@@ -134,6 +135,7 @@ local function LoadPetInfo(id: string)
     SetEquipButtonColor(petData.equipped);
 
     local equipCon: RBXScriptConnection
+    local deleteCon: RBXScriptConnection
     local currentlyEquipped = petData.equipped
     equipCon = petInfoButtons.Equip.MouseButton1Click:Connect(function()
         if not db then db = true task.delay(.15, function() db = false end)
@@ -152,13 +154,25 @@ local function LoadPetInfo(id: string)
             end
         end
     end)
+    deleteCon = petInfoButtons.Delete.MouseButton1Click:Connect(function()
+        if not db then db = true task.delay(.15, function() db = false end)
+            local success = network:InvokeServer('DeletePet', id);
+            if not success then return end;
+            selectedPetID = nil;
+            petInfoHolder.Visible = false;
+
+            InventoryHandler.LoadInventory();
+            holder:FindFirstChild(id, true):Destroy();
+        end
+    end)
     table.insert(petInfoConnections, equipCon);
+    table.insert(petInfoConnections, deleteCon)
 
     selectedPetID = id;
     petInfoHolder.Visible = true;
 end
 
-local function CreateClickConnection(clone, petData)
+local function CreateClickConnection(clone: ImageButton, petData)
     local clickCon: RBXScriptConnection = clone.MouseButton1Click:Connect(function()
         if not db then db = true task.delay(.15, function() db = false end)
             if selectedPetID == petData.id then
@@ -169,7 +183,11 @@ local function CreateClickConnection(clone, petData)
             end
         end
     end)
-    table.insert(clickConnections, clickCon);
+    clone:GetPropertyChangedSignal('Parent'):Once(function()
+        print('Button destroyed, disconnecting click conneciton')
+        clickCon:Disconnect();
+    end)
+    -- table.insert(clickConnections, clickCon);
 end
 
 local function CreateEquippedPet(petData, template)
