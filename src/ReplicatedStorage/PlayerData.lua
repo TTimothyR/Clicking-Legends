@@ -13,6 +13,10 @@ Shared.DEFAULT_PLAYER_DATA = {
 
     ClickMultiplier = 0,
 
+    PetEquips = 4,
+    CurrentEquips = 0,
+    PetStorage = 250,
+
     Pets = {},
     PetIndex = {},
     AutoDeletedPets = {},

@@ -15,6 +15,7 @@ local library = framework:WaitForChild('Library');
 local selectedPetID: string = nil;
 -- local clickConnections = {};
 local petInfoConnections = {};
+local bulkButtonsConnected = false;
 
 -- UI
 local playerGui = player:WaitForChild('PlayerGui');
@@ -25,6 +26,12 @@ local normalTemplate: ImageButton = templates:WaitForChild('Normal');
 local secretTemplate: ImageButton = templates:WaitForChild('Secret');
 local equippedSecretTemplate: ImageButton = templates:WaitForChild('EquippedSecret');
 local main: Frame = inventoryFrame:WaitForChild('Main');
+local statsFrame: Frame = main:WaitForChild('Stats');
+local equippedStat: Frame = statsFrame:WaitForChild('Equipped');
+local storageStat: Frame = statsFrame:WaitForChild('Storage');
+local bulkButtons: Frame = main:WaitForChild('BulkButtons');
+local equipBest: ImageButton = bulkButtons:WaitForChild('EquipBest');
+local deleteAll: ImageButton = bulkButtons:WaitForChild('DeleteAll');
 local inventory: Frame = main:WaitForChild('Inventory');
 local holder: ScrollingFrame = inventory:WaitForChild('ScrollingFrame');
 local equippedHolder: Folder = holder:WaitForChild('Equipped');
@@ -82,10 +89,20 @@ local function GetPetData(id: string)
 
     for i, data in ipairs(pets) do
         if data.id == id then
-            return data;
+            return data, profile;
         end
     end
-    return nil;
+    return nil, profile;
+end
+
+local function GetPetAmount(profile, petName: string)
+    local count = 0;
+    for i, petData in ipairs(profile.Pets) do
+        if petData.petName == petName and not petData.shiny and not petData.locked then
+            count += 1
+        end
+    end
+    return count;
 end
 
 local function SetEquipButtonColor(newStatus: boolean)
@@ -106,7 +123,7 @@ local function SetEquipButtonColor(newStatus: boolean)
 end
 
 local function LoadPetInfo(id: string)
-    local petData = GetPetData(id);
+    local petData, profile = GetPetData(id);
     if not petData then
         warn('Player does not own pet with ID:', id);
         return;
@@ -132,10 +149,20 @@ local function LoadPetInfo(id: string)
     petInfoHolder.Stats.Clicks.Amount.Text = infMath.new(clicks):GetSuffix(true);
     petInfoHolder.Stats.Gems.Amount.Text = infMath.new(gems):GetSuffix(true);
 
+    if petData.shiny then
+        petInfoButtons.Shiny.Title.Text = 'Already Shiny';
+    elseif petData.locked then
+        petInfoButtons.Shiny.Title.Text = 'Locked';
+    else
+        petInfoButtons.Shiny.Title.Text = 'Make Shiny ('..GetPetAmount(profile, petData.petName)..'/8)';
+    end
+
     SetEquipButtonColor(petData.equipped);
 
     local equipCon: RBXScriptConnection
     local deleteCon: RBXScriptConnection
+    local shinyCon: RBXScriptConnection
+    local lockCon: RBXScriptConnection
     local currentlyEquipped = petData.equipped
     equipCon = petInfoButtons.Equip.MouseButton1Click:Connect(function()
         if not db then db = true task.delay(.15, function() db = false end)
@@ -165,8 +192,33 @@ local function LoadPetInfo(id: string)
             holder:FindFirstChild(id, true):Destroy();
         end
     end)
+    shinyCon = petInfoButtons.Shiny.MouseButton1Click:Connect(function()
+        if not db then db = true task.delay(.15, function() db = false end)
+            local success, usedIds = network:InvokeServer('MakeShiny', petData.petName);
+            if not success then return end;
+            selectedPetID = nil;
+            petInfoHolder.Visible = false;
+
+            InventoryHandler.LoadInventory();
+            for _, id in ipairs(usedIds) do
+                holder:FindFirstChild(id, true):Destroy();
+            end
+        end
+    end)
+    lockCon = petInfoHolder.Lock.MouseButton1Click:Connect(function()
+        if not db then db = true task.delay(.15, function() db = false end)
+            local success, newState = network:InvokeServer('ToggleLock', petData.id);
+            if not success then return end;
+            -- TODO: Make sure the lock button gets updated after the toggle
+            LoadPetInfo(petData.id);
+            local petClone = holder:FindFirstChild(petData.id, true)
+            petClone.Frame.Locked.Visible = newState;
+        end
+    end)
     table.insert(petInfoConnections, equipCon);
-    table.insert(petInfoConnections, deleteCon)
+    table.insert(petInfoConnections, deleteCon);
+    table.insert(petInfoConnections, shinyCon);
+    table.insert(petInfoConnections, lockCon);
 
     selectedPetID = id;
     petInfoHolder.Visible = true;
@@ -179,12 +231,12 @@ local function CreateClickConnection(clone: ImageButton, petData)
                 selectedPetID = nil;
                 petInfoHolder.Visible = false;
             else
+                selectedPetID = petData.id;
                 LoadPetInfo(petData.id);
             end
         end
     end)
     clone:GetPropertyChangedSignal('Parent'):Once(function()
-        print('Button destroyed, disconnecting click conneciton')
         clickCon:Disconnect();
     end)
     -- table.insert(clickConnections, clickCon);
@@ -194,6 +246,7 @@ local function CreateEquippedPet(petData, template)
     local clone: ImageButton = template:Clone();
     clone.Parent = equippedHolder;
     clone.Name = petData.id;
+    clone.Frame.Locked.Visible = petData.locked;
     if clone.Frame:FindFirstChild('PetName') then
         local egg = tblUtil.FindEgg(eggStats, petData.petName);
         local chance = eggStats[egg].Pets[petData.petName][1]
@@ -219,7 +272,8 @@ local function CreateNormalPet(petData)
     local clone: ImageButton = normalTemplate:Clone();
     clone.Parent = notEquippedHolder;
     clone.Name = petData.id;
-    
+    clone.Frame.Locked.Visible = petData.locked;
+
     local rarity = petStats[petData.petName].Rarity;
     clone.Frame.BackgroundColor3 = globals.RarityColors[rarity];
     if rarity == 'Legendary' then
@@ -235,6 +289,7 @@ local function CreateSecretPet(petData)
     clone.Name = petData.id;
     clone.Parent = notEquippedHolder;
     clone.Frame.PetName.Text = petData.petName;
+    clone.Frame.Locked.Visible = petData.locked;
     
     local egg = tblUtil.FindEgg(eggStats, petData.petName);
     local chance = eggStats[egg].Pets[petData.petName][1]
@@ -255,12 +310,28 @@ function InventoryHandler.LoadInventory()
         return;
     end
 
+    if not bulkButtonsConnected then
+        equipBest.MouseButton1Click:Connect(function()
+            if not db then db = true task.delay(.15, function() db = false end)
+                print('Player pressed equip best button.');
+            end
+        end)
+        deleteAll.MouseButton1Click:Connect(function()
+            if not db then db = true task.delay(.15, function() db = false end)
+                print('Player pressed delete all button.');
+            end
+        end)
+    end
+
     local pets = profile.Pets;
     local normalTbl, secretTbl = SeperatePets(pets, false);
     local equippedNormalTbl, equippedSecretTbl = SeperatePets(pets, true);
     local totalEquipped = #equippedNormalTbl + #equippedSecretTbl;
     table.sort(normalTbl, SortPets);
     table.sort(equippedNormalTbl, SortPets);
+
+    storageStat.TextLabel.Text = #pets..'/'..profile.PetStorage;
+    equippedStat.TextLabel.Text = totalEquipped..'/'..profile.PetEquips;
 
     for i, petData in ipairs(equippedSecretTbl) do
         if notEquippedHolder:FindFirstChild(petData.id) then
