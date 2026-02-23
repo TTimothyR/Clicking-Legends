@@ -76,12 +76,12 @@ local function handlePets(folder: Folder)
 		for i, v: Model in ipairs(folder:GetChildren()) do
 			local state
             if string.find(v.Name, 'Shiny') then
-                state = petStats[v.Name:gsub('Shiny ', '')].State or 'Walk';
+                state = petStats[v.PetName.Value:gsub('Shiny ', '')].State or 'Walk';
             else
-                state = petStats[v.Name].State;
+                state = petStats[v.PetName.Value].State;
             end
-			local rarity = petStats[v.Name:gsub("Shiny ", "")].Rarity or "Common"
-            local secret = petStats[v.Name:gsub('Shiny ', '')].Secret or false;
+			local rarity = petStats[v.PetName.Value:gsub("Shiny ", "")].Rarity or "Common"
+            local secret = petStats[v.PetName.Value:gsub('Shiny ', '')].Secret or false;
 			if not tValues[v] then
 				tValues[v] = 0
 			end
@@ -163,12 +163,26 @@ local function LoadPets(player: Player)
 
     for _, data in ipairs(pets) do
         if data.equipped then
-            PetHandler.UpdatePets(player, data, true);
+            PetHandler.UpdatePet(player, data, true);
         end
     end
 end
 
-function PetHandler.UpdatePets(player: Player, petData, equip: boolean)
+function PetHandler.UpdatePets(player: Player)
+	local profile = network:InvokeServer('GetOtherData', player.Name)
+	local pets = profile.Pets
+
+	for i, petData in ipairs(pets) do
+		if petData.equipped and not petsFolder:FindFirstChild(player.Name):FindFirstChild(petData.id) then
+			PetHandler.UpdatePet(player, petData, true);
+		end
+		if not petData.equipped and petsFolder:FindFirstChild(player.Name):FindFirstChild(petData.id) then
+			PetHandler.UpdatePet(player, petData, false);
+		end
+	end
+end
+
+function PetHandler.UpdatePet(player: Player, petData, equip: boolean)
     if equip then
         local model: Model
         if petModels:FindFirstChild(petData.fullName) then
@@ -177,10 +191,15 @@ function PetHandler.UpdatePets(player: Player, petData, equip: boolean)
             model = petModels[petData.petName]:Clone();
         end
         model.Parent = petsFolder:FindFirstChild(player.Name);
-        model.Name = petData.fullName;
-        model:PivotTo(player.Character:WaitForChild('HumanoidRootPart').CFrame);
+        model.Name = petData.id;
+		
+		local petName: StringValue = Instance.new('StringValue', model);
+		petName.Name = 'PetName';
+		petName.Value = petData.fullName;
+        
+		model:PivotTo(player.Character:WaitForChild('HumanoidRootPart').CFrame);
     else
-        petsFolder:FindFirstChild(player.Name):FindFirstChild(petData.fullName):Destroy();
+        petsFolder:FindFirstChild(player.Name):FindFirstChild(petData.id):Destroy();
     end
 end
 

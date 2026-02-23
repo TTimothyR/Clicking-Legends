@@ -31,6 +31,7 @@ local equippedStat: Frame = statsFrame:WaitForChild('Equipped');
 local storageStat: Frame = statsFrame:WaitForChild('Storage');
 local bulkButtons: Frame = main:WaitForChild('BulkButtons');
 local equipBest: ImageButton = bulkButtons:WaitForChild('EquipBest');
+local unequipAll: ImageButton = bulkButtons:WaitForChild('UnequipAll');
 local deleteAll: ImageButton = bulkButtons:WaitForChild('DeleteAll');
 local inventory: Frame = main:WaitForChild('Inventory');
 local holder: ScrollingFrame = inventory:WaitForChild('ScrollingFrame');
@@ -313,7 +314,22 @@ function InventoryHandler.LoadInventory()
     if not bulkButtonsConnected then
         equipBest.MouseButton1Click:Connect(function()
             if not db then db = true task.delay(.15, function() db = false end)
-                print('Player pressed equip best button.');
+                local success = network:InvokeServer('EquipBest');
+                if not success then return end;
+                InventoryHandler.LoadInventory();
+                if selectedPetID ~= nil then
+                    LoadPetInfo(selectedPetID);
+                end
+            end
+        end)
+        unequipAll.MouseButton1Click:Connect(function()
+            if not db then db = true task.delay(.15, function() db = false end)
+                local success = network:InvokeServer('UnequipAll');
+                if not success then return end;
+                InventoryHandler.LoadInventory();
+                if selectedPetID ~= nil then
+                    LoadPetInfo(selectedPetID);
+                end
             end
         end)
         deleteAll.MouseButton1Click:Connect(function()
@@ -329,6 +345,9 @@ function InventoryHandler.LoadInventory()
     local totalEquipped = #equippedNormalTbl + #equippedSecretTbl;
     table.sort(normalTbl, SortPets);
     table.sort(equippedNormalTbl, SortPets);
+
+    equipBest.Visible = (totalEquipped == 0);
+    unequipAll.Visible = not (totalEquipped == 0);
 
     storageStat.TextLabel.Text = #pets..'/'..profile.PetStorage;
     equippedStat.TextLabel.Text = totalEquipped..'/'..profile.PetEquips;

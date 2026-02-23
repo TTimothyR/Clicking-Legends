@@ -4,12 +4,12 @@ return{
         World = 'Spawn',
         Limited = false;
         Pets = {
-            ["Doggy"] = {16, 1},
-            ["Kitty"] = {16, 2},
-            ["Bear"] = {16, 3},
-            ["Bunny"] = {16, 4},
-            ["Fox"] = {16, 5},
-            ["Grand Patriotic Overlord"] = {0, 6},
+            ["Doggy"] = {0, 1},
+            ["Kitty"] = {0, 2},
+            ["Bear"] = {0, 3},
+            ["Bunny"] = {0, 4},
+            ["Fox"] = {0, 5},
+            ["Grand Patriotic Overlord"] = {0.001, 6},
         },
     },
     ['Release Egg'] = {

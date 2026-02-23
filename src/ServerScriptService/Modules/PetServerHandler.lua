@@ -52,11 +52,61 @@ function PetHandler.EquipPet(player: Player, id: string)
     if not index then return false end;
 
     for _, plr: Player in ipairs(players:GetPlayers()) do
-        network:FireClient(plr, 'UpdatePets', player, petData, true);
+        network:FireClient(plr, 'UpdatePet', player, petData, true);
     end
 
     petData.equipped = true;
     profile.CurrentEquips += 1;
+    return true;
+end
+
+function PetHandler.EquipBest(player: Player)
+    local profile = playerData.GetData(player);
+    if not profile then return false end;
+
+    local pets = profile.Pets
+
+    local statTable = {};
+
+    for _, petData in ipairs(pets) do
+        if petData.equipped then
+            petData.equipped = false;
+            profile.CurrentEquips -= 1;
+        end
+
+        table.insert(statTable, {petData = petData, Clicks = globals.GetPetClicks(petData)});
+    end
+
+    table.sort(statTable, function(a,b)
+        return a.Clicks > b.Clicks;
+    end)
+
+    for i = 1, profile.PetEquips do
+        local petData = statTable[i].petData;
+        petData.equipped = true;
+        profile.CurrentEquips += 1;
+    end
+    for _, plr: Player in ipairs(players:GetPlayers()) do
+        network:FireClient(plr, 'UpdatePets', player);
+    end
+
+    return true;
+end
+
+function PetHandler.UnequipAll(player: Player)
+    local profile = playerData.GetData(player);
+    if not profile then return false end;
+
+    local pets = profile.Pets
+    for _, petData in ipairs(pets) do
+        petData.equipped = false;
+        profile.CurrentEquips -= 1;
+    end
+
+    for _, plr: Player in ipairs(players:GetPlayers()) do
+        network:FireClient(plr, 'UpdatePets', player);
+    end
+
     return true;
 end
 
@@ -69,7 +119,7 @@ function PetHandler.UnequipPet(player: Player, id: string)
     if not index then return false end;
 
     for _, plr: Player in ipairs(players:GetPlayers()) do
-        network:FireClient(plr, 'UpdatePets', player, petData, false);
+        network:FireClient(plr, 'UpdatePet', player, petData, false);
     end
 
     petData.equipped = false;
@@ -120,11 +170,11 @@ function PetHandler.MakeShiny(player: Player, petName: string)
         local index, petData = tblUtil.FindIndexWithId(pets, id);
         if petData.equipped then
             profile.CurrentEquips -= 1;
-            for _, plr: Player in ipairs(players:GetPlayers()) do
-                network:FireClient(plr, 'UpdatePets', player, petData, false);
-            end
         end
         table.remove(pets, index);
+    end
+    for _, plr: Player in ipairs(players:GetPlayers()) do
+        network:FireClient(plr, 'UpdatePet', player);
     end
 
     table.insert(pets, {
