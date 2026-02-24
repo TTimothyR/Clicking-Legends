@@ -11,16 +11,24 @@ local player: Player = players.LocalPlayer;
 
 local framework = rs:WaitForChild('Framework');
 local library = framework:WaitForChild('Library');
+local classes: Folder = rs:WaitForChild('Classes');
 
 local selectedPetID: string = nil;
 -- local clickConnections = {};
 local petInfoConnections = {};
+local petConnections = {};
 local bulkButtonsConnected = false;
+local mutliDeleteActive = false;
+local selectedPets = {};
+local selectedPetAmount = 0;
+
+local CreateClickConnection
 
 -- UI
 local playerGui = player:WaitForChild('PlayerGui');
 local frames: ScreenGui = playerGui:WaitForChild('Frames');
 local inventoryFrame: Frame = frames:WaitForChild('Inventory');
+local warningFrame: Frame = frames:WaitForChild('Warning');
 local templates: Folder = inventoryFrame:WaitForChild('Templates');
 local normalTemplate: ImageButton = templates:WaitForChild('Normal');
 local secretTemplate: ImageButton = templates:WaitForChild('Secret');
@@ -33,12 +41,20 @@ local bulkButtons: Frame = main:WaitForChild('BulkButtons');
 local equipBest: ImageButton = bulkButtons:WaitForChild('EquipBest');
 local unequipAll: ImageButton = bulkButtons:WaitForChild('UnequipAll');
 local deleteAll: ImageButton = bulkButtons:WaitForChild('DeleteAll');
+local utilityButtons: Frame = main:WaitForChild('UtilityButtons');
+local utilButtonsHolder: Frame = utilityButtons:WaitForChild('Holder');
+local multiDeleteButton: ImageButton = utilButtonsHolder:WaitForChild('MultiDelete');
+local shrinkButton: ImageButton = utilButtonsHolder:WaitForChild('Shrink');
 local inventory: Frame = main:WaitForChild('Inventory');
 local holder: ScrollingFrame = inventory:WaitForChild('ScrollingFrame');
 local equippedHolder: Folder = holder:WaitForChild('Equipped');
 local notEquippedHolder: Folder = holder:WaitForChild('NotEquipped');
 
 local petInfo: Frame = main:WaitForChild('PetInfo');
+local multiDeleteInfo: Frame = petInfo:WaitForChild('MultiDeleteInfo');
+local mutliDeleteButtons: Frame = multiDeleteInfo:WaitForChild('Buttons');
+local confirmMultiDelete: ImageButton = mutliDeleteButtons:WaitForChild('Confirm');
+local cancelMultiDelete: ImageButton = mutliDeleteButtons:WaitForChild('Cancel');
 local petInfoHolder: Frame = petInfo:WaitForChild('Holder');
 local petInfoButtons: Frame = petInfoHolder:WaitForChild('Buttons');
 
@@ -48,7 +64,9 @@ local infMath = require(framework.InfiniteMath);
 local petStats = require(library.PetStats);
 local eggStats = require(library.EggStats);
 local globals = require(framework.Globals);
-local tblUtil = require(framework.TableUtility)
+local tblUtil = require(framework.TableUtility);
+local warning = require(classes.WarningPopup);
+local menuHandler = nil;
 
 -- Constants
 local maxColSecret = 3;
@@ -211,8 +229,10 @@ local function LoadPetInfo(id: string)
             local success, newState = network:InvokeServer('ToggleLock', petData.id);
             if not success then return end;
             -- TODO: Make sure the lock button gets updated after the toggle
+            petData.locked = newState;
             LoadPetInfo(petData.id);
             local petClone = holder:FindFirstChild(petData.id, true)
+            CreateClickConnection(petClone, petData)
             petClone.Frame.Locked.Visible = newState;
         end
     end)
@@ -225,22 +245,36 @@ local function LoadPetInfo(id: string)
     petInfoHolder.Visible = true;
 end
 
-local function CreateClickConnection(clone: ImageButton, petData)
+CreateClickConnection = function(clone: ImageButton, petData)
+    if petConnections[petData.id] then
+        petConnections[petData.id]:Disconnect();
+    end
     local clickCon: RBXScriptConnection = clone.MouseButton1Click:Connect(function()
         if not db then db = true task.delay(.15, function() db = false end)
-            if selectedPetID == petData.id then
-                selectedPetID = nil;
-                petInfoHolder.Visible = false;
+            if mutliDeleteActive then
+                if petData.locked then return end;
+                if selectedPets[petData.id] then
+                    selectedPets[petData.id] = nil;
+                    selectedPetAmount -= 1;
+                    clone.Frame.ImageLabel.ImageColor3 = Color3.fromRGB(255, 255, 255);
+                else
+                    selectedPets[petData.id] = true;
+                    selectedPetAmount += 1;
+                    clone.Frame.ImageLabel.ImageColor3 = Color3.fromRGB(255,0,0);
+                end
+                multiDeleteInfo.Info.Text = selectedPetAmount.." Pets selected";
             else
-                selectedPetID = petData.id;
-                LoadPetInfo(petData.id);
+                if selectedPetID == petData.id then
+                    selectedPetID = nil;
+                    petInfoHolder.Visible = false;
+                else
+                    selectedPetID = petData.id;
+                    LoadPetInfo(petData.id);
+                end
             end
         end
     end)
-    clone:GetPropertyChangedSignal('Parent'):Once(function()
-        clickCon:Disconnect();
-    end)
-    -- table.insert(clickConnections, clickCon);
+    petConnections[petData.id] = clickCon;
 end
 
 local function CreateEquippedPet(petData, template)
@@ -266,6 +300,14 @@ local function CreateEquippedPet(petData, template)
             clone.Frame.Legendary.Enabled = true;
         end
     end
+    clone:GetPropertyChangedSignal('Parent'):Once(function()
+        if petConnections[petData.id] then
+            if petConnections[petData.id].Connected then
+                petConnections[petData.id]:Disconnect();
+            end
+            petConnections[petData.id] = nil;
+        end
+    end)
     CreateClickConnection(clone, petData);
 end
 
@@ -281,7 +323,14 @@ local function CreateNormalPet(petData)
         clone.Glow.Visible = true;
         clone.Frame.Legendary.Enabled = true;
     end
-    
+    clone:GetPropertyChangedSignal('Parent'):Once(function()
+        if petConnections[petData.id] then
+            if petConnections[petData.id].Connected then
+                petConnections[petData.id]:Disconnect();
+            end
+            petConnections[petData.id] = nil;
+        end
+    end)
     CreateClickConnection(clone, petData);
 end
 
@@ -300,7 +349,14 @@ local function CreateSecretPet(petData)
         local simplifiedChance = infMath.new((1/chance)*100);
         clone.Frame.Chance.Text = '1 in '..simplifiedChance:GetSuffix(true);
     end
-
+    clone:GetPropertyChangedSignal('Parent'):Once(function()
+        if petConnections[petData.id] then
+            if petConnections[petData.id].Connected then
+                petConnections[petData.id]:Disconnect();
+            end
+            petConnections[petData.id] = nil;
+        end
+    end)
     CreateClickConnection(clone, petData);
 end
 
@@ -311,7 +367,69 @@ function InventoryHandler.LoadInventory()
         return;
     end
 
+    local function ClearMultiDelete()
+        mutliDeleteActive = false;
+        multiDeleteInfo.Visible = false;
+        if selectedPetID then
+            petInfoHolder.Visible = true;
+        end
+        for id, _ in pairs(selectedPets) do
+            holder:FindFirstChild(id, true).Frame.ImageLabel.ImageColor3 = Color3.fromRGB(255,255,255);
+        end
+        table.clear(selectedPets);
+        selectedPetAmount = 0;
+    end
+
     if not bulkButtonsConnected then
+        confirmMultiDelete.MouseButton1Click:Connect(function()
+            if not db then db = true task.delay(.15, function() db = false end)
+                if not mutliDeleteActive then return end;
+                if selectedPetAmount == 0 then
+                    ClearMultiDelete();
+                    return;
+                end;
+    
+                local success, deletedIds = network:InvokeServer('DeleteSelection', selectedPets);
+                if success then
+                    InventoryHandler.LoadInventory();
+                    for _, id in ipairs(deletedIds) do
+                        holder:FindFirstChild(id, true):Destroy();
+                        if selectedPetID == id then
+                            selectedPetID = nil;
+                            petInfoHolder.Visible = false;
+                        end
+                    end
+                    table.clear(selectedPets);
+                    ClearMultiDelete();
+                end
+            end
+        end)
+        cancelMultiDelete.MouseButton1Click:Connect(function()
+            if not db then db = true task.delay(.15, function() db = false end)
+                ClearMultiDelete();
+            end
+        end)
+        multiDeleteButton.MouseButton1Click:Connect(function()
+            if not db then db = true task.delay(.15, function() db = false end)
+                if mutliDeleteActive then
+                    ClearMultiDelete();
+                else
+                    table.clear(selectedPets);
+                    selectedPetAmount = 0;
+                    
+                    mutliDeleteActive = true;
+                    petInfoHolder.Visible = false;
+                    multiDeleteInfo.Visible = true;
+    
+                    multiDeleteInfo.Info.Text = "0 Pets selected";
+                end
+            end
+        end)
+        shrinkButton.MouseButton1Click:Connect(function()
+            if not db then db = true task.delay(.15, function() db = false end)
+                -- Continue here (by adding shrink and expand inventory)
+            end
+        end)
         equipBest.MouseButton1Click:Connect(function()
             if not db then db = true task.delay(.15, function() db = false end)
                 local success = network:InvokeServer('EquipBest');
@@ -334,10 +452,34 @@ function InventoryHandler.LoadInventory()
         end)
         deleteAll.MouseButton1Click:Connect(function()
             if not db then db = true task.delay(.15, function() db = false end)
-                print('Player pressed delete all button.');
+                local warningPopup = warning.new(
+                    nil,
+                    "Are you sure you want to delete all unlocked pets below the Legendary rarity?",
+                    function()
+                        menuHandler.handleOpenClose(inventoryFrame)
+                        local success, deletedIds = network:InvokeServer('DeleteAllUnlocked');
+                        if success then
+                            InventoryHandler.LoadInventory();
+                            for _, id in ipairs(deletedIds) do
+                                holder:FindFirstChild(id, true):Destroy();
+                                if selectedPetID == id then
+                                    selectedPetID = nil;
+                                    petInfoHolder.Visible = false;
+                                end
+                            end
+                        end
+                    end,
+                    function()
+                        menuHandler.handleOpenClose(inventoryFrame)
+                    end,
+                    warningFrame
+                )
+                menuHandler.handleOpenClose(warningFrame)
             end
         end)
+        bulkButtonsConnected = true;
     end
+
 
     local pets = profile.Pets;
     local normalTbl, secretTbl = SeperatePets(pets, false);
@@ -481,7 +623,9 @@ function InventoryHandler.LoadInventory()
     end
 end
 
-
+function InventoryHandler.ParseMenuHandler(handler)
+    menuHandler = handler;
+end
 
 function InventoryHandler.Initialize()
     if not game.Loaded then game.Loaded:Wait() end;
@@ -490,6 +634,7 @@ function InventoryHandler.Initialize()
         while task.wait(1) do
             if not selectedPetID then continue end;
             if not inventoryFrame.Visible then continue end;
+            if mutliDeleteActive then continue end;
             LoadPetInfo(selectedPetID);
         end
     end)

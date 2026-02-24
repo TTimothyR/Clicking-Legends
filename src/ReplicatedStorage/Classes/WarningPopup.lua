@@ -12,10 +12,10 @@ function Popup.new(title, message, confirmCallback, cancelCallback, frame)
 	self.connections = {}
 	
 	self.frame = frame
-	self.frame.Inside.Title.Text = self.title
-	self.frame.Inside.Message.Text = self.message
-	self.confirmButton = self.frame.Inside.Confirm
-	self.cancelButton = self.frame.Inside.Cancel
+	self.frame.Title.Text = self.title
+	self.frame.Message.Text = self.message
+	self.confirmButton = self.frame.Main.Buttons.Yes
+	self.cancelButton = self.frame.Main.Buttons.No
 	
 	table.insert(self.connections, self.confirmButton.MouseButton1Click:Connect(function()
 		if type(self.confirmCallback) == "function" then
@@ -28,6 +28,12 @@ function Popup.new(title, message, confirmCallback, cancelCallback, frame)
 			self.cancelCallback()
 		end
 		self:Cleanup()
+	end))
+	table.insert(self.connections, self.frame.Close.MouseButton1Click:Connect(function()
+		if type(self.cancelCallback) == "function" then
+			self.cancelCallback();
+		end
+		self:Cleanup();
 	end))
 	
 	return self

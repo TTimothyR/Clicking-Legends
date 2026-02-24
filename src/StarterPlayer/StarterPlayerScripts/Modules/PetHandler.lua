@@ -168,10 +168,7 @@ local function LoadPets(player: Player)
     end
 end
 
-function PetHandler.UpdatePets(player: Player)
-	local profile = network:InvokeServer('GetOtherData', player.Name)
-	local pets = profile.Pets
-
+function PetHandler.UpdatePets(player: Player, pets)
 	for i, petData in ipairs(pets) do
 		if petData.equipped and not petsFolder:FindFirstChild(player.Name):FindFirstChild(petData.id) then
 			PetHandler.UpdatePet(player, petData, true);
@@ -195,7 +192,7 @@ function PetHandler.UpdatePet(player: Player, petData, equip: boolean)
 		
 		local petName: StringValue = Instance.new('StringValue', model);
 		petName.Name = 'PetName';
-		petName.Value = petData.fullName;
+		petName.Value = petData.petName;
         
 		model:PivotTo(player.Character:WaitForChild('HumanoidRootPart').CFrame);
     else

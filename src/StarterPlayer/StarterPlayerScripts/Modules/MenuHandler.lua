@@ -30,6 +30,7 @@ local rebirthsFrame: Frame = frames:WaitForChild('Rebirths');
 local shopFrame: Frame = frames:WaitForChild('Shop');
 local playerListFrame: Frame = frames:WaitForChild('PlayerList');
 local tradeFrame: Frame = frames:WaitForChild('Trade');
+local warningFrame: Frame = frames:WaitForChild('Warning');
 
 local hud: ScreenGui = playerGui:WaitForChild('HUD');
 local left: Frame = hud:WaitForChild('Left');
@@ -58,6 +59,7 @@ local sizePos = {
     ["PlayerList"] = {UDim2.new(0.6,0,0.6,0), UDim2.new(0.5,0,0.5,0)},
     ["Trade"] = {UDim2.new(0.7,0,0.7,0), UDim2.new(0.5,0,0.5,0)},
     ["Info"] = {UDim2.new(0.45,0,0.45,0), UDim2.new(0.5,0,0.5,0)},
+    ["Warning"] = {UDim2.new(0.45,0,0.45,0), UDim2.new(0.5,0,0.5,0)},
 };
 local animationTime = .15;
 local fov = camera.FieldOfView;
@@ -99,6 +101,8 @@ end
 
 function ButtonHandler.Initialize()
     if not game.Loaded then game.Loaded:Wait() end;
+
+	inventoryHandler.ParseMenuHandler(ButtonHandler);
     
     indexButton.MouseButton1Click:Connect(function()
         ButtonHandler.handleOpenClose(indexFrame, indexHandler.LoadIndex);
@@ -120,7 +124,7 @@ function ButtonHandler.Initialize()
     end)
 
 	for _, frame: Frame in ipairs(frames:GetChildren()) do
-		if frame:FindFirstChild('Close') then
+		if frame:FindFirstChild('Close') and frame.Name ~= 'Warning' then
 			frame:FindFirstChild('Close').MouseButton1Click:Connect(function()
 				if not db then db = true task.delay(.15, function() db = false end)
 					ButtonHandler.closeFrame(frame);

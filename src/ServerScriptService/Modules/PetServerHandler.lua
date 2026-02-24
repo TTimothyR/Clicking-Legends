@@ -8,13 +8,15 @@ local rs = game:GetService('ReplicatedStorage');
 -- Variables
 local dataModules: Folder = sss:WaitForChild('DataModules');
 local framework: Folder = rs:WaitForChild('Framework');
+local library: Folder = framework:WaitForChild('Library');
 
 -- Modules
 local playerData = require(dataModules.PlayerData);
 local tblUtil = require(framework.TableUtility);
 local network = require(framework.Network);
 local globals = require(framework.Globals);
-local generateID = require(framework.GenerateID)
+local generateID = require(framework.GenerateID);
+local petStats = require(library.PetStats);
 
 local function GetPetAmount(profile, petName: string)
     local count = 0;
@@ -87,7 +89,7 @@ function PetHandler.EquipBest(player: Player)
         profile.CurrentEquips += 1;
     end
     for _, plr: Player in ipairs(players:GetPlayers()) do
-        network:FireClient(plr, 'UpdatePets', player);
+        network:FireClient(plr, 'UpdatePets', player, table.clone(pets));
     end
 
     return true;
@@ -104,7 +106,7 @@ function PetHandler.UnequipAll(player: Player)
     end
 
     for _, plr: Player in ipairs(players:GetPlayers()) do
-        network:FireClient(plr, 'UpdatePets', player);
+        network:FireClient(plr, 'UpdatePets', player, table.clone(pets));
     end
 
     return true;
@@ -147,6 +149,69 @@ function PetHandler.DeletePet(player: Player, id: string)
     return true;
 end
 
+function PetHandler.DeleteAllUnlocked(player: Player)
+    local profile = playerData.GetData(player)
+    if not profile then return false end;
+
+    if profile.IsInTrade then return false end;
+
+    local idsToRemove = {};
+    local pets = profile.Pets
+
+    for i, petData in ipairs(pets) do
+        if petData.locked then continue end;
+        if petStats[petData.petName].Rarity == 'Legendary' then continue end;
+        if petStats[petData.petName].Rarity == 'Secret' then continue end;
+        if petData.equipped then
+            petData.equipped = false;
+            profile.CurrentEquips -= 1;
+        end
+        table.insert(idsToRemove, petData.id);
+    end
+    for _, plr: Player in ipairs(players:GetPlayers()) do
+        network:FireClient(plr, 'UpdatePets', player, table.clone(pets));
+    end
+
+    for _, id in ipairs(idsToRemove) do
+        local index, _ = tblUtil.FindIndexWithId(pets, id);
+        table.remove(pets, index);
+    end
+
+    return true, idsToRemove;
+end
+
+function PetHandler.DeleteSelection(player: Player, selection)
+    local profile = playerData.GetData(player);
+    if not profile then return false end;
+
+    if profile.IsInTrade then return false end;
+
+    local idsToRemove = {};
+    local pets = profile.Pets;
+
+    for id, _ in pairs(selection) do
+        local index, petData = tblUtil.FindIndexWithId(pets, id);
+        if not index then continue end;
+        if petData.locked then continue end;
+
+        if petData.equipped then
+            petData.equipped = false;
+            profile.CurrentEquips -= 1;
+        end
+        table.insert(idsToRemove, id);
+    end
+    for _, plr: Player in ipairs(players:GetPlayers()) do
+        network:FireClient(plr, 'UpdatePets', player, table.clone(pets));
+    end
+
+    for _, id in ipairs(idsToRemove) do
+        local index, _ = tblUtil.FindIndexWithId(pets, id);
+        table.remove(pets, index);
+    end
+
+    return true, idsToRemove;
+end
+
 function PetHandler.MakeShiny(player: Player, petName: string)
     local profile = playerData.GetData(player);
     if not profile then return false, nil end;
@@ -163,18 +228,19 @@ function PetHandler.MakeShiny(player: Player, petName: string)
         if petData.petName == petName and not petData.shiny and not petData.locked then
             table.insert(idsToRemove, petData.id);
             count += 1
+            if petData.equipped then
+                petData.equipped = false;
+                profile.CurrentEquips -= 1;
+            end
         end
+    end
+    for _, plr: Player in ipairs(players:GetPlayers()) do
+        network:FireClient(plr, 'UpdatePets', player, table.clone(pets));
     end
 
     for _, id in ipairs(idsToRemove) do
-        local index, petData = tblUtil.FindIndexWithId(pets, id);
-        if petData.equipped then
-            profile.CurrentEquips -= 1;
-        end
+        local index, _ = tblUtil.FindIndexWithId(pets, id);
         table.remove(pets, index);
-    end
-    for _, plr: Player in ipairs(players:GetPlayers()) do
-        network:FireClient(plr, 'UpdatePet', player);
     end
 
     table.insert(pets, {
