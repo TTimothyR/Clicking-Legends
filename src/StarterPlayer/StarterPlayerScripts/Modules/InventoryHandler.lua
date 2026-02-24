@@ -21,7 +21,6 @@ local bulkButtonsConnected = false;
 local mutliDeleteActive = false;
 local selectedPets = {};
 local selectedPetAmount = 0;
-local inventoryScale = 1;
 
 local CreateClickConnection
 
@@ -428,8 +427,7 @@ function InventoryHandler.LoadInventory()
         end)
         shrinkButton.MouseButton1Click:Connect(function()
             if not db then db = true task.delay(.15, function() db = false end)
-                inventoryScale = (inventoryScale == 1) and 2 or 1;
-                InventoryHandler.LoadInventory();
+                -- Continue here (by adding shrink and expand inventory)
             end
         end)
         equipBest.MouseButton1Click:Connect(function()
@@ -482,8 +480,6 @@ function InventoryHandler.LoadInventory()
         bulkButtonsConnected = true;
     end
 
-    print(inventoryScale);
-
 
     local pets = profile.Pets;
     local normalTbl, secretTbl = SeperatePets(pets, false);
@@ -535,11 +531,10 @@ function InventoryHandler.LoadInventory()
     local lastEquippedRow = -1
 
     for i, petData in ipairs(equippedSecretTbl) do
-        local row = math.floor((i-1)/(maxColNormal*inventoryScale));
-        local col = math.floor((i-1)%(maxColNormal*inventoryScale));
+        local row = math.floor((i-1)/maxColNormal);
+        local col = math.floor((i-1)%maxColNormal);
 
         local clone: ImageButton = equippedHolder:FindFirstChild(petData.id);
-        clone.Size = UDim2.new(equippedSecretTemplate.Size.X.Scale / inventoryScale, 0, equippedSecretTemplate.Size.Y.Scale / inventoryScale, 0);
         clone.Position = UDim2.new(
             clone.Size.X.Scale*col + clone.Size.X.Scale/2,
             0,
@@ -551,11 +546,10 @@ function InventoryHandler.LoadInventory()
         clone.Visible = true;
     end
     for i, petData in ipairs(equippedNormalTbl) do
-        local row = math.floor((i+#equippedSecretTbl-1)/(maxColNormal*inventoryScale));
-        local col = math.floor((i+#equippedSecretTbl-1)%(maxColNormal*inventoryScale));
+        local row = math.floor((i+#equippedSecretTbl-1)/maxColNormal);
+        local col = math.floor((i+#equippedSecretTbl-1)%maxColNormal);
 
         local clone: ImageButton = equippedHolder:FindFirstChild(petData.id);
-        clone.Size = UDim2.new(normalTemplate.Size.X.Scale / inventoryScale, 0, normalTemplate.Size.Y.Scale / inventoryScale, 0);
         clone.Position = UDim2.new(
             clone.Size.X.Scale*col + clone.Size.X.Scale/2,
             0,
@@ -573,17 +567,17 @@ function InventoryHandler.LoadInventory()
     local lastColumn = 0;
 
     for i, petData in ipairs(secretTbl) do
-        local row = math.floor((i-1)/(maxColSecret*inventoryScale));
+        local row = math.floor((i-1)/maxColSecret);
         lastRow = (row+1)*2;
-        local column = math.floor((i-1)%(maxColSecret*inventoryScale));
-        lastColumn = ((column+1)%(maxColSecret*inventoryScale))*2;
+        local column = math.floor((i-1)%maxColSecret);
+        lastColumn = ((column+1)%maxColSecret)*2;
 
         local clone: ImageButton = notEquippedHolder:FindFirstChild(petData.id);
-        clone.Size = UDim2.new(secretTemplate.Size.X.Scale / inventoryScale, 0, secretTemplate.Size.Y.Scale / inventoryScale, 0);
+        
         clone.Position = UDim2.new(
             clone.Size.X.Scale*column + clone.Size.X.Scale/2,
             0,
-            clone.Size.Y.Scale*row + clone.Size.Y.Scale/2 + (normalTemplate.Size.Y.Scale/inventoryScale) * lastEquippedRow,
+            clone.Size.Y.Scale*row + clone.Size.Y.Scale/2 + normalTemplate.Size.Y.Scale * lastEquippedRow,
             0
         );
 
@@ -593,38 +587,35 @@ function InventoryHandler.LoadInventory()
     local savedColumn = lastColumn;
     local rowsFilled = 0;
     local finalIndex = 0;
-    local secretRows = math.ceil(#secretTbl/(maxColSecret*inventoryScale));
-    local yPaddingCorrection = 0.043 / inventoryScale;
+    local secretRows = math.ceil(#secretTbl/maxColSecret);
+    local yPaddingCorrection = 0.043;
     local equipCorrection = (totalEquipped == 0) and 0 or yPaddingCorrection*3;
-    equipCorrection /= inventoryScale;
     local finalCorrection = lastEquippedRow == 0 and normalTemplate.Size.Y.Scale/2 or 0;
-    finalCorrection /= inventoryScale;
-    print(equipCorrection, finalCorrection);
 
     for i, petData in ipairs(normalTbl) do
         local clone: ImageButton = notEquippedHolder:FindFirstChild(petData.id);
-        clone.Size = UDim2.new(normalTemplate.Size.X.Scale / inventoryScale, 0, normalTemplate.Size.Y.Scale / inventoryScale, 0);
+
         if lastColumn > 0 and rowsFilled < 2 then
             local targetColumn = lastColumn + 1;
-            local row = math.floor((i-1)/((maxColNormal * inventoryScale)-savedColumn));
+            local row = math.floor((i-1)/(maxColNormal-savedColumn));
             
             lastColumn += 1;
-            if lastColumn == 6 * inventoryScale then
+            if lastColumn == 6 then
                 rowsFilled += 1;
                 lastColumn = savedColumn;
                 lastRow += 1;
             end
 
-            local xPos = (normalTemplate.Size.X.Scale/inventoryScale)*(targetColumn-1) + (normalTemplate.Size.X.Scale/inventoryScale)/2;
-            local yPos = (secretTemplate.Size.Y.Scale/inventoryScale)*(secretRows-1) + ((normalTemplate.Size.Y.Scale/inventoryScale)-yPaddingCorrection)*row + ((normalTemplate.Size.Y.Scale/inventoryScale) * lastEquippedRow) + equipCorrection + finalCorrection;
+            local xPos = normalTemplate.Size.X.Scale*(targetColumn-1) + normalTemplate.Size.X.Scale/2;
+            local yPos = secretTemplate.Size.Y.Scale*(secretRows-1) + (normalTemplate.Size.Y.Scale-yPaddingCorrection)*row + (normalTemplate.Size.Y.Scale * lastEquippedRow) + equipCorrection + finalCorrection;
             clone.Position = UDim2.new(xPos, 0, yPos, 0)
             finalIndex = i;
         else
-            local targetRow = secretRows * 2 + math.floor((i-finalIndex-1)/(maxColNormal * inventoryScale));
-            local targetColumn = math.floor((i-finalIndex-1)%(maxColNormal * inventoryScale));
+            local targetRow = secretRows * 2 + math.floor((i-finalIndex-1)/maxColNormal);
+            local targetColumn = math.floor((i-finalIndex-1)%maxColNormal);
 
-            local xPos = (normalTemplate.Size.X.Scale/inventoryScale)*targetColumn + (normalTemplate.Size.X.Scale/inventoryScale)/2;
-            local yPos = (secretTemplate.Size.Y.Scale/inventoryScale)*secretRows + ((normalTemplate.Size.Y.Scale/inventoryScale)-yPaddingCorrection)*(targetRow-secretRows*2) + ((normalTemplate.Size.Y.Scale/inventoryScale) * lastEquippedRow) + equipCorrection + finalCorrection;
+            local xPos = normalTemplate.Size.X.Scale*targetColumn + normalTemplate.Size.X.Scale/2;
+            local yPos = secretTemplate.Size.Y.Scale*secretRows + (normalTemplate.Size.Y.Scale-yPaddingCorrection)*(targetRow-secretRows*2) + (normalTemplate.Size.Y.Scale * lastEquippedRow) + equipCorrection + finalCorrection;
             clone.Position = UDim2.new(xPos, 0, yPos, 0)
         end
 
