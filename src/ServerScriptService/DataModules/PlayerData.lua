@@ -6,8 +6,9 @@ local sss = game:GetService("ServerScriptService")
 local PlayerDataTemplate = require(rs.PlayerData)
 local ProfileStore = require(sss.DataModules.ProfileStore)
 local leaderstats = require(sss.DataModules.leaderstats)
+local dataSync = require(script.Parent.DataSyncServer);
 
-local v = "23"
+local v = "24"
 local dataKey = "OfficialV"..v
 if runService:IsStudio() then
 	dataKey = "TestV"..v
@@ -57,6 +58,8 @@ function Local.LoadProfile(player: Player)
 	end
 	leaderstats:CreateLeaderstats(player, profile)
 	profile.Data.ClickDebounce = false
+
+	dataSync.InitializePlayer(player, profile.Data);
 end
 
 function Local.RemoveProfile(player: Player)

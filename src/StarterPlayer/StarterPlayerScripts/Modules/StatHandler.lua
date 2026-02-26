@@ -50,6 +50,7 @@ local infMath = require(framework.InfiniteMath);
 local util = require(framework.Utility);
 local globals = require(framework.Globals);
 local imageService = require(library.ImageService);
+local dataSync = require(script.Parent.DataSyncClient);
 
 -- Constants
 local rotationTime: number = 15;
@@ -224,12 +225,12 @@ local function CriticalHitEffect()
     end
 end
 
-local function UpdateStatDisplay(currencyStr: string)
+local function UpdateStatDisplay(currencyStr: string, newValue)
     if not statsLoaded then return end;
     local currencyFrame: Frame = statsFrame[currencyStr]
     local goalValue: number = 1;
 
-    local targetValue = infMath.new(http:JSONDecode(plr:GetAttribute(currencyStr)));
+    -- local targetValue = infMath.new(http:JSONDecode(plr:GetAttribute(currencyStr)));
 
     local data = animationData[currencyStr];
 
@@ -243,7 +244,7 @@ local function UpdateStatDisplay(currencyStr: string)
     data.currentAnimValue = infMath.new(data.currentValue);
 
     local startValue = data.currentValue;
-    local delta = infMath.new(targetValue - startValue);
+    local delta = infMath.new(newValue - startValue);
 
     if currencyStr == 'Gems' then
         task.spawn(PopUp, delta, currencyStr)
@@ -256,7 +257,7 @@ local function UpdateStatDisplay(currencyStr: string)
         currencyFrame.Background.Amount.Text = data.currentAnimValue:GetSuffix(true);
     end)
     data.activeTween:Play();
-    data.currentValue = targetValue;
+    data.currentValue = newValue;
 end
 
 local function ClickByButton()
@@ -415,14 +416,22 @@ function ClickHandler.Initialize()
         end
     end)
 
-    plr:GetAttributeChangedSignal('Clicks'):Connect(function()
-        task.spawn(UpdateStatDisplay, 'Clicks');
-    end)
+    -- plr:GetAttributeChangedSignal('Clicks'):Connect(function()
+    --     task.spawn(UpdateStatDisplay, 'Clicks');
+    -- end)
 
-    plr:GetAttributeChangedSignal('Gems'):Connect(function()
-        task.spawn(UpdateStatDisplay, 'Gems');
-    end)
+    -- plr:GetAttributeChangedSignal('Gems'):Connect(function()
+    --     task.spawn(UpdateStatDisplay, 'Gems');
+    -- end)
 end
 
+dataSync.OnReady(function()
+    local targetValue = dataSync.Get('Clicks');
+    task.spawn(UpdateStatDisplay, 'Clicks', targetValue);
+end)
+
+dataSync.OnChanged('Clicks', function(newValue, oldValue)
+    task.spawn(UpdateStatDisplay, 'Clicks', newValue);
+end)
 
 return ClickHandler;

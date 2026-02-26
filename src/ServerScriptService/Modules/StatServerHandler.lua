@@ -25,6 +25,7 @@ local network = require(framework.Network);
 local petStats = require(library.PetStats);
 local globals = require(framework.Globals);
 local petHandler = require(script.Parent.PetServerHandler);
+local dataSync = require(dataModules.DataSyncServer);
 
 -- Constants
 local clickDebounce = 0.15;
@@ -100,6 +101,8 @@ function StatHandler.Click(player: Player)
     task.delay(clickDebounce, function()
         profile.ClickDebounce = false;
     end)
+
+    dataSync.SyncPlayer(player, profile);
 
     return increment, critical
 end

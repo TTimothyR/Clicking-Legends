@@ -1,11 +1,20 @@
 local Shared = {}
 
+-- Services
+local rs = game:GetService('ReplicatedStorage');
+
+-- Variables
+local framework = rs:WaitForChild('Framework');
+
+-- Modules
+local infMath = require(framework.InfiniteMath);
+
 Shared.DEFAULT_PLAYER_DATA = {
-    ActualClicks = 0,
-    Clicks = 0,
-    Gems = 0,
-    Rebirths = 1,
-    Eggs = 0,
+    ActualClicks = infMath.new(0),
+    Clicks = infMath.new(0),
+    Gems = infMath.new(0),
+    Rebirths = infMath.new(1),
+    Eggs = infMath.new(0),
 
     LuckPercentage = 0,
     EggHatches = 3,
