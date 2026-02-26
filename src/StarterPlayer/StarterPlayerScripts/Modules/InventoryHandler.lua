@@ -72,6 +72,13 @@ local menuHandler = nil;
 local maxColSecret = 3;
 local maxColNormal = 6;
 
+local function RemovePetConnection(id: string)
+    if petConnections[id] then
+        petConnections[id]:Disconnect();
+        petConnections[id] = nil;
+    end
+end
+
 local function SeperatePets(petsTbl, equipped)
     local normalTbl = {};
     local secretTbl = {};
@@ -209,6 +216,7 @@ local function LoadPetInfo(id: string)
 
             InventoryHandler.LoadInventory();
             holder:FindFirstChild(id, true):Destroy();
+            RemovePetConnection(id);
         end
     end)
     shinyCon = petInfoButtons.Shiny.MouseButton1Click:Connect(function()
@@ -221,6 +229,7 @@ local function LoadPetInfo(id: string)
             InventoryHandler.LoadInventory();
             for _, id in ipairs(usedIds) do
                 holder:FindFirstChild(id, true):Destroy();
+                RemovePetConnection(id);
             end
         end
     end)
@@ -230,8 +239,8 @@ local function LoadPetInfo(id: string)
             if not success then return end;
             -- TODO: Make sure the lock button gets updated after the toggle
             petData.locked = newState;
-            LoadPetInfo(petData.id);
-            local petClone = holder:FindFirstChild(petData.id, true)
+            LoadPetInfo(id);
+            local petClone = holder:FindFirstChild(id, true)
             CreateClickConnection(petClone, petData)
             petClone.Frame.Locked.Visible = newState;
         end
@@ -246,11 +255,10 @@ local function LoadPetInfo(id: string)
 end
 
 CreateClickConnection = function(clone: ImageButton, petData)
-    if petConnections[petData.id] then
-        petConnections[petData.id]:Disconnect();
-    end
+    RemovePetConnection(petData.id);
     local clickCon: RBXScriptConnection = clone.MouseButton1Click:Connect(function()
         if not db then db = true task.delay(.15, function() db = false end)
+            print(selectedPetID);
             if mutliDeleteActive then
                 if petData.locked then return end;
                 if selectedPets[petData.id] then
@@ -300,14 +308,14 @@ local function CreateEquippedPet(petData, template)
             clone.Frame.Legendary.Enabled = true;
         end
     end
-    clone:GetPropertyChangedSignal('Parent'):Once(function()
-        if petConnections[petData.id] then
-            if petConnections[petData.id].Connected then
-                petConnections[petData.id]:Disconnect();
-            end
-            petConnections[petData.id] = nil;
-        end
-    end)
+    -- clone:GetPropertyChangedSignal('Parent'):Once(function()
+    --     if petConnections[petData.id] then
+    --         if petConnections[petData.id].Connected then
+    --             petConnections[petData.id]:Disconnect();
+    --         end
+    --         petConnections[petData.id] = nil;
+    --     end
+    -- end)
     CreateClickConnection(clone, petData);
 end
 
@@ -323,14 +331,14 @@ local function CreateNormalPet(petData)
         clone.Glow.Visible = true;
         clone.Frame.Legendary.Enabled = true;
     end
-    clone:GetPropertyChangedSignal('Parent'):Once(function()
-        if petConnections[petData.id] then
-            if petConnections[petData.id].Connected then
-                petConnections[petData.id]:Disconnect();
-            end
-            petConnections[petData.id] = nil;
-        end
-    end)
+    -- clone:GetPropertyChangedSignal('Parent'):Once(function()
+    --     if petConnections[petData.id] then
+    --         if petConnections[petData.id].Connected then
+    --             petConnections[petData.id]:Disconnect();
+    --         end
+    --         petConnections[petData.id] = nil;
+    --     end
+    -- end)
     CreateClickConnection(clone, petData);
 end
 
@@ -349,14 +357,14 @@ local function CreateSecretPet(petData)
         local simplifiedChance = infMath.new((1/chance)*100);
         clone.Frame.Chance.Text = '1 in '..simplifiedChance:GetSuffix(true);
     end
-    clone:GetPropertyChangedSignal('Parent'):Once(function()
-        if petConnections[petData.id] then
-            if petConnections[petData.id].Connected then
-                petConnections[petData.id]:Disconnect();
-            end
-            petConnections[petData.id] = nil;
-        end
-    end)
+    -- clone:GetPropertyChangedSignal('Parent'):Once(function()
+    --     if petConnections[petData.id] then
+    --         if petConnections[petData.id].Connected then
+    --             petConnections[petData.id]:Disconnect();
+    --         end
+    --         petConnections[petData.id] = nil;
+    --     end
+    -- end)
     CreateClickConnection(clone, petData);
 end
 
@@ -497,6 +505,7 @@ function InventoryHandler.LoadInventory()
     for i, petData in ipairs(equippedSecretTbl) do
         if notEquippedHolder:FindFirstChild(petData.id) then
             notEquippedHolder:FindFirstChild(petData.id):Destroy();
+            RemovePetConnection(petData.id);
         end
         if not equippedHolder:FindFirstChild(petData.id) then
             CreateEquippedPet(petData, equippedSecretTemplate);
@@ -505,6 +514,7 @@ function InventoryHandler.LoadInventory()
     for i, petData in ipairs(equippedNormalTbl) do
         if notEquippedHolder:FindFirstChild(petData.id) then
             notEquippedHolder:FindFirstChild(petData.id):Destroy();
+            RemovePetConnection(petData.id);
         end
         if not equippedHolder:FindFirstChild(petData.id) then
             CreateEquippedPet(petData, normalTemplate)
@@ -514,6 +524,7 @@ function InventoryHandler.LoadInventory()
     for i, petData in ipairs(secretTbl) do
         if equippedHolder:FindFirstChild(petData.id) then
             equippedHolder:FindFirstChild(petData.id):Destroy();
+            RemovePetConnection(petData.id);
         end
         if not notEquippedHolder:FindFirstChild(petData.id) then
             CreateSecretPet(petData);
@@ -522,6 +533,7 @@ function InventoryHandler.LoadInventory()
     for i, petData in ipairs(normalTbl) do
         if equippedHolder:FindFirstChild(petData.id) then
             equippedHolder:FindFirstChild(petData.id):Destroy();
+            RemovePetConnection(petData.id);
         end
         if not notEquippedHolder:FindFirstChild(petData.id) then
             CreateNormalPet(petData);
