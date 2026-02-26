@@ -31,6 +31,7 @@ local shopFrame: Frame = frames:WaitForChild('Shop');
 local playerListFrame: Frame = frames:WaitForChild('PlayerList');
 local tradeFrame: Frame = frames:WaitForChild('Trade');
 local warningFrame: Frame = frames:WaitForChild('Warning');
+local infoFrame: Frame = frames:WaitForChild('Info');
 
 local hud: ScreenGui = playerGui:WaitForChild('HUD');
 local left: Frame = hud:WaitForChild('Left');
@@ -84,7 +85,7 @@ end
 
 function ButtonHandler.handleOpenClose(frame, func)
 	if not db then db = true task.delay(.15, function() db = false end)
-		if (ButtonHandler.activeFrame == tradeFrame) and (frame ~= tradeFrame) then
+		if (ButtonHandler.activeFrame == tradeFrame) and (frame ~= tradeFrame) and (frame ~= infoFrame) then
 			return
 		end
 		if frame == ButtonHandler.activeFrame then
@@ -124,7 +125,7 @@ function ButtonHandler.Initialize()
     end)
 
 	for _, frame: Frame in ipairs(frames:GetChildren()) do
-		if frame:FindFirstChild('Close') and frame.Name ~= 'Warning' then
+		if frame:FindFirstChild('Close') and frame.Name ~= 'Warning' and frame.name ~= 'Info' then
 			frame:FindFirstChild('Close').MouseButton1Click:Connect(function()
 				if not db then db = true task.delay(.15, function() db = false end)
 					ButtonHandler.closeFrame(frame);

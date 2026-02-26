@@ -22,6 +22,13 @@ function Popup.new(title, message, confirmCallback, frame)
 		self:Cleanup()
 	end))
 
+	table.insert(self.connections, self.frame.Close.MouseButton1Click:Connect(function()
+		if type(self.confirmCallback) == "function" then
+			self.confirmCallback();
+		end
+		self:Cleanup();
+	end))
+
 	return self
 end
 

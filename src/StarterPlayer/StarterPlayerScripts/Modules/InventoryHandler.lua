@@ -258,7 +258,6 @@ CreateClickConnection = function(clone: ImageButton, petData)
     RemovePetConnection(petData.id);
     local clickCon: RBXScriptConnection = clone.MouseButton1Click:Connect(function()
         if not db then db = true task.delay(.15, function() db = false end)
-            print(selectedPetID);
             if mutliDeleteActive then
                 if petData.locked then return end;
                 if selectedPets[petData.id] then

@@ -102,6 +102,8 @@ local function CompleteTrade(tradeID: string)
 
     trades[tradeID] = nil;
 
+    profile1.IsInTrade = false;
+    profile2.IsInTrade = false;
 
     for _, playerName in ipairs(playerNames) do
         local plr: Player = players:FindFirstChild(playerName);

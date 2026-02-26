@@ -46,8 +46,7 @@ end
 function PetHandler.EquipPet(player: Player, id: string)
     local profile = playerData.GetData(player);
     if not profile then return false end;
-
-    if profile.CurrentEquips == profile.PetEquips then return false end;
+    if profile.CurrentEquips >= profile.PetEquips then return false end;
 
     local pets = profile.Pets
     local index, petData = tblUtil.FindIndexWithId(pets, id);
@@ -101,8 +100,10 @@ function PetHandler.UnequipAll(player: Player)
 
     local pets = profile.Pets
     for _, petData in ipairs(pets) do
-        petData.equipped = false;
-        profile.CurrentEquips -= 1;
+        if petData.equipped then
+            petData.equipped = false;
+            profile.CurrentEquips -= 1;
+        end
     end
 
     for _, plr: Player in ipairs(players:GetPlayers()) do
@@ -119,6 +120,8 @@ function PetHandler.UnequipPet(player: Player, id: string)
     local pets = profile.Pets
     local index, petData = tblUtil.FindIndexWithId(pets, id);
     if not index then return false end;
+
+    if not petData.equipped then return false end;
 
     for _, plr: Player in ipairs(players:GetPlayers()) do
         network:FireClient(plr, 'UpdatePet', player, petData, false);
