@@ -19,6 +19,7 @@ local generateID = require(framework.GenerateID);
 local playerData = require(dataModules.PlayerData);
 local tblUtil = require(framework.TableUtility);
 local petHandler = require(script.Parent.PetServerHandler);
+local dataSync = require(dataModules.DataSyncServer);
 
 -- Constants
 local startTime = 7;
@@ -105,6 +106,9 @@ local function CompleteTrade(tradeID: string)
     profile1.IsInTrade = false;
     profile2.IsInTrade = false;
 
+    dataSync.SyncPlayer(player1, profile1);
+    dataSync.SyncPlayer(player2, profile2);
+
     for _, playerName in ipairs(playerNames) do
         local plr: Player = players:FindFirstChild(playerName);
         network:FireClient(plr, 'TradeFinished');
@@ -172,6 +176,7 @@ function TradeHandler.RequestAnswer(you: Player, me: Player, choice: boolean)
             pendingRequests[you.Name] = nil;
             profile1.TradeRequestFrom = '';
             network:FireClient(me, 'UpdateTradeButtons');
+            dataSync.SyncPlayer(you, profile1);
         end
     end
     
@@ -211,6 +216,9 @@ function TradeHandler.RequestAnswer(you: Player, me: Player, choice: boolean)
             for _, plr: Player in ipairs(players:GetPlayers()) do
                 network:FireClient(plr, 'UpdateTradeButtons', me, you);
             end
+
+            dataSync.SyncPlayer(you, profile1);
+            dataSync.SyncPlayer(me, profile2);
         end
     end
 end
@@ -232,11 +240,13 @@ function TradeHandler.SendTradeRequest(me: Player, you: Player)
     profile.TradeRequestFrom = me.Name;
     pendingRequests[you.Name] = me.Name;
 
+    dataSync.SyncPlayer(you, profile);
 
     task.delay(10, function()
         if pendingRequests[you.Name] and (pendingRequests[you.Name] == me.Name) then
             pendingRequests[you.Name] = nil;
             profile.TradeRequestFrom = '';
+            dataSync.SyncPlayer(you, profile);
             network:FireClient(you, 'HideTradeRequest');
             network:FireClient(me, 'UpdateTradeButtons')
         end
@@ -348,6 +358,7 @@ function TradeHandler.ResetVariables(player: Player)
     local profile = playerData.GetData(player);
     profile.IsInTrade = false;
     profile.TradeRequestFrom = 'RunService';
+    dataSync.SyncPlayer(player, profile);
 end
 
 function TradeHandler.Initialize()

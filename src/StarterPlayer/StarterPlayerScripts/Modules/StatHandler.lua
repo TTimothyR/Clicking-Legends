@@ -57,7 +57,6 @@ local rotationTime: number = 15;
 local animationTime: number = 0.5;
 local debounceTime: number = 0.15;
 local textEndSize: UDim2 = UDim2.new(1,0,0.5,0);
-local currencies = {'Clicks', 'Gems'};
 local characterGroup = "CHAR";
 local debrisGroup = 'DEBRIS';
 
@@ -230,8 +229,6 @@ local function UpdateStatDisplay(currencyStr: string, newValue)
     local currencyFrame: Frame = statsFrame[currencyStr]
     local goalValue: number = 1;
 
-    -- local targetValue = infMath.new(http:JSONDecode(plr:GetAttribute(currencyStr)));
-
     local data = animationData[currencyStr];
 
     if data.activeTween then
@@ -290,11 +287,11 @@ local function StartCPSTrack()
     local cpsText: TextLabel = currencyFrame.Background.CPS;
     cpsText.Text = "0/s";
 
+    local startClicks = dataSync.Get('Clicks');
+
     local lastClickTable;
-    local startJSON = util.WaitForAttribute(plr, 'Clicks');
-    if startJSON then
-        local tbl = http:JSONDecode(startJSON);
-        lastClickTable = tbl;
+    if startClicks then
+        lastClickTable = startClicks;
     else
         lastClickTable = infMath.new(0);
     end
@@ -307,8 +304,6 @@ local function StartCPSTrack()
 
     while true do
         task.wait(updateTime);
-
-        local jsonString = plr:GetAttribute('Clicks');
         if currentTween then
             currentTween:Cancel();
         end
@@ -316,8 +311,9 @@ local function StartCPSTrack()
             currentConnection:Disconnect();
         end
 
-        if jsonString then
-            local currentRaw = http:JSONDecode(jsonString);
+        local currentClicks = dataSync.Get('Clicks');
+        if currentClicks then
+            local currentRaw = currentClicks;
             local currentTbl = infMath.new(currentRaw);
 
             local cps = infMath.new(currentTbl - lastClickTable);
@@ -366,25 +362,18 @@ local function UpdateAutoClickButton(status: boolean)
     toggleButton.Title.Text = text;
 end
 
-function ClickHandler.LoadStatDisplay(profile)
-    for _, currency: string in ipairs(currencies) do
-        statsFrame[currency].Background.Amount.Text = infMath.new(profile[currency]):GetSuffix(true);
+local function LoadStatDisplay(currency, value)
+    local numValue = Instance.new('NumberValue', script);
+    numValue.Name = currency;
+    numValue.Value = 0;
 
-        local numValue = Instance.new('NumberValue', script);
-        numValue.Name = currency;
-        numValue.Value = 0;
-
-        animationData[currency] = {
-            currentValue = infMath.new(profile[currency]),
-            currentAnimValue = infMath.new(0),
-            activeTween = ts:Create(numValue, TweenInfo.new(0),{Value = 0}),
-            activeConnection = nil,
-            tweenNumber = numValue
-        };
-    end
-    autoClickStatus = profile.AutoClickerStatus;
-    UpdateAutoClickButton(autoClickStatus);
-    statsLoaded = true;
+    animationData[currency] = {
+        currentValue = infMath.new(value),
+        currentAnimValue = infMath.new(0),
+        activeTween = ts:Create(numValue, TweenInfo.new(0),{Value = 0}),
+        activeConnection = nil,
+        tweenNumber = numValue
+    };
 end
 
 function ClickHandler.Initialize()
@@ -411,9 +400,36 @@ function ClickHandler.Initialize()
 
     toggleButton.MouseButton1Click:Connect(function()
         if not db then db = true task.delay(debounceTime, function() db = false end)
-            autoClickStatus = network:InvokeServer('ToggleAutoClicker');
-            UpdateAutoClickButton(autoClickStatus);
+            network:FireServer('ToggleAutoClicker');
         end
+    end)
+
+    
+    dataSync.OnReady(function()
+        local targetClicks = dataSync.Get('Clicks');
+        local targetGems = dataSync.Get('Gems');
+        task.spawn(UpdateStatDisplay, 'Clicks', targetClicks);
+        task.spawn(UpdateStatDisplay, 'Gems', targetGems);
+        task.spawn(LoadStatDisplay, 'Clicks', targetClicks);
+        task.spawn(LoadStatDisplay, 'Gems', targetGems);
+
+        autoClickStatus = dataSync.Get('AutoClickerStatus');
+        UpdateAutoClickButton(autoClickStatus);
+
+        statsLoaded = true;
+    end)
+
+    dataSync.OnChanged('Clicks', function(newValue, oldValue)
+        task.spawn(UpdateStatDisplay, 'Clicks', newValue);
+    end)
+    
+    dataSync.OnChanged('Gems', function(newValue, oldValue)
+        task.spawn(UpdateStatDisplay, 'Gems', newValue);
+    end)
+
+    dataSync.OnChanged('AutoClickerStatus', function(new)
+        autoClickStatus = new;
+        UpdateAutoClickButton(autoClickStatus);
     end)
 
     -- plr:GetAttributeChangedSignal('Clicks'):Connect(function()
@@ -424,14 +440,5 @@ function ClickHandler.Initialize()
     --     task.spawn(UpdateStatDisplay, 'Gems');
     -- end)
 end
-
-dataSync.OnReady(function()
-    local targetValue = dataSync.Get('Clicks');
-    task.spawn(UpdateStatDisplay, 'Clicks', targetValue);
-end)
-
-dataSync.OnChanged('Clicks', function(newValue, oldValue)
-    task.spawn(UpdateStatDisplay, 'Clicks', newValue);
-end)
 
 return ClickHandler;

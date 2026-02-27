@@ -8,7 +8,7 @@ local runService = game:GetService('RunService');
 
 -- Variables
 repeat task.wait() until players.LocalPlayer;
-local player: Player = players.LocalPlayer;
+local plr: Player = players.LocalPlayer;
 local petsFolder: Folder = workspace:WaitForChild('EquippedPets');
 
 local framework: Folder = rs:WaitForChild('Framework');
@@ -21,6 +21,7 @@ local tValues = {};
 -- Modules
 local network = require(framework.Network);
 local petStats = require(library.PetStats);
+local dataSync = require(script.Parent.DataSyncClient);
 
 -- Constants
 local amplitude = 1
@@ -157,9 +158,13 @@ local function handlePets(folder: Folder)
 end
 
 local function LoadPets(player: Player)
-    local profile = network:InvokeServer('GetOtherData', player.Name);
-
-    local pets = profile.Pets;
+    -- local profile = dataSync.GetOtherData(player.UserId);
+    local pets;
+	if player == plr then
+		pets = dataSync.Get('Pets');
+	else
+		pets = dataSync.GetOtherData(player.UserId).Pets;
+	end
 
     for _, data in ipairs(pets) do
         if data.equipped then
@@ -203,10 +208,12 @@ end
 function PetHandler.Initialize()
     if not game.Loaded then game.Loaded:Wait() end;
 
-    for _, folder: Folder in ipairs(petsFolder:GetChildren()) do
-        LoadPets(players:FindFirstChild(folder.Name));
-        task.delay(.2, handlePets, folder);
-    end
+	dataSync.OnReady(function()
+		for _, folder: Folder in ipairs(petsFolder:GetChildren()) do
+			LoadPets(players:FindFirstChild(folder.Name));
+			task.delay(.2, handlePets, folder);
+		end
+	end)
     players.PlayerAdded:Connect(function(player)
         LoadPets(player);
         task.delay(.2, handlePets, petsFolder:FindFirstChild(player.Name));

@@ -34,14 +34,14 @@ local eggStats = require(library.EggStats);
 local petStats = require(library.PetStats);
 local network = require(framework.Network);
 local globals = require(framework.Globals);
+local dataSync = require(script.Parent.DataSyncClient);
 
 local function SetupTemplate(ui)
     local petHolder = ui.Main.PetsFrame.Holder;
     local buttons = ui.Main.Buttons;
 
-    local profile = network:InvokeServer('GetData');
-    local index = profile.PetIndex;
-    local luckPercentage = profile.LuckPercentage;
+    local index = dataSync.Get('PetIndex');
+    local luckPercentage = dataSync.Get('LuckPercentage');
 
     for _, item in ipairs(petHolder:GetChildren()) do
         if item:IsA('ImageButton') then
@@ -51,9 +51,10 @@ local function SetupTemplate(ui)
             local rarity = petStat.Rarity;
             local discovered = index[item.Name];
 
-            local autoDeleted = network:InvokeServer('GetAutoDeleted', item.Name);
+            -- local autoDeleted = network:InvokeServer('GetAutoDeleted', item.Name);
+            local autoDeleted = dataSync.Get('AutoDeletedPets');
 
-            if autoDeleted then
+            if autoDeleted[item.Name] then
                 item.ImageLabel.ImageTransparency = 0.5;
             else
                 item.ImageLabel.ImageTransparency = 0;
@@ -86,13 +87,13 @@ local function SetupTemplate(ui)
     singleConnection = buttons.Hatch.MouseButton1Click:Connect(function()
         if not db then db = true task.delay(.15, function() db = false end)
             local egg = closestEgg2;
-            if egg ~= '' then network:InvokeServer('OpenEgg', egg, 1) end;
+            if egg ~= '' then network:FireServer('OpenEgg', egg, 1) end;
         end
     end)
     mutliConnection = buttons.Multi.MouseButton1Click:Connect(function()
         if not db then db = true task.delay(.15, function() db = false end)
             local egg = closestEgg2;
-            if egg ~= '' then network:InvokeServer('OpenEgg', egg, 3) end;
+            if egg ~= '' then network:FireServer('OpenEgg', egg, 3) end;
         end
     end)
     autoConnection = buttons.Auto.MouseButton1Click:Connect(function()
@@ -159,12 +160,11 @@ local function GetClosestEgg()
 end
 
 local function ConfigureEggUI(egg: Model)
-    local profile = network:InvokeServer('GetData');
-    local index = profile.PetIndex;
+    local index = dataSync.Get('PetIndex');
     local clone = eggUI:Clone();
     clone.Parent = eggHolder;
 
-    local luckPercentage = profile.LuckPercentage;
+    local luckPercentage = dataSync.Get('LuckPercentage');
 
     clone.Adornee = egg:FindFirstChild('View');
     table.insert(adornees, {
@@ -209,9 +209,10 @@ local function ConfigureEggUI(egg: Model)
         petClone.LayoutOrder = data[2];
 
         local discovered = index[petName];
-        local autoDeleted = network:InvokeServer('GetAutoDeleted', petName);
+        -- local autoDeleted = network:InvokeServer('GetAutoDeleted', petName);
+        local autoDeleted = dataSync.Get('AutoDeletedPets');
 
-        if autoDeleted then
+        if autoDeleted[petName] then
             petClone.ImageLabel.ImageTransparency = 0.5;
         else
             petClone.ImageLabel.ImageTransparency = 0;
@@ -238,9 +239,11 @@ end
 function EggUIHandler.Initialize()
     if not game.Loaded then game.Loaded:Wait() end;
 
-    for _, egg in ipairs(eggs:GetChildren()) do
-        ConfigureEggUI(egg);
-    end
+    dataSync.OnReady(function()
+        for _, egg in ipairs(eggs:GetChildren()) do
+            ConfigureEggUI(egg);
+        end
+    end)
 
     task.spawn(GetClosestEgg);
 
@@ -250,10 +253,10 @@ function EggUIHandler.Initialize()
         if input.UserInputType == Enum.UserInputType.Keyboard then
             if input.KeyCode == Enum.KeyCode.E then
                 local egg = closestEgg2;
-                if egg ~= '' then network:InvokeServer('OpenEgg', egg, 1) end;
+                if egg ~= '' then network:FireServer('OpenEgg', egg, 1) end;
             elseif input.KeyCode == Enum.KeyCode.R then
                 local egg = closestEgg2;
-                if egg ~= '' then network:InvokeServer('OpenEgg', egg, 3) end;
+                if egg ~= '' then network:FireServer('OpenEgg', egg, 3) end;
             elseif input.KeyCode == Enum.KeyCode.T then
                 local egg = closestEgg2
 				if egg ~= "" and not autoHatching then

@@ -8,29 +8,25 @@ local dataModules: Folder = sss:WaitForChild('DataModules');
 
 -- Modules
 local playerData = require(dataModules.PlayerData);
+local dataSync = require(dataModules.DataSyncServer);
 
 function AutoDeleteHandler.ToggleAutoDelete(player: Player, petName: string)
     local profile = playerData.GetData(player);
     if not profile then return end
 
+    local returnValue: boolean
+
     if profile.AutoDeletedPets[petName] then
         profile.AutoDeletedPets[petName] = nil;
-        return false;
+        returnValue = false;
     else
         profile.AutoDeletedPets[petName] = true;
-        return true;
+        returnValue = true;
     end
-end
 
-function AutoDeleteHandler.GetAutoDeleted(player: Player, petName: string)
-    local profile = playerData.GetData(player);
-    if not profile then return end;
+    dataSync.SyncPlayer(player, profile);
 
-    if profile.AutoDeletedPets[petName] then
-        return true;
-    else
-        return false;
-    end
+    return returnValue
 end
 
 return AutoDeleteHandler;

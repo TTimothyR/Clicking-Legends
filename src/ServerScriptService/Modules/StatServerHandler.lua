@@ -42,14 +42,6 @@ local function SetupCollision()
     physicsService:CollisionGroupSetCollidable(debrisGroup, debrisGroup, false);
 end
 
-local function sendStatsToClient(player: Player)
-    local profile = playerData.GetData(player);
-    player:SetAttribute('Clicks', http:JSONEncode(profile.Clicks));
-    player:SetAttribute('ActualClicks', http:JSONEncode(profile.ActualClicks));
-
-    network:FireClient(player, 'LoadStatDisplay', profile);
-end
-
 local function GetPetClicks(pets)
     local totalClicks = 0
 
@@ -95,8 +87,8 @@ function StatHandler.Click(player: Player)
     player.leaderstats.Clicks.Value = infMath.new(profile.Clicks):GetSuffix(true);
     profile.ActualClicks = infMath.new(profile.ActualClicks + infMath.new(1));
 
-    player:SetAttribute("Clicks", http:JSONEncode(profile.Clicks));
-    player:SetAttribute("ActualClicks", http:JSONEncode(profile.ActualClicks));
+    -- player:SetAttribute("Clicks", http:JSONEncode(profile.Clicks));
+    -- player:SetAttribute("ActualClicks", http:JSONEncode(profile.ActualClicks));
 
     task.delay(clickDebounce, function()
         profile.ClickDebounce = false;
@@ -112,22 +104,13 @@ function StatHandler.ToggleAutoClicker(player: Player)
     if not profile then return false end;
 
     profile.AutoClickerStatus = not profile.AutoClickerStatus;
-
-    return profile.AutoClickerStatus;
+    dataSync.SyncPlayer(player, profile);
 end
 
 function StatHandler.Initialize()
     if not game.Loaded then game.Loaded:Wait() end;
 
     SetupCollision();
-
-    for _, player: Player in ipairs(players:GetPlayers()) do
-        sendStatsToClient(player);
-    end
-
-    players.PlayerAdded:Connect(function(player: Player)
-        sendStatsToClient(player);
-    end)
 end
 
 return StatHandler;

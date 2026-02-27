@@ -64,14 +64,18 @@ local function CalculateDifference(old, new)
         elseif key == 'Pets' then
             changed = (oldValue == nil) or (#oldValue ~= #newValue);
             if not changed then
+                print('Pet amount not changed');
                 for i, newPet in ipairs(newValue) do
                     local oldPet = oldValue[i];
                     if oldPet == nil then changed = true break end;
+                    print('----------------------')
                     for statName, statValue in pairs(newPet) do
+                        print(statName, oldPet[statName], statValue)
                         if oldPet[statName] ~= statValue then changed = true break end;
                     end
                     if not changed then
                         for statName in pairs(oldPet) do
+                            print(statName, newPet[statName]);
                             if newPet[statName] == nil then changed = true break end;
                         end
                     end

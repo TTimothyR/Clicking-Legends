@@ -66,6 +66,7 @@ local eggStats = require(library.EggStats);
 local globals = require(framework.Globals);
 local tblUtil = require(framework.TableUtility);
 local warning = require(classes.WarningPopup);
+local dataSync = require(script.Parent.DataSyncClient);
 local menuHandler = nil;
 
 -- Constants
@@ -109,21 +110,19 @@ local function SortPets(petA, petB)
 end
 
 local function GetPetData(id: string)
-    local profile = network:InvokeServer('GetData');
-
-    local pets = profile.Pets;
+    local pets = dataSync.Get('Pets');
 
     for i, data in ipairs(pets) do
         if data.id == id then
-            return data, profile;
+            return data;
         end
     end
-    return nil, profile;
+    return nil;
 end
 
-local function GetPetAmount(profile, petName: string)
+local function GetPetAmount(pets, petName: string)
     local count = 0;
-    for i, petData in ipairs(profile.Pets) do
+    for i, petData in ipairs(pets) do
         if petData.petName == petName and not petData.shiny and not petData.locked then
             count += 1
         end
@@ -149,8 +148,9 @@ local function SetEquipButtonColor(newStatus: boolean)
 end
 
 local function LoadPetInfo(id: string)
-    local petData, profile = GetPetData(id);
+    local petData = GetPetData(id);
     if not petData then
+        -- DEBUG TO BE REMOVED
         warn('Player does not own pet with ID:', id);
         return;
     end
@@ -180,7 +180,7 @@ local function LoadPetInfo(id: string)
     elseif petData.locked then
         petInfoButtons.Shiny.Title.Text = 'Locked';
     else
-        petInfoButtons.Shiny.Title.Text = 'Make Shiny ('..GetPetAmount(profile, petData.petName)..'/8)';
+        petInfoButtons.Shiny.Title.Text = 'Make Shiny ('..GetPetAmount(dataSync.Get('Pets'), petData.petName)..'/8)';
     end
 
     SetEquipButtonColor(petData.equipped);
@@ -197,13 +197,13 @@ local function LoadPetInfo(id: string)
                 if not success then return end;
                 currentlyEquipped = true;
                 SetEquipButtonColor(currentlyEquipped);
-                InventoryHandler.LoadInventory();
+                -- InventoryHandler.LoadInventory();
             else
                 local success = network:InvokeServer('UnequipPet', id);
                 if not success then return end;
                 currentlyEquipped = false;
                 SetEquipButtonColor(currentlyEquipped);
-                InventoryHandler.LoadInventory();
+                -- InventoryHandler.LoadInventory();
             end
         end
     end)
@@ -214,7 +214,7 @@ local function LoadPetInfo(id: string)
             selectedPetID = nil;
             petInfoHolder.Visible = false;
 
-            InventoryHandler.LoadInventory();
+            -- InventoryHandler.LoadInventory();
             holder:FindFirstChild(id, true):Destroy();
             RemovePetConnection(id);
         end
@@ -226,7 +226,7 @@ local function LoadPetInfo(id: string)
             selectedPetID = nil;
             petInfoHolder.Visible = false;
 
-            InventoryHandler.LoadInventory();
+            -- InventoryHandler.LoadInventory();
             for _, id in ipairs(usedIds) do
                 holder:FindFirstChild(id, true):Destroy();
                 RemovePetConnection(id);
@@ -239,7 +239,7 @@ local function LoadPetInfo(id: string)
             if not success then return end;
             -- TODO: Make sure the lock button gets updated after the toggle
             petData.locked = newState;
-            LoadPetInfo(id);
+            -- LoadPetInfo(id);
             local petClone = holder:FindFirstChild(id, true)
             CreateClickConnection(petClone, petData)
             petClone.Frame.Locked.Visible = newState;
@@ -367,13 +367,14 @@ local function CreateSecretPet(petData)
     CreateClickConnection(clone, petData);
 end
 
-function InventoryHandler.LoadInventory()
-    local profile = network:InvokeServer('GetData');
-    if not profile then
-        warn('Failed to load player profile');
-        return;
-    end
+local function ReloadPetInfo()
+    if not selectedPetID then return end;
+    if not inventoryFrame.Visible then return end;
+    if mutliDeleteActive then return end;
+    LoadPetInfo(selectedPetID);
+end
 
+function InventoryHandler.LoadInventory()
     local function ClearMultiDelete()
         mutliDeleteActive = false;
         multiDeleteInfo.Visible = false;
@@ -398,7 +399,7 @@ function InventoryHandler.LoadInventory()
     
                 local success, deletedIds = network:InvokeServer('DeleteSelection', selectedPets);
                 if success then
-                    InventoryHandler.LoadInventory();
+                    -- InventoryHandler.LoadInventory();
                     for _, id in ipairs(deletedIds) do
                         holder:FindFirstChild(id, true):Destroy();
                         if selectedPetID == id then
@@ -432,29 +433,24 @@ function InventoryHandler.LoadInventory()
                 end
             end
         end)
-        shrinkButton.MouseButton1Click:Connect(function()
-            if not db then db = true task.delay(.15, function() db = false end)
-                -- Continue here (by adding shrink and expand inventory)
-            end
-        end)
         equipBest.MouseButton1Click:Connect(function()
             if not db then db = true task.delay(.15, function() db = false end)
-                local success = network:InvokeServer('EquipBest');
-                if not success then return end;
-                InventoryHandler.LoadInventory();
-                if selectedPetID ~= nil then
-                    LoadPetInfo(selectedPetID);
-                end
+                network:FireServer('EquipBest');
+                -- if not success then return end;
+                -- InventoryHandler.LoadInventory();
+                -- if selectedPetID ~= nil then
+                --     LoadPetInfo(selectedPetID);
+                -- end
             end
         end)
         unequipAll.MouseButton1Click:Connect(function()
             if not db then db = true task.delay(.15, function() db = false end)
-                local success = network:InvokeServer('UnequipAll');
-                if not success then return end;
-                InventoryHandler.LoadInventory();
-                if selectedPetID ~= nil then
-                    LoadPetInfo(selectedPetID);
-                end
+                network:FireServer('UnequipAll');
+                -- if not success then return end;
+                -- InventoryHandler.LoadInventory();
+                -- if selectedPetID ~= nil then
+                --     LoadPetInfo(selectedPetID);
+                -- end
             end
         end)
         deleteAll.MouseButton1Click:Connect(function()
@@ -466,7 +462,7 @@ function InventoryHandler.LoadInventory()
                         menuHandler.handleOpenClose(inventoryFrame)
                         local success, deletedIds = network:InvokeServer('DeleteAllUnlocked');
                         if success then
-                            InventoryHandler.LoadInventory();
+                            -- InventoryHandler.LoadInventory();
                             for _, id in ipairs(deletedIds) do
                                 holder:FindFirstChild(id, true):Destroy();
                                 if selectedPetID == id then
@@ -488,7 +484,7 @@ function InventoryHandler.LoadInventory()
     end
 
 
-    local pets = profile.Pets;
+    local pets = dataSync.Get('Pets');
     local normalTbl, secretTbl = SeperatePets(pets, false);
     local equippedNormalTbl, equippedSecretTbl = SeperatePets(pets, true);
     local totalEquipped = #equippedNormalTbl + #equippedSecretTbl;
@@ -498,8 +494,8 @@ function InventoryHandler.LoadInventory()
     equipBest.Visible = (totalEquipped == 0);
     unequipAll.Visible = not (totalEquipped == 0);
 
-    storageStat.TextLabel.Text = #pets..'/'..profile.PetStorage;
-    equippedStat.TextLabel.Text = totalEquipped..'/'..profile.PetEquips;
+    storageStat.TextLabel.Text = #pets..'/'..dataSync.Get('PetStorage');
+    equippedStat.TextLabel.Text = totalEquipped..'/'..dataSync.Get('PetEquips');
 
     for i, petData in ipairs(equippedSecretTbl) do
         if notEquippedHolder:FindFirstChild(petData.id) then
@@ -641,14 +637,30 @@ end
 function InventoryHandler.Initialize()
     if not game.Loaded then game.Loaded:Wait() end;
 
-    task.spawn(function()
-        while task.wait(1) do
-            if not selectedPetID then continue end;
-            if not inventoryFrame.Visible then continue end;
-            if mutliDeleteActive then continue end;
-            LoadPetInfo(selectedPetID);
-        end
+    dataSync.OnChanged('Pets', function()
+        InventoryHandler.LoadInventory();
+        ReloadPetInfo();
     end)
+
+    dataSync.OnChanged('PetEquips', function()
+        InventoryHandler.LoadInventory();
+    end)    
+    dataSync.OnChanged('CurrentEquips', function()
+        InventoryHandler.LoadInventory();
+    end)
+
+    dataSync.OnChanged('PetStorage', function()
+        InventoryHandler.LoadInventory();
+    end)
+
+    -- task.spawn(function()
+    --     while task.wait(1) do
+    --         if not selectedPetID then continue end;
+    --         if not inventoryFrame.Visible then continue end;
+    --         if mutliDeleteActive then continue end;
+    --         LoadPetInfo(selectedPetID);
+    --     end
+    -- end)
 end
 
 return InventoryHandler;

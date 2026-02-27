@@ -15,6 +15,7 @@ local library: Folder = framework:WaitForChild('Library');
 local autoRebirthStatus = false;
 local autoRebirthSelect = false;
 local selectedIndex = 0;
+local isLoaded = false;
 
 -- UI
 local playerGui = player:WaitForChild('PlayerGui');
@@ -34,6 +35,7 @@ local rebirthStats = require(library.RebirthStats);
 local globals = require(framework.Globals);
 local infMath = require(framework.InfiniteMath);
 local network = require(framework.Network);
+local dataSync = require(script.Parent.DataSyncClient);
 
 local function UpdateButtonColor(inner: Frame, color: string)
     inner.Click.Frame.UIGradient.Color = globals.ButtonPresets[color].Gradient;
@@ -52,9 +54,9 @@ local function UpdateButtonColor(inner: Frame, color: string)
 end
 
 local function UpdateButton(inner: Frame, price)
-    local playerClicks = infMath.new(http:JSONDecode(player:GetAttribute('Clicks')));
     local color = '';
-    if playerClicks >= price then
+    local currentClicks = dataSync.Get('Clicks');
+    if currentClicks >= price then
         color = 'Green';
     else
         color = 'Red';
@@ -63,16 +65,16 @@ local function UpdateButton(inner: Frame, price)
 end
 
 local function UpdateButtons(fromSignal: boolean)
-    local playerRebirths = infMath.new(http:JSONDecode(player:GetAttribute('Rebirths')));
-    local playerClicks = infMath.new(http:JSONDecode(player:GetAttribute('Clicks')));
-
+    if not isLoaded then return end;
+    local currentRebirths = dataSync.Get('Rebirths');
+    local currentClicks = dataSync.Get('Clicks');
     if (rebirthFrame.Visible or not fromSignal) and not autoRebirthSelect then
         for index, rebirths in ipairs(rebirthStats) do
             local clone: Frame = holder:FindFirstChild(index);
             
             local word = (rebirths == 1) and 'Rebirth' or 'Rebirths';
             
-            local cost = infMath.new(globals.RebirthBasePrice * rebirths * playerRebirths);
+            local cost = infMath.new(globals.RebirthBasePrice * rebirths * currentRebirths);
             
             local inner: Frame = clone.Inner;
             inner.Amount.Text = '+'..tostring(rebirths)..' '..word..' ('..cost:GetSuffix(true)..' Clicks)';
@@ -82,12 +84,12 @@ local function UpdateButtons(fromSignal: boolean)
             
             clone.Visible = true;
         end
-        main.Rebirths.Amount.Text = 'Rebirths: '..playerRebirths:GetSuffix(true);
+        main.Rebirths.Amount.Text = 'Rebirths: '..currentRebirths:GetSuffix(true);
     end
     
     for index, rebirths in ipairs(rebirthStats) do
-        local cost = infMath.new(globals.RebirthBasePrice * rebirths * playerRebirths);
-        if autoRebirthStatus and selectedIndex == index and (playerClicks >= cost) then
+        local cost = infMath.new(globals.RebirthBasePrice * rebirths * currentRebirths);
+        if autoRebirthStatus and selectedIndex == index and (currentClicks >= cost) then
             network:FireServer('AttemptRebirth', index);
         end
     end
@@ -109,14 +111,6 @@ local function UpdateAutoRebirthButton(status: boolean)
     autoRebirthToggle.Title.Text = text;
 end
 
-local function LoadAutoRebirth()
-    local profile = network:InvokeServer('GetData');
-
-    autoRebirthStatus = profile.AutoRebirthStatus;
-    selectedIndex = profile.AutoRebirthIndex;
-    UpdateAutoRebirthButton(autoRebirthStatus);
-end
-
 function RebirthHandler.LoadRebirthButtons()
     if #holder:GetChildren() - 1 == #rebirthStats then
         UpdateButtons(false);
@@ -132,27 +126,49 @@ function RebirthHandler.LoadRebirthButtons()
         inner.Click.MouseButton1Click:Connect(function()
             if not db then db = true task.delay(.15, function() db = false end)
                 if autoRebirthSelect then
-                    selectedIndex = network:InvokeServer('SetAutoRebirthIndex', index);
+                    network:FireServer('SetAutoRebirthIndex', index);
                     autoRebirthSelect = false;
-                    UpdateButtons(false);
                 else
                     network:FireServer('AttemptRebirth', index);
                 end
             end
         end)
     end
+    isLoaded = true;
     UpdateButtons(false);
 end
 
 function RebirthHandler.Initialize()
     if not game.Loaded then game.Loaded:Wait() end;
 
-    task.spawn(LoadAutoRebirth)
+    dataSync.OnReady(function()
+        autoRebirthStatus = dataSync.Get('AutoRebirthStatus');
+        selectedIndex = dataSync.Get('AutoRebirthIndex');
+
+        UpdateAutoRebirthButton(autoRebirthStatus);
+    end)
+
+    dataSync.OnChanged('Clicks', function()
+        UpdateButtons(true);
+    end)
+
+    dataSync.OnChanged('Rebirths', function()
+        UpdateButtons(true);
+    end)
+
+    dataSync.OnChanged('AutoRebirthStatus', function(new)
+        autoRebirthStatus = new;
+        UpdateAutoRebirthButton(new);
+    end)
+
+    dataSync.OnChanged('AutoRebirthIndex', function(new)
+        selectedIndex = new;
+        UpdateButtons(false);
+    end)
 
     autoRebirthToggle.MouseButton1Click:Connect(function()
         if not db then db = true task.delay(.15, function() db = false end)
-            autoRebirthStatus = network:InvokeServer('ToggleAutoRebirth');
-            UpdateAutoRebirthButton(autoRebirthStatus);
+            network:FireServer('ToggleAutoRebirth');
         end
     end)
 
@@ -170,13 +186,6 @@ function RebirthHandler.Initialize()
                 UpdateButtons(false);
             end
         end
-    end)
-
-    player:GetAttributeChangedSignal('Clicks'):Connect(function()
-        UpdateButtons(true);
-    end)
-    player:GetAttributeChangedSignal('Rebirths'):Connect(function()
-        UpdateButtons(true);
     end)
 end
 

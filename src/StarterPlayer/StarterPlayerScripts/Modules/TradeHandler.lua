@@ -53,6 +53,7 @@ local globals = require(framework.Globals);
 local petStats = require(library.PetStats);
 local menuHandler = require(script.Parent.MenuHandler);
 local infoPopup = require(classes.InfoPopup);
+local dataSync = require(script.Parent.DataSyncClient);
 
 local function UpdateTradeButton(color: string, text: string, button: ImageButton)
     button.Frame.UIGradient.Color = globals.ButtonPresets[color].Gradient;
@@ -240,9 +241,9 @@ function TradeHandler.TogglePet(me: Player, data, state)
 end
 
 function TradeHandler.EnterTrade(me: Player, you: Player)
-    local myProfile = network:InvokeServer('GetData');
-    local yourProfile = network:InvokeServer('GetOtherData', you.Name);
-    local myPets = myProfile.Pets;
+    -- local myProfile = network:InvokeServer('GetData');
+    local yourProfile = dataSync.GetOtherData(you.UserId);
+    local myPets = dataSync.Get('Pets');
     local yourPets = yourProfile.Pets;
 
     meOffer.Ready.Visible = false;
@@ -307,7 +308,8 @@ function TradeHandler.UpdateTradeButtons()
     for _, child in ipairs(playerHolder:GetChildren()) do
         if child:IsA('Frame') then
             local playerName: string = child.Name
-            local profile = network:InvokeServer('GetOtherData', playerName);
+            -- local profile = network:InvokeServer('GetOtherData', playerName);
+            local profile = dataSync.GetOtherData(players:FindFirstChild(playerName).UserId);
             if profile.IsInTrade then
                 UpdateTradeButton('Red', 'Busy', child.Inner.Trade);
             elseif profile.HasTradingDisabled then
@@ -379,10 +381,7 @@ function TradeHandler.TradeRequest(me: Player)
     if acceptCon.Connected then acceptCon:Disconnect() end;
     if declineCon.Connected then declineCon:Disconnect() end;
 
-    print('sent')
     network:FireServer('RequestAnswer', me, (choice or false));
-
-    -- return choice or false;
 end
 
 function TradeHandler.LoadPlayerList()

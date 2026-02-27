@@ -14,6 +14,7 @@ local infMath = require(framework.InfiniteMath);
 local prizes = require(library.Prizes);
 local playerData = require(dataModules.PlayerData);
 local rewardHandler = require(script.Parent.Private.RewardHandler);
+local dataSync = require(dataModules.DataSyncServer);
 
 local function CheckAlreadyClaimed(prizeData, prizeType, prizeIndex)
     for i, idx in ipairs(prizeData[prizeType]) do
@@ -26,17 +27,17 @@ end
 
 function PrizeHandler.ClaimPrize(player: Player, prizeType: string, prizeIndex: number)
     if prizeType ~= 'Eggs' and prizeType ~= 'ActualClicks' then
-        return false, 'SERVER - Invalid Prize Type';
+        return 'SERVER - Invalid Prize Type';
     end
     if prizes[prizeType][prizeIndex] == nil then
-        return false, 'SERVER - Invalid Prize Index';
+        return 'SERVER - Invalid Prize Index';
     end
 
     local profile = playerData.GetData(player);
     local prizeData = profile.ClaimedPrizes;
 
     if CheckAlreadyClaimed(prizeData, prizeType, prizeIndex) then
-        return false;
+        return;
     end
 
     local prizeStat = prizes[prizeType][prizeIndex];
@@ -44,34 +45,34 @@ function PrizeHandler.ClaimPrize(player: Player, prizeType: string, prizeIndex: 
     local currentProgress = infMath.new(profile[prizeType]);
 
     if currentProgress < target then
-        return false;
+        return;
     end
 
     local rewardData = prizeStat.Reward;
     if rewardData[1] == 'Pet' then
         local success, warning = rewardHandler.ClaimPet(player, rewardData[2], rewardData[3]);
         if not success then
-            return false, warning;
+            return warning;
         end
     elseif rewardData[1] == 'Currency' then
         local success, warning = rewardHandler.ClaimCurrency(player, rewardData[2], rewardData[3]);
         if not success then
-            return false, warning;
+            return warning;
         end
     elseif rewardData[1] == 'Perk' then
         local success, warning = rewardHandler.ClaimPerk(player, rewardData[2], rewardData[3]);
         if not success then
-            return false, warning;
+            return warning;
         end
     else
-        return false, 'SERVER - Invalid Reward Type, unable to claim prize.';
+        return 'SERVER - Invalid Reward Type, unable to claim prize.';
     end
 
     table.insert(prizeData[prizeType], prizeIndex);
 
-    print(prizeData)
+    dataSync.SyncPlayer(player, profile);
 
-    return true;
+    return;
 end
 
 return PrizeHandler;

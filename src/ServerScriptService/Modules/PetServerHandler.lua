@@ -17,6 +17,7 @@ local network = require(framework.Network);
 local globals = require(framework.Globals);
 local generateID = require(framework.GenerateID);
 local petStats = require(library.PetStats);
+local dataSync = require(dataModules.DataSyncServer);
 
 local function GetPetAmount(profile, petName: string)
     local count = 0;
@@ -41,6 +42,8 @@ function PetHandler.LevelUp(player: Player, id: string)
         petData.xp = 0;
         petData.level += 1;
     end
+
+    dataSync.SyncPlayer(player, profile);
 end
 
 function PetHandler.EquipPet(player: Player, id: string)
@@ -58,12 +61,16 @@ function PetHandler.EquipPet(player: Player, id: string)
 
     petData.equipped = true;
     profile.CurrentEquips += 1;
+
+    print(profile);
+
+    dataSync.SyncPlayer(player, profile);
     return true;
 end
 
 function PetHandler.EquipBest(player: Player)
     local profile = playerData.GetData(player);
-    if not profile then return false end;
+    if not profile then return end;
 
     local pets = profile.Pets
 
@@ -91,12 +98,12 @@ function PetHandler.EquipBest(player: Player)
         network:FireClient(plr, 'UpdatePets', player, table.clone(pets));
     end
 
-    return true;
+    dataSync.SyncPlayer(player, profile);
 end
 
 function PetHandler.UnequipAll(player: Player)
     local profile = playerData.GetData(player);
-    if not profile then return false end;
+    if not profile then return end;
 
     local pets = profile.Pets
     for _, petData in ipairs(pets) do
@@ -110,7 +117,7 @@ function PetHandler.UnequipAll(player: Player)
         network:FireClient(plr, 'UpdatePets', player, table.clone(pets));
     end
 
-    return true;
+    dataSync.SyncPlayer(player, profile);
 end
 
 function PetHandler.UnequipPet(player: Player, id: string)
@@ -129,6 +136,8 @@ function PetHandler.UnequipPet(player: Player, id: string)
 
     petData.equipped = false;
     profile.CurrentEquips -= 1;
+
+    dataSync.SyncPlayer(player, profile);
     return true;
 end
 
@@ -148,6 +157,8 @@ function PetHandler.DeletePet(player: Player, id: string)
         PetHandler.UnequipPet(player, id);
     end
     table.remove(pets, index);
+
+    dataSync.SyncPlayer(player, profile);
 
     return true;
 end
@@ -180,6 +191,8 @@ function PetHandler.DeleteAllUnlocked(player: Player)
         table.remove(pets, index);
     end
 
+    dataSync.SyncPlayer(player, profile);
+
     return true, idsToRemove;
 end
 
@@ -211,6 +224,8 @@ function PetHandler.DeleteSelection(player: Player, selection)
         local index, _ = tblUtil.FindIndexWithId(pets, id);
         table.remove(pets, index);
     end
+
+    dataSync.SyncPlayer(player, profile);
 
     return true, idsToRemove;
 end
@@ -258,6 +273,8 @@ function PetHandler.MakeShiny(player: Player, petName: string)
         equipped = false
     })
 
+    dataSync.SyncPlayer(player, profile);
+
     return true, idsToRemove;
 end
 
@@ -273,6 +290,8 @@ function PetHandler.ToggleLock(player: Player, id: string)
 
     petData.locked = not petData.locked;
     local newState = petData.locked
+
+    dataSync.SyncPlayer(player, profile);
 
     return true, newState;
 end

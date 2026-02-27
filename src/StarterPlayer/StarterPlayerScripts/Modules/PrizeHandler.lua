@@ -16,6 +16,7 @@ local library: Folder = framework:WaitForChild('Library');
 local selectedType: string = 'Eggs';
 local UpdatePrizes
 local clickConnections = {};
+local isLoaded = false;
 
 -- UI
 local playerGui: PlayerGui = player:WaitForChild('PlayerGui');
@@ -34,6 +35,7 @@ local scrollingHolder: ScrollingFrame = holderFrame:WaitForChild('ScrollingFrame
 local prizes = require(library.Prizes);
 local infMath = require(framework.InfiniteMath);
 local network = require(framework.Network);
+local dataSync = require(script.Parent.DataSyncClient);
 
 -- Constants
 local rewardFormat = {
@@ -71,7 +73,7 @@ local function UpdatePrizeProgress(clone: Frame, targetType: string, data, claim
     local goal: string = (targetType == 'Eggs') and 'Hatch '..target:GetSuffix(true)..' Eggs' or 'Click '..target:GetSuffix(true)..' Times';
     clone.Task.Text = goal;
 
-    local currentProgress = infMath.new(http:JSONDecode(player:GetAttribute(targetType)));
+    local currentProgress = infMath.new(dataSync.Get(targetType));
     local procentualProgress = infMath.new(currentProgress/target):GetSuffix(true);
 
     clone.Progress.Level.Text = (currentProgress < target) and currentProgress:GetSuffix(true)..' / '..target:GetSuffix(true) or 'Completed';
@@ -91,16 +93,15 @@ local function UpdatePrizeProgress(clone: Frame, targetType: string, data, claim
 end
 
 local function UpdatePrizes()
-    local profile = network:InvokeServer('GetData');
+    if not isLoaded then return end;
     for i, data in ipairs(prizes[selectedType]) do
         local clone: Frame = scrollingHolder:FindFirstChild(i);
 
-        UpdatePrizeProgress(clone, selectedType, data, profile.ClaimedPrizes);
+        UpdatePrizeProgress(clone, selectedType, data, dataSync.Get('ClaimedPrizes'));
     end
 end
 
 function PrizeHandler.LoadPrizes(targetType: string)
-    local profile = network:InvokeServer('GetData');
     targetType = targetType or selectedType;
 
     for _, instance in ipairs(scrollingHolder:GetChildren()) do
@@ -115,15 +116,13 @@ function PrizeHandler.LoadPrizes(targetType: string)
         clone.LayoutOrder = i;
         clone.Name = i;
 
-        UpdatePrizeProgress(clone, targetType, data, profile.ClaimedPrizes);
+        UpdatePrizeProgress(clone, targetType, data, dataSync.Get('ClaimedPrizes'));
 
         local clickConnection: RBXScriptConnection
         clickConnection = clone.Accept.MouseButton1Click:Connect(function()
             if not db then db = true task.delay(.15, function() db = false end)
-                local success, warning = network:InvokeServer('ClaimPrize', targetType, tonumber(clone.Name));
+                local warning = network:InvokeServer('ClaimPrize', targetType, tonumber(clone.Name));
                 if warning then warn(warning) end;
-                if not success then return end;
-                UpdatePrizes();
             end
         end)
         clone:GetPropertyChangedSignal('Parent'):Once(function()
@@ -132,6 +131,7 @@ function PrizeHandler.LoadPrizes(targetType: string)
 
         clone.Visible = true;
     end
+    isLoaded = true;
 end
 
 function PrizeHandler.Initialize()
@@ -154,16 +154,20 @@ function PrizeHandler.Initialize()
         end
     end)
 
-    player:GetAttributeChangedSignal('ActualClicks'):Connect(function()
+    dataSync.OnChanged('ActualClicks', function()
         if selectedType == 'ActualClicks' and prizeFrame.Visible then
             UpdatePrizes();
         end
     end)
-
-    player:GetAttributeChangedSignal('Eggs'):Connect(function()
+    
+    dataSync.OnChanged('Eggs', function()
         if selectedType == 'Eggs' and prizeFrame.Visible then
-            UpdatePrizes()
+            UpdatePrizes();
         end
+    end)
+
+    dataSync.OnChanged('ClaimedPrizes', function()
+        UpdatePrizes();
     end)
 end
 

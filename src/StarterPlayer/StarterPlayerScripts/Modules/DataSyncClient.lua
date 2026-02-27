@@ -133,14 +133,15 @@ function DataSync.OnChanged(key, callback)
     end
 end
 
-function DataSync.GetOtherData(userId, callback)
+function DataSync.GetOtherData(userId)
     task.spawn(function()
         local raw = network:InvokeServer('GetOtherDataSync', userId);
-        if raw then
-            callback(UnpackData(raw));
-        else
-            callback(nil);
-        end
+        return raw;
+        -- if raw then
+        --     callback(UnpackData(raw));
+        -- else
+        --     callback(nil);
+        -- end
     end)
 end
 

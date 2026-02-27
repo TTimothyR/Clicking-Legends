@@ -16,6 +16,8 @@ local clickConnections = {};
 local shinySelected: boolean = false;
 local selectedEgg: string = nil;
 
+local eggPetCount = {};
+
 -- UI
 local playerGui: PlayerGui = player:WaitForChild('PlayerGui');
 local frames: ScreenGui = playerGui:WaitForChild('Frames');
@@ -36,22 +38,31 @@ local discoveryFrame: Frame = miscFrame:WaitForChild('Discovery');
 local lockedFrame: Frame = discoveryFrame:WaitForChild('Locked');
 
 -- Modules
-local network = require(framework.Network);
 local globals = require(framework.Globals);
 local eggStats = require(library.EggStats);
 local petStats = require(library.PetStats);
+local dataSync = require(script.Parent.DataSyncClient);
 
-local function GetTotalPetCount(eggName: string)
-    local count = 0
-    for _, _ in pairs(eggStats[eggName].Pets) do
-        count += 1
+-- local function GetTotalPetCount(eggName: string)
+--     local count = 0
+--     for _, _ in pairs(eggStats[eggName].Pets) do
+--         count += 1
+--     end
+--     return count;
+-- end
+
+local function LoadTotalPetCount()
+    for eggName, data in pairs(eggStats) do
+        local count = 0;
+        for petName, petData in pairs(data.Pets) do
+            count += 1
+        end
+        eggPetCount[eggName] = count;
     end
-    return count;
 end
 
 local function GetPlayerPetCount(eggName: string)
-    local profile = network:InvokeServer('GetData');
-    local index = profile.PetIndex
+    local index = dataSync.Get('PetIndex');
 
     local normalCount = 0
     local shinyCount = 0
@@ -100,7 +111,7 @@ local function LoadPets(index, eggName: string, shiny: boolean)
         clone.Visible = true;
     end
     
-    local petsInEgg = GetTotalPetCount(eggName);
+    local petsInEgg = eggPetCount[eggName];
     local normalCount, shinyCount = GetPlayerPetCount(eggName);
 
     local visible = shiny and (shinyCount ~= petsInEgg) or (normalCount ~= petsInEgg);
@@ -113,8 +124,7 @@ local function LoadPets(index, eggName: string, shiny: boolean)
 end
 
 local function SelectEgg(eggName: string)
-    local profile = network:InvokeServer('GetData');
-    local index = profile.PetIndex;
+    local index = dataSync.Get('PetIndex');
     selectedEgg = eggName;
     
     LoadPets(index, eggName, shinySelected);
@@ -142,7 +152,7 @@ function IndexHandler.LoadIndex()
             clone.Parent = eggHolder;
             
             local infoFrame: Frame = clone.Frame;
-            local petsInEgg = GetTotalPetCount(eggName);
+            local petsInEgg = eggPetCount[eggName];
             local normal, shiny = GetPlayerPetCount(eggName);
     
             infoFrame.EggName.Text = eggName;
@@ -164,6 +174,8 @@ end
 
 function IndexHandler.Initialize()
     if not game.Loaded then game.Loaded:Wait() end;
+
+    LoadTotalPetCount();
 
     normalButton.MouseButton1Click:Connect(function()
         if not db then db = true task.delay(.15, function() db = false end)

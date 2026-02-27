@@ -16,6 +16,7 @@ local rebirthStats = require(library.RebirthStats);
 local petStats = require(library.PetStats);
 local infMath = require(framework.InfiniteMath);
 local globals = require(framework.Globals);
+local dataSync = require(dataModules.DataSyncServer);
 
 local function GetPetGems(pets)
     local totalGems = 0
@@ -41,16 +42,18 @@ function RebirthHandler.AttemptRebirth(player: Player, rebirthIndex: number)
 
     if clicks >= price then
         profile.Clicks = infMath.new(0);
-        player:SetAttribute('Clicks', http:JSONEncode(profile.Clicks));
+        -- player:SetAttribute('Clicks', http:JSONEncode(profile.Clicks));
         player.leaderstats.Clicks.Value = profile.Clicks:GetSuffix(true);
 
         profile.Gems = infMath.new(profile.Gems + (gemsPerRebirth * rebirthAmount));
-        player:SetAttribute('Gems', http:JSONEncode(profile.Gems));
+        -- player:SetAttribute('Gems', http:JSONEncode(profile.Gems));
         player.leaderstats.Gems.Value = profile.Gems:GetSuffix(true);
         
         profile.Rebirths = infMath.new(profile.Rebirths + rebirthAmount);
-        player:SetAttribute('Rebirths', http:JSONEncode(profile.Rebirths));
+        -- player:SetAttribute('Rebirths', http:JSONEncode(profile.Rebirths));
         player.leaderstats.Rebirths.Value = profile.Rebirths:GetSuffix(true);
+    
+        dataSync.SyncPlayer(player, profile);
     end
 end
 
@@ -59,8 +62,7 @@ function RebirthHandler.ToggleAutoRebirth(player: Player)
     if not profile then return end;
 
     profile.AutoRebirthStatus = not profile.AutoRebirthStatus;
-
-    return profile.AutoRebirthStatus;
+    dataSync.SyncPlayer(player, profile);
 end
 
 function RebirthHandler.SetAutoRebirthIndex(player: Player, rebirthIndex: number)
@@ -73,7 +75,7 @@ function RebirthHandler.SetAutoRebirthIndex(player: Player, rebirthIndex: number
         profile.AutoRebirthIndex = rebirthIndex;
     end
 
-    return profile.AutoRebirthIndex;
+    dataSync.SyncPlayer(player, profile);
 end
 
 return RebirthHandler;

@@ -19,6 +19,7 @@ local infMath = require(framework.InfiniteMath);
 local generateID = require(framework.GenerateID);
 local network = require(framework.Network);
 local luckHandler = require(script.Parent.LuckHandler);
+local dataSync = require(dataModules.DataSyncServer);
 
 local function ValidateDistance(player: Player, eggName: string)
     local maxDistance = 15;
@@ -66,8 +67,8 @@ function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
     profile.Eggs = infMath.new(profile.Eggs + amount);
     player.leaderstats.Eggs.Value = profile.Eggs:GetSuffix(true);
 
-    player:SetAttribute('Clicks', http:JSONEncode(profile.Clicks));
-    player:SetAttribute('Eggs', http:JSONEncode(profile.Eggs));
+    -- player:SetAttribute('Clicks', http:JSONEncode(profile.Clicks));
+    -- player:SetAttribute('Eggs', http:JSONEncode(profile.Eggs));
 
     local petData = {};
 
@@ -110,6 +111,8 @@ function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
         end
 
     end
+    dataSync.SyncPlayer(player, profile);
+
     player.UILock.Value = true;
     network:FireClient(player, 'EggAnimation', eggName, amount, petData);
 end
@@ -118,6 +121,7 @@ function EggHandler.ResetVariables(player: Player)
     local profile = playerData.GetData(player);
     if not profile then warn("Could not fetch profile.") return end
     profile.HatchDebounce = false;
+    dataSync.SyncPlayer(player, profile);
     player.UILock.Value = false;
 end
 
