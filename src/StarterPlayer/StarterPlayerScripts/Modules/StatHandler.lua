@@ -106,7 +106,7 @@ local function ClickAnimation()
 end
 
 local function PopUp(increment, currencyStr: string, critical: boolean, position: UDim2)
-    if not increment then
+    if not increment or increment == infMath.new(0) then
         return
     end
 

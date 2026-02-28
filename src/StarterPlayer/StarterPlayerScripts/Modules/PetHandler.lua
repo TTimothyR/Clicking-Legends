@@ -41,8 +41,8 @@ local function CalculateYOffset(model: Model, rayDistance)
     end
 
     local params = RaycastParams.new();
-    params.FilterType = Enum.RaycastFilterType.Exclude;
-    params.FilterDescendantsInstances = {petsFolder, workspace.Baseplate};
+    params.FilterType = Enum.RaycastFilterType.Include;
+    params.FilterDescendantsInstances = {workspace.PetCollidables};
 
     local resultDown: RaycastResult = workspace:Raycast(
         model.PrimaryPart.Position - Vector3.new(0, lowestOffset, 0),

@@ -48,6 +48,11 @@ local function PackData(data, includePrivate)
                     cloned[i] = table.clone(pet);
                 end
                 out[key] = cloned;
+            elseif key == 'ClaimedPrizes' then
+                out[key] = {
+                    Eggs = table.clone(value.Eggs);
+                    ActualClicks = table.clone(value.ActualClicks);
+                }
             else
                 out[key] = table.clone(value);
             end

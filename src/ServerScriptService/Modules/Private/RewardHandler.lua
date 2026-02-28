@@ -58,7 +58,7 @@ function RewardHandler.ClaimCurrency(player: Player, currencyStr: string, amount
     -- if player:GetAttribute(currencyStr) then
     --     player:SetAttribute(currencyStr, http:JSONEncode(profile[currencyStr]));
     -- end
-    for _, instance in ipairs(player:GetDescendants()) do
+    for _, instance in ipairs(player.leaderstats:GetDescendants()) do
         if instance.Name == currencyStr then
             instance.Value = profile[currencyStr]:GetSuffix(true);
         end
