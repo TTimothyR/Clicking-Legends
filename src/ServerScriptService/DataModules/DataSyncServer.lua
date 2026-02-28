@@ -42,7 +42,15 @@ local function PackData(data, includePrivate)
         if infMathStats[key] then
             out[key] = PackInfiniteMath(value);
         elseif type(value) == 'table' then
-            out[key] = table.clone(value);
+            if key == 'Pets' then
+                local cloned = {};
+                for i, pet in ipairs(value) do
+                    cloned[i] = table.clone(pet);
+                end
+                out[key] = cloned;
+            else
+                out[key] = table.clone(value);
+            end
         else
             out[key] = value;
         end
@@ -64,18 +72,18 @@ local function CalculateDifference(old, new)
         elseif key == 'Pets' then
             changed = (oldValue == nil) or (#oldValue ~= #newValue);
             if not changed then
-                print('Pet amount not changed');
+                -- print('Pet amount not changed');
                 for i, newPet in ipairs(newValue) do
                     local oldPet = oldValue[i];
                     if oldPet == nil then changed = true break end;
-                    print('----------------------')
+                    -- print('----------------------')
                     for statName, statValue in pairs(newPet) do
-                        print(statName, oldPet[statName], statValue)
+                        -- print(statName, oldPet[statName], statValue)
                         if oldPet[statName] ~= statValue then changed = true break end;
                     end
                     if not changed then
                         for statName in pairs(oldPet) do
-                            print(statName, newPet[statName]);
+                            -- print(statName, newPet[statName]);
                             if newPet[statName] == nil then changed = true break end;
                         end
                     end

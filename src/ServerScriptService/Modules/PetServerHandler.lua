@@ -62,7 +62,6 @@ function PetHandler.EquipPet(player: Player, id: string)
     petData.equipped = true;
     profile.CurrentEquips += 1;
 
-    print(profile);
 
     dataSync.SyncPlayer(player, profile);
     return true;
