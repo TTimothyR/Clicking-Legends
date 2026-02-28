@@ -87,8 +87,8 @@ function PetHandler.EquipBest(player: Player)
     table.sort(statTable, function(a,b)
         return a.Clicks > b.Clicks;
     end)
-
     for i = 1, profile.PetEquips do
+        if not statTable[i] then continue end;
         local petData = statTable[i].petData;
         petData.equipped = true;
         profile.CurrentEquips += 1;

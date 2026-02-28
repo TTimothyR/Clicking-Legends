@@ -44,11 +44,15 @@ local deleteAll: ImageButton = bulkButtons:WaitForChild('DeleteAll');
 local utilityButtons: Frame = main:WaitForChild('UtilityButtons');
 local utilButtonsHolder: Frame = utilityButtons:WaitForChild('Holder');
 local multiDeleteButton: ImageButton = utilButtonsHolder:WaitForChild('MultiDelete');
-local shrinkButton: ImageButton = utilButtonsHolder:WaitForChild('Shrink');
 local inventory: Frame = main:WaitForChild('Inventory');
 local holder: ScrollingFrame = inventory:WaitForChild('ScrollingFrame');
+local equippedTag: TextLabel = holder:WaitForChild('EquippedTag');
+local petsTag: TextLabel = holder:WaitForChild('Pets');
 local equippedHolder: Folder = holder:WaitForChild('Equipped');
 local notEquippedHolder: Folder = holder:WaitForChild('NotEquipped');
+
+local searchFrame: Frame = main:WaitForChild('Search');
+local searchBox: TextBox = searchFrame:WaitForChild('TextBox');
 
 local petInfo: Frame = main:WaitForChild('PetInfo');
 local multiDeleteInfo: Frame = petInfo:WaitForChild('MultiDeleteInfo');
@@ -85,6 +89,10 @@ local function SeperatePets(petsTbl, equipped)
     local secretTbl = {};
     
     for i, petData in ipairs(petsTbl) do
+        local clone = holder:FindFirstChild(petData.id, true)
+
+        if searchBox.Text ~= '' and not clone then continue end;
+        if searchBox.Text ~= '' and not clone.Visible then continue end;
         if petData.equipped == equipped then
             if petStats[petData.petName].Secret then
                 table.insert(secretTbl, petData);
@@ -284,11 +292,18 @@ CreateClickConnection = function(clone: ImageButton, petData)
     petConnections[petData.id] = clickCon;
 end
 
+local function CreateFullNameVariable(clone, petData)
+    local fullNameValue = Instance.new('StringValue', clone);
+    fullNameValue.Name = 'FullName';
+    fullNameValue.Value = petData.fullName;
+end
+
 local function CreateEquippedPet(petData, template)
     local clone: ImageButton = template:Clone();
     clone.Parent = equippedHolder;
     clone.Name = petData.id;
     clone.Frame.Locked.Visible = petData.locked;
+    CreateFullNameVariable(clone, petData);
     if clone.Frame:FindFirstChild('PetName') then
         local egg = tblUtil.FindEgg(eggStats, petData.petName);
         local chance = eggStats[egg].Pets[petData.petName][1]
@@ -323,6 +338,7 @@ local function CreateNormalPet(petData)
     clone.Parent = notEquippedHolder;
     clone.Name = petData.id;
     clone.Frame.Locked.Visible = petData.locked;
+    CreateFullNameVariable(clone, petData);
 
     local rarity = petStats[petData.petName].Rarity;
     clone.Frame.BackgroundColor3 = globals.RarityColors[rarity];
@@ -347,6 +363,8 @@ local function CreateSecretPet(petData)
     clone.Parent = notEquippedHolder;
     clone.Frame.PetName.Text = petData.petName;
     clone.Frame.Locked.Visible = petData.locked;
+
+    CreateFullNameVariable(clone, petData);
     
     local egg = tblUtil.FindEgg(eggStats, petData.petName);
     local chance = eggStats[egg].Pets[petData.petName][1]
@@ -389,6 +407,34 @@ function InventoryHandler.LoadInventory()
     end
 
     if not bulkButtonsConnected then
+        searchBox.Focused:Connect(function()
+            searchBox.Text = "";
+            for _, descendant in ipairs(holder:GetDescendants()) do
+                if descendant:IsA('ImageButton') then
+                    descendant.Visible = true;
+                end
+            end
+            InventoryHandler.LoadInventory();
+        end)
+        searchBox:GetPropertyChangedSignal('Text'):Connect(function()
+            local txt = searchBox.Text;
+            if txt == '' then
+                for _, descendant in ipairs(holder:GetDescendants()) do
+                    if descendant:IsA('ImageButton') then
+                        descendant.Visible = true;
+                    end
+                end
+            else
+                for _, descendant in ipairs(holder:GetDescendants()) do
+                    if descendant:IsA('ImageButton') then
+                        if not string.find(string.lower(descendant.FullName.Value), string.lower(txt)) then
+                            descendant.Visible = false;
+                        end
+                    end
+                end
+            end
+            InventoryHandler.LoadInventory();
+        end)
         confirmMultiDelete.MouseButton1Click:Connect(function()
             if not db then db = true task.delay(.15, function() db = false end)
                 if not mutliDeleteActive then return end;
@@ -488,14 +534,25 @@ function InventoryHandler.LoadInventory()
     local normalTbl, secretTbl = SeperatePets(pets, false);
     local equippedNormalTbl, equippedSecretTbl = SeperatePets(pets, true);
     local totalEquipped = #equippedNormalTbl + #equippedSecretTbl;
+    local totalVisibleEquipped = dataSync.Get('CurrentEquips');
     table.sort(normalTbl, SortPets);
     table.sort(equippedNormalTbl, SortPets);
 
-    equipBest.Visible = (totalEquipped == 0);
-    unequipAll.Visible = not (totalEquipped == 0);
+    if totalEquipped == 0 then
+        equippedTag.Visible = false;
+        petsTag.Position = UDim2.new(0,0,0,0);
+    else
+        equippedTag.Visible = true
+        equippedTag.Position = UDim2.new(0,0,0,0);
+    end
+
+    equipBest.Visible = (totalVisibleEquipped == 0);
+    unequipAll.Visible = not (totalVisibleEquipped == 0);
 
     storageStat.TextLabel.Text = #pets..'/'..dataSync.Get('PetStorage');
-    equippedStat.TextLabel.Text = totalEquipped..'/'..dataSync.Get('PetEquips');
+    equippedStat.TextLabel.Text = totalVisibleEquipped..'/'..dataSync.Get('PetEquips');
+
+    local handledPetIds = {};
 
     for i, petData in ipairs(equippedSecretTbl) do
         if notEquippedHolder:FindFirstChild(petData.id) then
@@ -505,6 +562,7 @@ function InventoryHandler.LoadInventory()
         if not equippedHolder:FindFirstChild(petData.id) then
             CreateEquippedPet(petData, equippedSecretTemplate);
         end
+        handledPetIds[petData.id] = true;
     end
     for i, petData in ipairs(equippedNormalTbl) do
         if notEquippedHolder:FindFirstChild(petData.id) then
@@ -514,6 +572,7 @@ function InventoryHandler.LoadInventory()
         if not equippedHolder:FindFirstChild(petData.id) then
             CreateEquippedPet(petData, normalTemplate)
         end
+        handledPetIds[petData.id] = true;
     end
 
     for i, petData in ipairs(secretTbl) do
@@ -524,6 +583,7 @@ function InventoryHandler.LoadInventory()
         if not notEquippedHolder:FindFirstChild(petData.id) then
             CreateSecretPet(petData);
         end
+        handledPetIds[petData.id] = true;
     end
     for i, petData in ipairs(normalTbl) do
         if equippedHolder:FindFirstChild(petData.id) then
@@ -532,6 +592,16 @@ function InventoryHandler.LoadInventory()
         end
         if not notEquippedHolder:FindFirstChild(petData.id) then
             CreateNormalPet(petData);
+        end
+        handledPetIds[petData.id] = true;
+    end
+
+    for _, descendant in ipairs(holder:GetDescendants()) do
+        if descendant:IsA('ImageButton') then
+            if not handledPetIds[descendant.Name] then
+                RemovePetConnection(descendant.Name);
+                descendant:Destroy();
+            end
         end
     end
 
@@ -545,7 +615,7 @@ function InventoryHandler.LoadInventory()
         clone.Position = UDim2.new(
             clone.Size.X.Scale*col + clone.Size.X.Scale/2,
             0,
-            clone.Size.Y.Scale*row + clone.Size.Y.Scale/2,
+            clone.Size.Y.Scale*row + clone.Size.Y.Scale/2 + equippedTag.Size.Y.Scale,
             0
         );
 
@@ -560,7 +630,7 @@ function InventoryHandler.LoadInventory()
         clone.Position = UDim2.new(
             clone.Size.X.Scale*col + clone.Size.X.Scale/2,
             0,
-            clone.Size.Y.Scale*row + clone.Size.Y.Scale/2,
+            clone.Size.Y.Scale*row + clone.Size.Y.Scale/2 + equippedTag.Size.Y.Scale,
             0
         );
 
@@ -570,6 +640,19 @@ function InventoryHandler.LoadInventory()
 
     lastEquippedRow += 1;
 
+    local tagCorrection = 0;
+    if equippedTag.Visible then
+        tagCorrection += equippedTag.Size.Y.Scale;
+    end
+    
+    petsTag.Position = UDim2.new(
+        0,0,
+        normalTemplate.Size.Y.Scale * lastEquippedRow + tagCorrection, 0
+    );
+
+    tagCorrection += petsTag.Size.Y.Scale;
+    
+    
     local lastRow = 0;
     local lastColumn = 0;
 
@@ -584,7 +667,7 @@ function InventoryHandler.LoadInventory()
         clone.Position = UDim2.new(
             clone.Size.X.Scale*column + clone.Size.X.Scale/2,
             0,
-            clone.Size.Y.Scale*row + clone.Size.Y.Scale/2 + normalTemplate.Size.Y.Scale * lastEquippedRow,
+            clone.Size.Y.Scale*row + clone.Size.Y.Scale/2 + normalTemplate.Size.Y.Scale * lastEquippedRow + tagCorrection,
             0
         );
 
@@ -614,7 +697,7 @@ function InventoryHandler.LoadInventory()
             end
 
             local xPos = normalTemplate.Size.X.Scale*(targetColumn-1) + normalTemplate.Size.X.Scale/2;
-            local yPos = secretTemplate.Size.Y.Scale*(secretRows-1) + (normalTemplate.Size.Y.Scale-yPaddingCorrection)*row + (normalTemplate.Size.Y.Scale * lastEquippedRow) + equipCorrection + finalCorrection;
+            local yPos = secretTemplate.Size.Y.Scale*(secretRows-1) + (normalTemplate.Size.Y.Scale-yPaddingCorrection)*row + (normalTemplate.Size.Y.Scale * lastEquippedRow) + equipCorrection + finalCorrection + tagCorrection;
             clone.Position = UDim2.new(xPos, 0, yPos, 0)
             finalIndex = i;
         else
@@ -622,7 +705,7 @@ function InventoryHandler.LoadInventory()
             local targetColumn = math.floor((i-finalIndex-1)%maxColNormal);
 
             local xPos = normalTemplate.Size.X.Scale*targetColumn + normalTemplate.Size.X.Scale/2;
-            local yPos = secretTemplate.Size.Y.Scale*secretRows + (normalTemplate.Size.Y.Scale-yPaddingCorrection)*(targetRow-secretRows*2) + (normalTemplate.Size.Y.Scale * lastEquippedRow) + equipCorrection + finalCorrection;
+            local yPos = secretTemplate.Size.Y.Scale*secretRows + (normalTemplate.Size.Y.Scale-yPaddingCorrection)*(targetRow-secretRows*2) + (normalTemplate.Size.Y.Scale * lastEquippedRow) + equipCorrection + finalCorrection + tagCorrection;
             clone.Position = UDim2.new(xPos, 0, yPos, 0)
         end
 
@@ -638,11 +721,13 @@ function InventoryHandler.Initialize()
     if not game.Loaded then game.Loaded:Wait() end;
 
     dataSync.OnChanged('Pets', function()
+        if not inventoryFrame.Visible then return end;
         InventoryHandler.LoadInventory();
         ReloadPetInfo();
     end)
 
     dataSync.OnChanged('PetEquips', function()
+        if not inventoryFrame.Visible then return end;
         InventoryHandler.LoadInventory();
     end)    
     dataSync.OnChanged('CurrentEquips', function()
@@ -650,6 +735,7 @@ function InventoryHandler.Initialize()
     end)
 
     dataSync.OnChanged('PetStorage', function()
+        if not inventoryFrame.Visible then return end;
         InventoryHandler.LoadInventory();
     end)
 
