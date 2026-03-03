@@ -310,6 +310,7 @@ function TradeHandler.UpdateTradeButtons()
             local playerName: string = child.Name
             -- local profile = network:InvokeServer('GetOtherData', playerName);
             local profile = dataSync.GetOtherData(players:FindFirstChild(playerName).UserId);
+            print(profile);
             if profile.IsInTrade then
                 UpdateTradeButton('Red', 'Busy', child.Inner.Trade);
             elseif profile.HasTradingDisabled then

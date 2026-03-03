@@ -91,12 +91,14 @@ local function CompleteTrade(tradeID: string)
     for id, petData in pairs(petsTo2) do
         local clone = table.clone(petData);
         petHandler.UnequipPet(player1, id);
+        clone.equipped = false;
         table.insert(pets2, clone);
         RemovePet(pets1, id);
     end
     for id, petData in pairs(petsTo1) do
         local clone = table.clone(petData);
         petHandler.UnequipPet(player2, id);
+        clone.equipped = false;
         table.insert(pets1, clone);
         RemovePet(pets2, id);
     end

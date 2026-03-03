@@ -16,7 +16,7 @@ local playerDataTemplate = require(rs.PlayerData);
 
 -- Constants
 local blackListedStats = {
-    TradeRequestFrom = true,
+    -- TradeRequestFrom = true,
     ClickDebounce = true,
     HatchDebounce = true
 }
