@@ -134,7 +134,7 @@ function DataSync.OnChanged(key, callback)
 end
 
 function DataSync.GetOtherData(userId)
-    task.spawn(function()
+    -- task.spawn(function()
         local raw = network:InvokeServer('GetOtherDataSync', userId);
         return raw;
         -- if raw then
@@ -142,7 +142,7 @@ function DataSync.GetOtherData(userId)
         -- else
         --     callback(nil);
         -- end
-    end)
+    -- end)
 end
 
 return DataSync

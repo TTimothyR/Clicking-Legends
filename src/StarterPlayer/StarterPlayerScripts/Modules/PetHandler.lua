@@ -163,7 +163,8 @@ local function LoadPets(player: Player)
 	if player == plr then
 		pets = dataSync.Get('Pets');
 	else
-		pets = dataSync.GetOtherData(player.UserId).Pets;
+		local profile = dataSync.GetOtherData(player.UserId)
+		pets = profile.Pets;
 	end
 
     for _, data in ipairs(pets) do
