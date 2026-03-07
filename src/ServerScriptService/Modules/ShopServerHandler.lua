@@ -12,6 +12,8 @@ local library: Folder = framework:WaitForChild('Library');
 -- Modules
 local shopStats = require(library.ShopStats);
 local network = require(framework.Network);
+local playerData = require(script.Parent.Parent.DataModules.PlayerData);
+local dataSync = require(script.Parent.Parent.DataModules.DataSyncServer);
 
 -- Constants
 local gpIDToName = {};
@@ -49,6 +51,11 @@ local function GamepassPurchaseHandler()
             network:FireClient(player, 'HideGreyFrame');
             return
         end;
+
+        local profile = playerData.GetData(player);
+        profile.OwnedGamepasses[gpName] = true;
+
+        dataSync.SyncPlayer(player, profile);
 
         callbacks[gpName](player);
         network:FireClient(player, 'PurchaseConfirmed', 'gamepass', gpName, gamePassId);
@@ -93,9 +100,31 @@ local function ProductPurchaseHandler()
     end
 end
 
+local function EnsureGamepassOwnership(player: Player)
+    local profile = playerData.GetData(player);
+    local ownedPasses = profile.OwnedGamepasses;
+
+    for gpName, data in pairs(shopStats.Gamepasses) do
+        if ownedPasses[gpName] then continue end;
+        if (mps:UserOwnsGamePassAsync(player.UserId, data.GamepassID)) then
+            ownedPasses[gpName] = true;
+        end
+    end
+
+    dataSync.SyncPlayer(player, profile);
+end
+
 function ShopHandler.Initialize()
     GamepassPurchaseHandler();
     ProductPurchaseHandler();
+
+    for _, player: Player in ipairs(players:GetPlayers()) do
+        EnsureGamepassOwnership(player);
+    end
+
+    players.PlayerAdded:Connect(function(player)
+        EnsureGamepassOwnership(player);
+    end)
 end
 
 return ShopHandler;

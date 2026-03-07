@@ -42,6 +42,8 @@ local function SetupTemplate(ui)
 
     local index = dataSync.Get('PetIndex');
     local luckPercentage = dataSync.Get('LuckPercentage');
+    local gpsOwned = dataSync.Get('OwnedGamepasses');
+    local luckPassOwned = gpsOwned['Double Luck'] and true or false;
 
     for _, item in ipairs(petHolder:GetChildren()) do
         if item:IsA('ImageButton') then
@@ -64,7 +66,7 @@ local function SetupTemplate(ui)
                 item.ImageLabel.ImageColor3 = Color3.fromRGB(255,255,255);
             end
             
-            local chance = globals.GetPetChance(luckPercentage, item.Name, ui.Name, false);
+            local chance = globals.GetPetChance(luckPassOwned, luckPercentage, item.Name, ui.Name, false);
             
             item.Chance.Text = tostring(chance)..'%';
             
@@ -165,6 +167,8 @@ local function ConfigureEggUI(egg: Model)
     clone.Parent = eggHolder;
 
     local luckPercentage = dataSync.Get('LuckPercentage');
+    local gpsOwned = dataSync.Get('OwnedGamepasses');
+    local luckPassOwned = gpsOwned['Double Luck'] and true or false;
 
     clone.Adornee = egg:FindFirstChild('View');
     table.insert(adornees, {
@@ -188,7 +192,7 @@ local function ConfigureEggUI(egg: Model)
 
     for petName, data in pairs(currentStats.Pets) do
         local petClone: ImageButton = petTemplate:Clone();
-        local chance = globals.GetPetChance(luckPercentage, petName, egg.Name, false);
+        local chance = globals.GetPetChance(luckPassOwned, luckPercentage, petName, egg.Name, false);
         local rarity = petStats[petName].Rarity
 
         petClone.Parent = holder;

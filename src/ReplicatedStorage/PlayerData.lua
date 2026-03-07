@@ -16,7 +16,7 @@ Shared.DEFAULT_PLAYER_DATA = {
     Rebirths = infMath.new(1),
     Eggs = infMath.new(0),
 
-    LuckPercentage = 0,
+    LuckPercentage = 50,
     EggHatches = 3,
     HatchSpeed = 0,
 
@@ -26,6 +26,8 @@ Shared.DEFAULT_PLAYER_DATA = {
     CurrentEquips = 0,
     PetStorage = 250,
 
+    TotalRobuxSpent = 0,
+
     Pets = {},
     PetIndex = {},
     AutoDeletedPets = {},
@@ -33,6 +35,7 @@ Shared.DEFAULT_PLAYER_DATA = {
         ['Eggs'] = {},
         ['ActualClicks'] = {}
     },
+    OwnedGamepasses = {},
 
     IsInTrade = false,
     HasTradingDisabled = false,

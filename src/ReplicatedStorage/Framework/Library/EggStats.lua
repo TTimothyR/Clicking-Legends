@@ -9,7 +9,7 @@ return{
             ["Bear"] = {16, 3},
             ["Bunny"] = {16, 4},
             ["Fox"] = {16, 5},
-            ["Grand Patriotic Overlord"] = {0, 6},
+            ["Grand Patriotic Overlord"] = {0.01, 6},
         },
     },
     ['Release Egg'] = {

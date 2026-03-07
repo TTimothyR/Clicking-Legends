@@ -29,8 +29,9 @@ end
 function LuckHandler.RollPet(player: Player, eggName: string)
     local profile = playerData.GetData(player);
     local luckPercentage = profile.LuckPercentage;
+	local ownedGamepasses = profile.OwnedGamepasses;
 
-    local gamepass = false;
+    local gamepass = ownedGamepasses['Double Luck'] and true or false;
     local upgrade = false;
     if gamepass then
         luckPercentage *= 2;

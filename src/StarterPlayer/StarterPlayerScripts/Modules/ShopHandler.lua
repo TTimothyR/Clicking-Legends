@@ -45,11 +45,25 @@ local function ShowGreyFrame()
     ts:Create(greyFrame, TweenInfo.new(0.25, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {BackgroundTransparency = 0.4}):Play();
 end
 
+local function UpdateGamepasses(newData)
+    for gpName, _ in pairs(newData) do
+        local clone = scrollingHolder:FindFirstChild(gpName);
+        for _, child in ipairs(clone.Inner.Buttons.Buy:GetChildren()) do
+            child.Visible = (child.Name == 'Owns');
+        end
+        clone.Inner.Buttons.Buy:SetAttribute('Scale', nil);
+        if gpConnections[gpName] then
+            gpConnections[gpName]:Disconnect();
+        end
+        -- clone.Inner.Buttons.Buy.PriceHolder.Title.Text = 'Owned';
+    end
+end
+
 local function LoadShop()
     for gamepassName, data in pairs(shopStats.Gamepasses) do
         if data.GamepassID == nil then continue end;
         local clone = passTemplate:Clone();
-        clone.Name = data.GamepassID;
+        clone.Name = gamepassName;
         clone.Parent = scrollingHolder;
         clone.LayoutOrder = data.LayoutOrder;
 
@@ -115,6 +129,8 @@ local function LoadShop()
             end
         end)
     end
+
+    UpdateGamepasses(dataSync.Get('OwnedGamepasses'));
 end
 
 function ShopHandler.HideGreyFrame()
@@ -133,7 +149,7 @@ function ShopHandler.PurchaseConfirmed(purchaseType: string, purchaseName: strin
         nil,
         'Thank you for your purchase!',
         function()
-            menuHandler.handleOpenClose(infoFrame);
+            menuHandler.handleOpenClose(shopFrame);
         end,
         infoFrame
     );
@@ -146,6 +162,23 @@ function ShopHandler.Initialize()
 
     dataSync.OnReady(function()
         LoadShop();
+    end)
+
+    dataSync.OnChanged('OwnedGamepasses', function(new, old)
+        UpdateGamepasses(new);
+    end)
+
+    task.spawn(function()
+        while true do
+            local tween1 = ts:Create(shopFrame.Shine, TweenInfo.new(15, Enum.EasingStyle.Linear), {Rotation = 180});
+            local tween2 = ts:Create(shopFrame.Shine, TweenInfo.new(15, Enum.EasingStyle.Linear), {Rotation = 360});
+            
+            tween1:Play();
+            tween1.Completed:Wait();
+
+            tween2:Play();
+            tween2.Completed:Wait();
+        end
     end)
 end
 

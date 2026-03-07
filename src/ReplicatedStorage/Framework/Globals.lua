@@ -104,7 +104,7 @@ function Globals.GetPetGems(petData)
 	return total;
 end
 
-function Globals.GetPetChance(luckPercentage, petName: string, eggName: string, shiny: boolean)
+function Globals.GetPetChance(gpOwned: boolean, luckPercentage, petName: string, eggName: string, shiny: boolean)
     local tbl = eggStats[eggName].Pets;
     local boosted = {['Epic'] = true, ['Legendary'] = true};
 
@@ -114,8 +114,12 @@ function Globals.GetPetChance(luckPercentage, petName: string, eggName: string, 
     local addedChance = 0;
     local totalNonBoosted = 0;
     local totalWeight = 0;
+	if gpOwned then
+		luckPercentage *= 2;
+	end
 
     local luckBoost = 1 + (luckPercentage/100);
+
 
 	for item, chance in pairs(tbl) do
 		raw[item] = chance[1]
