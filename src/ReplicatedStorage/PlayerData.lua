@@ -36,6 +36,7 @@ Shared.DEFAULT_PLAYER_DATA = {
         ['ActualClicks'] = {}
     },
     OwnedGamepasses = {},
+    RedeemedCodes = {},
 
     IsInTrade = false,
     HasTradingDisabled = false,
