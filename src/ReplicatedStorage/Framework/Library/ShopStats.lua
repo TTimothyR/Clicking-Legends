@@ -6,7 +6,7 @@ return {
             LayoutOrder = 21,
         }
     },
-    DeveloperProdcuts = {
+    DeveloperProducts = {
         ["Pet1"] = {
             ProductID = 3548669529,
             PetName = 'Grand Patriotic Overlord'
