@@ -66,7 +66,7 @@ local function LoadShop()
             return mps:GetProductInfoAsync(data.GamepassID, Enum.InfoType.GamePass);
         end)
         if s then
-            clone.Inner.Buttons.Buy.PriceHolder.Title.Text = info.PriceInRobux;
+            clone.Inner.Buttons.Buy.PriceHolder.Title.Text = info.PriceInRobux or "???";
         end
 
         clone.Inner.PassName.Text = gamepassName;

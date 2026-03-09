@@ -23,19 +23,19 @@ local callbacks = {
         local profile = playerData.GetData(player);
         profile.PetStorage += 100;
 
-        dataSync.SyncPlayer();
+        dataSync.SyncPlayer(player, profile);
     end,
     ['+500 Pet Storage'] = function(player: Player)
         local profile = playerData.GetData(player);
         profile.PetStorage += 500;
 
-        dataSync.SyncPlayer();
+        dataSync.SyncPlayer(player, profile);
     end,
     ['+3 Pet Equips'] = function(player: Player)
         local profile = playerData.GetData(player);
         profile.PetEquips += 3;
 
-        dataSync.SyncPlayer();
+        dataSync.SyncPlayer(player, profile);
     end,
     
     
