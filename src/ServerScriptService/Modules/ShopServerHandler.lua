@@ -19,8 +19,23 @@ local dataSync = require(script.Parent.Parent.DataModules.DataSyncServer);
 local gpIDToName = {};
 local productIDToname = {};
 local callbacks = {
-    ['Double Luck'] = function(player: Player)
-        print(player.Name..' bought double luck')
+    ['+100 Pet Storage'] = function(player: Player)
+        local profile = playerData.GetData(player);
+        profile.PetStorage += 100;
+
+        dataSync.SyncPlayer();
+    end,
+    ['+500 Pet Storage'] = function(player: Player)
+        local profile = playerData.GetData(player);
+        profile.PetStorage += 500;
+
+        dataSync.SyncPlayer();
+    end,
+    ['+3 Pet Equips'] = function(player: Player)
+        local profile = playerData.GetData(player);
+        profile.PetEquips += 3;
+
+        dataSync.SyncPlayer();
     end,
     
     
@@ -57,8 +72,11 @@ local function GamepassPurchaseHandler()
 
         dataSync.SyncPlayer(player, profile);
 
-        callbacks[gpName](player);
-        network:FireClient(player, 'PurchaseConfirmed', 'gamepass', gpName, gamePassId);
+        if callbacks[gpName] then
+            callbacks[gpName](player);
+        end
+
+        network:FireClient(player, 'PurchaseConfirmed');
     end)
 end
 
@@ -94,7 +112,7 @@ local function ProductPurchaseHandler()
             callbacks['Gem'](player, nil);
         end
 
-        network:FireClient(player, 'PurchaseConfirmed', 'product', productName, receiptInfo.ProductId);
+        network:FireClient(player, 'PurchaseConfirmed');
 
         return Enum.ProductPurchaseDecision.PurchaseGranted;
     end

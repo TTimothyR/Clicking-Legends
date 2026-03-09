@@ -4,6 +4,7 @@ local db = false;
 -- Services
 local players = game:GetService('Players');
 local rs = game:GetService('ReplicatedStorage');
+local mps = game:GetService('MarketplaceService');
 
 -- Variables
 repeat task.wait() until players.LocalPlayer;
@@ -22,6 +23,9 @@ local mutliDeleteActive = false;
 local selectedPets = {};
 local selectedPetAmount = 0;
 
+local increaseEquippedButtonCon: RBXScriptConnection
+local increaseStorageButtonCon: RBXScriptConnection
+
 local CreateClickConnection
 
 -- UI
@@ -36,7 +40,9 @@ local equippedSecretTemplate: ImageButton = templates:WaitForChild('EquippedSecr
 local main: Frame = inventoryFrame:WaitForChild('Main');
 local statsFrame: Frame = main:WaitForChild('Stats');
 local equippedStat: Frame = statsFrame:WaitForChild('Equipped');
+local increaseEquippedButton: ImageButton = equippedStat:WaitForChild('Increase');
 local storageStat: Frame = statsFrame:WaitForChild('Storage');
+local increaseStorageButton: ImageButton = storageStat:WaitForChild('Increase');
 local bulkButtons: Frame = main:WaitForChild('BulkButtons');
 local equipBest: ImageButton = bulkButtons:WaitForChild('EquipBest');
 local unequipAll: ImageButton = bulkButtons:WaitForChild('UnequipAll');
@@ -67,10 +73,12 @@ local network = require(framework.Network);
 local infMath = require(framework.InfiniteMath);
 local petStats = require(library.PetStats);
 local eggStats = require(library.EggStats);
+local shopStats = require(library.ShopStats);
 local globals = require(framework.Globals);
 local tblUtil = require(framework.TableUtility);
 local warning = require(classes.WarningPopup);
 local dataSync = require(script.Parent.DataSyncClient);
+local shopHandler = nil;
 local menuHandler = nil;
 
 -- Constants
@@ -406,6 +414,44 @@ function InventoryHandler.LoadInventory()
         selectedPetAmount = 0;
     end
 
+    local ownedPasses = dataSync.Get('OwnedGamepasses');
+    local ownsEquips = ownedPasses['+3 Pet Equips'];
+    local ownsStorageT1 = ownedPasses['+100 Pet Storage'];
+    local ownsStorageT2 = ownedPasses['+500 Pet Storage'];
+
+    if increaseEquippedButtonCon and increaseEquippedButtonCon.Connected then
+        increaseEquippedButtonCon:Disconnect();
+    end
+    if increaseStorageButtonCon and increaseStorageButtonCon.Connected then
+        increaseStorageButtonCon:Disconnect();
+    end
+
+    if not ownsEquips then
+        increaseEquippedButtonCon = increaseEquippedButton.MouseButton1Click:Connect(function()
+            if not db then db = true task.delay(.15, function() db = false end)
+                mps:PromptGamePassPurchase(player, shopStats.Gamepasses['+3 Pet Equips'].GamepassID);
+                shopHandler.ShowGreyFrame();
+            end
+        end)
+    else
+        increaseEquippedButton.Visible = false;
+    end
+    if ownsStorageT1 and ownsStorageT2 then
+        increaseStorageButton.Visible = false;
+    end
+    if not ownsStorageT1 or not ownsStorageT2 then
+        increaseStorageButtonCon = increaseStorageButton.MouseButton1Click:Connect(function()
+            if not db then db = true task.delay(.15, function() db = false end)
+                if not ownsStorageT1 then
+                    mps:PromptGamePassPurchase(player, shopStats.Gamepasses['+100 Pet Storage'].GamepassID);
+                    shopHandler.ShowGreyFrame();
+                elseif not ownsStorageT2 then
+                    mps:PromptGamePassPurchase(player, shopStats.Gamepasses['+500 Pet Storage'].GamepassID);
+                    shopHandler.ShowGreyFrame();
+                end
+            end
+        end)
+    end
     if not bulkButtonsConnected then
         searchBox.Focused:Connect(function()
             searchBox.Text = "";
@@ -717,6 +763,10 @@ function InventoryHandler.ParseMenuHandler(handler)
     menuHandler = handler;
 end
 
+function InventoryHandler.ParseShopHandler(handler)
+    shopHandler = handler;
+end
+
 function InventoryHandler.Initialize()
     if not game.Loaded then game.Loaded:Wait() end;
 
@@ -729,7 +779,7 @@ function InventoryHandler.Initialize()
     dataSync.OnChanged('PetEquips', function()
         if not inventoryFrame.Visible then return end;
         InventoryHandler.LoadInventory();
-    end)    
+    end)
     dataSync.OnChanged('CurrentEquips', function()
         InventoryHandler.LoadInventory();
     end)

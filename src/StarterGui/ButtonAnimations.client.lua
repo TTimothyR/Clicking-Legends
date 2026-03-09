@@ -62,6 +62,14 @@ local function animateButton(button: ImageButton)
 				mouseUp:Disconnect()
 			end
 		end)
+		button:GetAttributeChangedSignal('Scale'):Connect(function()
+			if button:GetAttribute('Scale') == nil then
+				mouseEnter:Disconnect()
+				mouseLeave:Disconnect()
+				mouseDown:Disconnect()
+				mouseUp:Disconnect()
+			end
+		end)
 	end)
 end
 

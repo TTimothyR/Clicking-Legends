@@ -35,19 +35,14 @@ local exclusivePetFrame: Frame = scrollingHolder:WaitForChild('ExclusivePets');
 -- Modules
 local dataSync = require(script.Parent.DataSyncClient);
 local menuHandler = require(script.Parent.MenuHandler);
+local inventoryHandler = require(script.Parent.InventoryHandler);
 local shopStats = require(library.ShopStats);
 local infoPopup = require(classes.InfoPopup);
-
-local function ShowGreyFrame()
-    if greyFrame.Visible and greyFrame.BackgroundTransparency == 0.4 then return end;
-
-    greyFrame.Visible = true;
-    ts:Create(greyFrame, TweenInfo.new(0.25, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {BackgroundTransparency = 0.4}):Play();
-end
 
 local function UpdateGamepasses(newData)
     for gpName, _ in pairs(newData) do
         local clone = scrollingHolder:FindFirstChild(gpName);
+        if not clone then continue end;
         for _, child in ipairs(clone.Inner.Buttons.Buy:GetChildren()) do
             child.Visible = (child.Name == 'Owns');
         end
@@ -81,7 +76,7 @@ local function LoadShop()
         gpConnections[gamepassName] = clone.Inner.Buttons.Buy.MouseButton1Click:Connect(function()
             if not db then db = true task.delay(.15, function() db = false end)
                 mps:PromptGamePassPurchase(player, data.GamepassID);
-                ShowGreyFrame();
+                ShopHandler.ShowGreyFrame();
             end
         end)
         clone.Inner.Buttons.Gift.MouseButton1Click:Connect(function()
@@ -125,12 +120,19 @@ local function LoadShop()
         buyButton.MouseButton1Click:Connect(function()
             if not db then db = true task.delay(.15, function() db = false end)
                 mps:PromptProductPurchase(player, data.ProductID);
-                ShowGreyFrame();
+                ShopHandler.ShowGreyFrame();
             end
         end)
     end
 
     UpdateGamepasses(dataSync.Get('OwnedGamepasses'));
+end
+
+function ShopHandler.ShowGreyFrame()
+    if greyFrame.Visible and greyFrame.BackgroundTransparency == 0.4 then return end;
+
+    greyFrame.Visible = true;
+    ts:Create(greyFrame, TweenInfo.new(0.25, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {BackgroundTransparency = 0.4}):Play();
 end
 
 function ShopHandler.HideGreyFrame()
@@ -142,14 +144,18 @@ function ShopHandler.HideGreyFrame()
     greyFrame.Visible = false;
 end
 
-function ShopHandler.PurchaseConfirmed(purchaseType: string, purchaseName: string, id: number)
+function ShopHandler.PurchaseConfirmed()
     ShopHandler.HideGreyFrame();
+
+    local targetFrame = menuHandler.activeFrame;
+
+    -- if not shopFrame.Visible then return end;
 
     local popup = infoPopup.new(
         nil,
         'Thank you for your purchase!',
         function()
-            menuHandler.handleOpenClose(shopFrame);
+            menuHandler.handleOpenClose(targetFrame);
         end,
         infoFrame
     );
@@ -160,6 +166,8 @@ end
 function ShopHandler.Initialize()
     if not game.Loaded then game.Loaded:Wait() end;
 
+    inventoryHandler.ParseShopHandler(ShopHandler);
+
     dataSync.OnReady(function()
         LoadShop();
     end)
@@ -168,18 +176,14 @@ function ShopHandler.Initialize()
         UpdateGamepasses(new);
     end)
 
-    task.spawn(function()
-        while true do
-            local tween1 = ts:Create(shopFrame.Shine, TweenInfo.new(15, Enum.EasingStyle.Linear), {Rotation = 180});
-            local tween2 = ts:Create(shopFrame.Shine, TweenInfo.new(15, Enum.EasingStyle.Linear), {Rotation = 360});
-            
-            tween1:Play();
-            tween1.Completed:Wait();
-
-            tween2:Play();
-            tween2.Completed:Wait();
-        end
-    end)
+    -- task.spawn(function()
+    --     while true do
+    --         local tween1: Tween = ts:Create(shopFrame.Shine, TweenInfo.new(30, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {Rotation = 360});
+    --         tween1:Play();
+    --         tween1.Completed:Wait();
+    --         shopFrame.Shine.Rotation = 0;
+    --     end
+    -- end)
 end
 
 return ShopHandler;
