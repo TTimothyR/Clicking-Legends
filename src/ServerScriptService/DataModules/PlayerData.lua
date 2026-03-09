@@ -8,7 +8,7 @@ local ProfileStore = require(sss.DataModules.ProfileStore)
 local leaderstats = require(sss.DataModules.leaderstats)
 local dataSync = require(script.Parent.DataSyncServer);
 
-local v = "27"
+local v = "28"
 local dataKey = "OfficialV"..v
 if runService:IsStudio() then
 	dataKey = "TestV"..v
