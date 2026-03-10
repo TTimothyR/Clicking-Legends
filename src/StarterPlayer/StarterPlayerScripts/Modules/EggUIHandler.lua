@@ -251,6 +251,8 @@ function EggUIHandler.Initialize()
 
     task.spawn(GetClosestEgg);
 
+    print('Grand Patriotic Overlord Exist Count:'..rs.GetPetExist:InvokeServer('Grand Patriotic Overlord', false));
+
     uis.InputBegan:Connect(function(input, gameProcessedEvent)
         if gameProcessedEvent then return end;
 

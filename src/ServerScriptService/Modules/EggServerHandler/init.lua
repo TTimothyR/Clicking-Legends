@@ -23,6 +23,7 @@ local dataSync = require(dataModules.DataSyncServer);
 
 -- Bindables
 local NotifyHatch = game:GetService("ServerStorage"):WaitForChild("NotifyHatch")
+local HatchBind = game:GetService('ServerStorage'):WaitForChild('Hatch');
 
 local function ValidateDistance(player: Player, eggName: string)
     local maxDistance = 15;
@@ -74,6 +75,7 @@ function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
     -- player:SetAttribute('Eggs', http:JSONEncode(profile.Eggs));
 
     local petData = {};
+    local changes = {};
 
     for _ = 1, amount do
         local petName, shiny = luckHandler.RollPet(player, eggName);
@@ -100,9 +102,16 @@ function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
         })
 
         if not autoDeleted then
-            if petStats[petName].Secret then
-                NotifyHatch:Invoke(player.Name, petName, 'Secret');
-            end
+            -- if petStats[petName].Secret then
+            --     NotifyHatch:Invoke(player.Name, petName, 'Secret');
+            -- end
+            table.insert(changes, {
+                petName = petName,
+                rarity = rarity,
+                isSecret = petStats[petName].Secret == true;
+                isShiny = shiny,
+                delta = 1
+            })
             table.insert(profile.Pets,{
                 petName = petName,
                 fullName = fullName,
@@ -116,6 +125,14 @@ function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
             })
         end
 
+    end
+
+    if #changes > 0 then
+        task.spawn(function()
+            local encoded = http:JSONEncode(changes);
+            print(encoded)
+            HatchBind:Invoke(player.Name, encoded);
+        end)
     end
     dataSync.SyncPlayer(player, profile);
 

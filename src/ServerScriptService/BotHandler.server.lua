@@ -10,7 +10,7 @@ local library = framework:WaitForChild('Library');
 local config = {
     BOT_URL = 'https://clrbot.onrender.com',
     ROBLOX_SECRET = 'hG7kP2mN9qR4',
-    HATCH_CHANNEL = '990280771992424468',
+    HATCH_CHANNEL = '1480590775111913676',
     KEEP_ALIVE_INTERVAL = 4*60
 };
 
@@ -105,14 +105,14 @@ end
 
 task.spawn(SyncPetStats);
 
-task.spawn(function()
-    while true do
-        task.wait(config.KEEP_ALIVE_INTERVAL);
-        pcall(function()
-            httpService:GetAsync(config.BOT_URL.."/ping");
-        end)
-    end
-end)
+-- task.spawn(function()
+--     while true do
+--         task.wait(config.KEEP_ALIVE_INTERVAL);
+--         pcall(function()
+--             httpService:GetAsync(config.BOT_URL.."/ping");
+--         end)
+--     end
+-- end)
 
 local function SecretHatch(playerName: string, petName: string, rarity: string)
     task.spawn(function()
@@ -130,4 +130,46 @@ NotifyHatchBindable.Parent = game:GetService("ServerStorage")
 
 NotifyHatchBindable.OnInvoke = function(playerName, petName, rarity)
     SecretHatch(playerName, petName, rarity)
+end
+
+local HatchBindable = Instance.new("BindableFunction")
+HatchBindable.Name = "Hatch"
+HatchBindable.Parent = game:GetService("ServerStorage")
+HatchBindable.OnInvoke = function(playerName, changesJson)
+    local body = httpService:JSONEncode({
+        playerName = playerName,
+        channelId  = config.HATCH_CHANNEL,
+        changes    = httpService:JSONDecode(changesJson)
+    })
+    -- send body directly, bypass Post's encoding
+    pcall(function()
+        httpService:RequestAsync({
+            Url = config.BOT_URL .. '/hatch',
+            Method = "POST",
+            Headers = headers,
+            Body = body
+        })
+    end)
+end
+
+local GetPetExist = Instance.new("RemoteFunction")
+GetPetExist.Name = "GetPetExist"
+GetPetExist.Parent = rs
+
+GetPetExist.OnServerInvoke = function(player, petName, isShiny)
+	if typeof(petName) ~= "string" then return nil end
+	isShiny = isShiny == true -- ensure boolean
+	local shinyParam = isShiny and "true" or "false"
+	local url = config.BOT_URL .. "/pet-exist?name=" .. httpService:UrlEncode(petName) .. "&shiny=" .. shinyParam
+	local s, result = pcall(function()
+		return httpService:RequestAsync({
+			Url     = url,
+			Method  = "GET",
+			Headers = headers,
+		})
+	end)
+	if not s or result.StatusCode ~= 200 then return nil end
+	local ok, data = pcall(httpService.JSONDecode, httpService, result.Body)
+	if not ok or not data.ok then return nil end
+	return data.totalExisting
 end
