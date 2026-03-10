@@ -21,6 +21,9 @@ local network = require(framework.Network);
 local luckHandler = require(script.Parent.LuckHandler);
 local dataSync = require(dataModules.DataSyncServer);
 
+-- Bindables
+local NotifyHatch = game:GetService("ServerStorage"):WaitForChild("NotifyHatch")
+
 local function ValidateDistance(player: Player, eggName: string)
     local maxDistance = 15;
 
@@ -97,6 +100,9 @@ function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
         })
 
         if not autoDeleted then
+            if petStats[petName].Secret then
+                NotifyHatch:Invoke(player.Name, petName, 'Secret');
+            end
             table.insert(profile.Pets,{
                 petName = petName,
                 fullName = fullName,
