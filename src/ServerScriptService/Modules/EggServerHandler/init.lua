@@ -34,18 +34,34 @@ local function ValidateDistance(player: Player, eggName: string)
     return distance <= maxDistance;
 end
 
+function EggHandler.ToggleAutoHatch(player: Player, eggName: string, new: boolean)
+    local profile = playerData.GetData(player);
+    if not profile then return end;
+    profile.IsAutoHatching = new;
+    profile.TargetAutoHatchEgg = eggName;
+    
+    if profile.IsAutoHatching then
+        EggHandler.OpenEgg(player, eggName, profile.EggHatches);
+    end
+
+    dataSync.SyncPlayer(player, profile);
+end
+
 function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
     if not ValidateDistance(player, eggName) then
+        EggHandler.ToggleAutoHatch(player, '', false);
         print('Too far away from egg.')
         return
     end
     if not eggStats[eggName] then
+        EggHandler.ToggleAutoHatch(player, '', false);
         warn('Invalid egg name', eggName);
         return;
     end
 
     local profile = playerData.GetData(player);
     if not profile then
+        EggHandler.ToggleAutoHatch(player, '', false);
         warn('Could not fetch profile for player', player.Name)
         return;
     end
@@ -65,6 +81,7 @@ function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
             amount = newAmount
             price = infMath.new(priceForOne * amount);
         else
+            EggHandler.ToggleAutoHatch(player, '', false);
             warn('Not enough currency');
             return;
         end
@@ -141,26 +158,42 @@ function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
             HatchBind:Invoke(player.Name, encoded);
         end)
     end
-    dataSync.SyncPlayer(player, profile);
-
+    
     player.UILock.Value = true;
+    dataSync.SyncPlayer(player, profile);
     network:FireClient(player, 'EggAnimation', eggName, amount, petData);
 end
 
-function EggHandler.ResetVariables(player: Player)
+function EggHandler.RequestNextHatch(player: Player)
+    local profile = playerData.GetData(player);
+    if not profile or not profile.IsAutoHatching then return end;
+    if player.UILock.Value then return end;
+
+    task.delay(0.3, function()
+        EggHandler.OpenEgg(player, profile.TargetAutoHatchEgg, profile.EggHatches);
+    end)
+end
+
+function EggHandler.ResetVariables(player: Player, startUp: boolean)
+    startUp = startUp == nil and false or startUp;
+    
     local profile = playerData.GetData(player);
     if not profile then warn("Could not fetch profile.") return end
-    profile.HatchDebounce = false;
-    dataSync.SyncPlayer(player, profile);
     player.UILock.Value = false;
+    profile.HatchDebounce = false;
+    if startUp then
+        profile.IsAutoHatching = false;
+        profile.TargetAutoHatchEgg = '';
+    end
+    dataSync.SyncPlayer(player, profile);
 end
 
 function EggHandler.Initialize()
     for _, player: Player in ipairs(players:GetPlayers()) do
-        task.spawn(EggHandler.ResetVariables, player);
+        task.spawn(EggHandler.ResetVariables, player, true);
     end
     players.PlayerAdded:Connect(function(player)
-        task.spawn(EggHandler.ResetVariables, player);
+        task.spawn(EggHandler.ResetVariables, player, true);
     end)
 end
 

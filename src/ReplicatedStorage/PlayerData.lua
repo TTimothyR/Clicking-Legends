@@ -46,6 +46,9 @@ Shared.DEFAULT_PLAYER_DATA = {
     AutoRebirthStatus = false,
     AutoRebirthIndex = 0,
 
+    IsAutoHatching = false,
+    TargetAutoHatchEgg = '',
+
     ClickDebounce = false,
     HatchDebounce = false,
 }

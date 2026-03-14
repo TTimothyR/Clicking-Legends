@@ -356,19 +356,19 @@ function TradeHandler.Unready(me: Player)
     end
 end
 
-function TradeHandler.ResetVariables(player: Player)
+local function ResetVariables(player: Player)
     local profile = playerData.GetData(player);
     profile.IsInTrade = false;
-    profile.TradeRequestFrom = 'RunService';
+    profile.TradeRequestFrom = '';
     dataSync.SyncPlayer(player, profile);
 end
 
 function TradeHandler.Initialize()
     for _, player: Player in ipairs(players:GetPlayers()) do
-        TradeHandler.ResetVariables(player);
+        ResetVariables(player);
     end
     players.PlayerAdded:Connect(function(player)
-        TradeHandler.ResetVariables(player);
+        ResetVariables(player);
     end)
     players.PlayerRemoving:Connect(function(player, reason)
         TradeHandler.DeclineTrade(player);

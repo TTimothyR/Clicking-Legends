@@ -231,13 +231,19 @@ local function ConfigureEggUI(egg: Model)
 end
 
 function EggUIHandler.AutoHatch(eggName: string)
-    local egg = eggName;
-    autoHatching = true;
-    repeat
-        network:InvokeServer('OpenEgg', egg, dataSync.Get('EggHatches'));
-        task.wait(0.5);
-    until closestEgg2 ~= egg;
-    autoHatching = false;
+    network:FireServer('ToggleAutoHatch', eggName, true);
+    -- local egg = eggName;
+    -- autoHatching = true;
+    -- repeat
+    --     network:InvokeServer('OpenEgg', egg, dataSync.Get('EggHatches'));
+    --     task.wait(0.5);
+    -- until closestEgg2 ~= egg;
+    -- autoHatching = false;
+end
+
+local function HatchComplete()
+    if not autoHatching then return end;
+    network:FireServer('RequestNextHatch');
 end
 
 function EggUIHandler.Initialize()
@@ -246,6 +252,16 @@ function EggUIHandler.Initialize()
     dataSync.OnReady(function()
         for _, egg in ipairs(eggs:GetChildren()) do
             ConfigureEggUI(egg);
+        end
+    end)
+
+    dataSync.OnChanged('IsAutoHatching', function(new, old)
+        autoHatching = new;
+    end)
+
+    dataSync.OnChanged('HatchDebounce', function(new, old)
+        if new == false then
+            HatchComplete();
         end
     end)
 
