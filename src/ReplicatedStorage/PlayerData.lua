@@ -18,7 +18,6 @@ Shared.DEFAULT_PLAYER_DATA = {
 
     LuckPercentage = 50,
     EggHatches = 3,
-    HatchSpeed = 0,
 
     ClickMultiplier = 0,
 

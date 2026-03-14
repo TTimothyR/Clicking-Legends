@@ -11,9 +11,9 @@ local ts = game:GetService('TweenService');
 repeat task.wait() until players.LocalPlayer;
 local player: Player = players.LocalPlayer;
 
-local framework: Folder = rs:WaitForChild('Framework');
-local library: Folder = framework:WaitForChild('Library');
-local classes: Folder = rs:WaitForChild('Classes');
+local framework = rs:WaitForChild('Framework');
+local library = framework:WaitForChild('Library');
+local classes = rs:WaitForChild('Classes');
 
 local gpConnections = {};
 
@@ -38,6 +38,7 @@ local menuHandler = require(script.Parent.MenuHandler);
 local inventoryHandler = require(script.Parent.InventoryHandler);
 local shopStats = require(library.ShopStats);
 local infoPopup = require(classes.InfoPopup);
+local infMath = require(framework.InfiniteMath);
 
 local function UpdateGamepasses(newData)
     for gpName, _ in pairs(newData) do
@@ -51,6 +52,14 @@ local function UpdateGamepasses(newData)
             gpConnections[gpName]:Disconnect();
         end
         -- clone.Inner.Buttons.Buy.PriceHolder.Title.Text = 'Owned';
+    end
+end
+
+local function UpdateGemPacks(newRebirths)
+    for _, child in ipairs(scrollingHolder:GetChildren()) do
+        if string.match(child.Name, 'GemPack') then
+            child.Frame.Amount.Text = "+"..infMath.new(newRebirths * shopStats.DeveloperProducts[child.Name].BaseGems):GetSuffix(true);
+        end
     end
 end
 
@@ -113,6 +122,7 @@ local function LoadShop()
             clone.Name = productName;
             clone.LayoutOrder = data.LayoutOrder;
             clone.Frame.Buy.PriceHolder.Title.Text = info.PriceInRobux;
+            clone.Frame.Amount.Text = "+"..infMath.new(dataSync.Get('Rebirths') * shopStats.DeveloperProducts[productName].BaseGems):GetSuffix(true);
             clone.Visible = true;
         end
 
@@ -174,6 +184,10 @@ function ShopHandler.Initialize()
 
     dataSync.OnChanged('OwnedGamepasses', function(new, old)
         UpdateGamepasses(new);
+    end)
+
+    dataSync.OnChanged('Rebirths', function(new, old)
+        UpdateGemPacks(new);
     end)
 
     -- task.spawn(function()

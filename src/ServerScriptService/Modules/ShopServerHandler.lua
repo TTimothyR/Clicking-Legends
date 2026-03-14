@@ -6,14 +6,17 @@ local mps = game:GetService('MarketplaceService');
 local rs = game:GetService('ReplicatedStorage');
 
 -- Variables
-local framework: Folder = rs:WaitForChild('Framework');
-local library: Folder = framework:WaitForChild('Library');
+local framework = rs:WaitForChild('Framework');
+local library = framework:WaitForChild('Library');
 
 -- Modules
 local shopStats = require(library.ShopStats);
 local network = require(framework.Network);
+local infMath = require(framework.InfiniteMath);
+local globals = require(framework.Globals);
 local playerData = require(script.Parent.Parent.DataModules.PlayerData);
 local dataSync = require(script.Parent.Parent.DataModules.DataSyncServer);
+local rewardHandler = require(script.Parent.Private.RewardHandler);
 
 -- Constants
 local gpIDToName = {};
@@ -46,10 +49,20 @@ local callbacks = {
     
     
     ['Pet'] = function(player: Player, petNames: {number : string})
-        print(player.Name..' bought a pet');
-    end,
-    ['Gem'] = function(player: Player, packNr: number)
+        for i, petName in ipairs(petNames) do
+            local s = rewardHandler.ClaimPet(player, petName, false);
+        end
         
+        local profile = playerData.GetData(player);
+        dataSync.SyncPlayer(player, profile);
+    end,
+    ['Gem'] = function(player: Player, baseGems: number)
+        local profile = playerData.GetData(player);
+        local toAdd = infMath.new(profile.Rebirths * baseGems);
+        profile.Gems = infMath.new(profile.Gems + toAdd);
+        player.leaderstats.Gems.Value = profile.Gems:GetSuffix(true);
+
+        dataSync.SyncPlayer(player, profile);
     end
 }
 
@@ -113,9 +126,16 @@ local function ProductPurchaseHandler()
         end
 
         if string.match(productName, 'Pet') then
-            callbacks['Pet'](player, nil);
-        elseif string.match(productName, 'Gem') then
-            callbacks['Gem'](player, nil);
+            local petNames = {};
+            if string.match(productName, 'Combi') then
+                table.insert(petNames, shopStats.DeveloperProducts['Pet1'].PetName);
+                table.insert(petNames, shopStats.DeveloperProducts['Pet2'].PetName);
+            else
+                table.insert(petNames, shopStats.DeveloperProducts[productName].PetName);
+            end
+            callbacks['Pet'](player, petNames);
+        elseif string.match(productName, 'GemPack') then
+            callbacks['Gem'](player, shopStats.DeveloperProducts[productName].BaseGems);
         end
 
         network:FireClient(player, 'PurchaseConfirmed');
