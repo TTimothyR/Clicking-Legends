@@ -173,3 +173,55 @@ GetPetExist.OnServerInvoke = function(player, petName, isShiny)
 	if not ok or not data.ok then return nil end
 	return data.totalExisting
 end
+
+local function handleLinkCommand(player, token)
+	local result = Post("/confirm-link", {
+		token         = token,
+		robloxUsername = player.Name,
+	})
+ 
+	if result == nil then
+		-- HTTP failed — let the player know rather than kicking them
+		-- local notifEvent = rs:FindFirstChild("ShowNotification")
+		-- if notifEvent then
+		-- 	notifEvent:FireClient(player, "❌ Link Failed", "Could not reach the bot right now. Please try again in a moment.")
+		-- end
+		warn("[BotBridge] /confirm-link HTTP request failed for " .. player.Name)
+		return
+	end
+ 
+	if result.ok then
+		-- Notify the player in-game
+		-- local playerGui = player:FindFirstChild("PlayerGui")
+		-- if playerGui then
+		-- 	-- Fire a client-side notification (implement your own UI)
+		-- 	local notifEvent = rs:FindFirstChild("ShowNotification")
+		-- 	if notifEvent then
+		-- 		notifEvent:FireClient(player, "✅ Linked!", "Your Roblox account has been linked to Discord!")
+		-- 	end
+		-- end
+		print(("[BotBridge] %s linked to Discord ID %s"):format(player.Name, tostring(result.discordId)))
+	else
+		local msg = result.error or "Unknown error"
+		-- Notify player of failure
+		-- local notifEvent = rs:FindFirstChild("ShowNotification")
+		-- if notifEvent then
+		-- 	local friendly = msg
+		-- 	if msg == "Token not found" then friendly = "That code wasn't found. Use /link in Discord to get a new one."
+		-- 	elseif msg == "Token expired"  then friendly = "That code expired. Use /link in Discord to get a fresh one."
+		-- 	elseif msg == "Username mismatch" then friendly = "The Roblox username doesn't match. Make sure you typed your exact username in Discord."
+		-- 	end
+		-- 	notifEvent:FireClient(player, "❌ Link Failed", friendly)
+		-- end
+		warn(("[BotBridge] Link failed for %s: %s"):format(player.Name, msg))
+	end
+end
+ 
+players.PlayerAdded:Connect(function(player)
+	player.Chatted:Connect(function(message)
+		local token = message:match("^/linkdiscord%s+(%S+)$")
+		if token then
+			handleLinkCommand(player, token:upper())
+		end
+	end)
+end)
