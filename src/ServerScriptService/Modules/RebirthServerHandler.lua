@@ -41,6 +41,12 @@ function RebirthHandler.AttemptRebirth(player: Player, rebirthIndex: number)
     local gemsPerRebirth = petGems < 1 and 10 or 10 * petGems;
 
     if clicks >= price then
+        if profile.OwnedGamepasses['Double Rebirths'] then
+            rebirthAmount *= 2;
+        end
+        if profile.OwnedGamepasses['Double Gems'] then
+            gemsPerRebirth *= 2;
+        end
         profile.Clicks = infMath.new(0);
         -- player:SetAttribute('Clicks', http:JSONEncode(profile.Clicks));
         player.leaderstats.Clicks.Value = profile.Clicks:GetSuffix(true);
@@ -48,7 +54,6 @@ function RebirthHandler.AttemptRebirth(player: Player, rebirthIndex: number)
         profile.Gems = infMath.new(profile.Gems + (gemsPerRebirth * rebirthAmount));
         -- player:SetAttribute('Gems', http:JSONEncode(profile.Gems));
         player.leaderstats.Gems.Value = profile.Gems:GetSuffix(true);
-        
         profile.Rebirths = infMath.new(profile.Rebirths + rebirthAmount);
         -- player:SetAttribute('Rebirths', http:JSONEncode(profile.Rebirths));
         player.leaderstats.Rebirths.Value = profile.Rebirths:GetSuffix(true);

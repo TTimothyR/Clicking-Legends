@@ -234,7 +234,7 @@ function EggUIHandler.AutoHatch(eggName: string)
     local egg = eggName;
     autoHatching = true;
     repeat
-        network:InvokeServer('OpenEgg', egg, 5);
+        network:InvokeServer('OpenEgg', egg, dataSync.Get('EggHatches'));
         task.wait(0.5);
     until closestEgg2 ~= egg;
     autoHatching = false;
@@ -262,7 +262,7 @@ function EggUIHandler.Initialize()
                 if egg ~= '' then network:FireServer('OpenEgg', egg, 1) end;
             elseif input.KeyCode == Enum.KeyCode.R then
                 local egg = closestEgg2;
-                if egg ~= '' then network:FireServer('OpenEgg', egg, 3) end;
+                if egg ~= '' then network:FireServer('OpenEgg', egg, dataSync.Get('EggHatches')) end;
             elseif input.KeyCode == Enum.KeyCode.T then
                 local egg = closestEgg2
 				if egg ~= "" and not autoHatching then

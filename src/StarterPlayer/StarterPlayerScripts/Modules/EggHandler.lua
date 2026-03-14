@@ -53,6 +53,7 @@ local menuHandler = require(script.Parent.MenuHandler);
 local soundHandler = require(script.Parent.SoundHandler);
 local globals = require(framework.Globals);
 local interfaceUtility = require(framework.InterfaceUtility);
+local dataSync = require(script.Parent.DataSyncClient);
 
 -- Constants
 local dir, style, animTime = Enum.EasingDirection.Out, Enum.EasingStyle.Sine, 0.3;
@@ -143,7 +144,11 @@ local function UnHideUI()
 end
 
 function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
-    local speed = 2
+    local speed = 1
+    local ownedGamepsses = dataSync.Get('OwnedGamepasses');
+    if ownedGamepsses['Fast Hatch'] then
+        speed += 0.35;
+    end
 
     local eggData = {};
     local eggAnimationConnections = {};

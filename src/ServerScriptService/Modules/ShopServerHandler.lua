@@ -37,6 +37,12 @@ local callbacks = {
 
         dataSync.SyncPlayer(player, profile);
     end,
+    ['+2 Eggs'] = function(player: Player)
+        local profile = playerData.GetData(player);
+        profile.EggHatches += 2;
+
+        dataSync.SyncPlayer(player, profile);
+    end,
     
     
     ['Pet'] = function(player: Player, petNames: {number : string})

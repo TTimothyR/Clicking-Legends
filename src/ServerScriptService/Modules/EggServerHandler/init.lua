@@ -56,11 +56,18 @@ function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
     end
 
     local clicks = infMath.new(profile.Clicks);
-    local price = infMath.new(eggStats[eggName].Price[2] * amount);
+    local priceForOne = infMath.new(eggStats[eggName].Price[2]);
+    local price = infMath.new(priceForOne * amount);
 
     if clicks < price then
-        warn('Not enough currency');
-        return;
+        local newAmount = math.floor(infMath.new(clicks/priceForOne):Reverse());
+        if newAmount > 0 then
+            amount = newAmount
+            price = infMath.new(priceForOne * amount);
+        else
+            warn('Not enough currency');
+            return;
+        end
     end
 
     profile.HatchDebounce = true;

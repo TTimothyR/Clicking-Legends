@@ -83,6 +83,11 @@ function StatHandler.Click(player: Player)
         critical = true;
     end
 
+    local ownedGamepasses = profile.OwnedGamepasses;
+    if ownedGamepasses['Double Clicks'] then
+        increment *= 2;
+    end
+
     profile.Clicks = infMath.new(profile.Clicks + increment);
     player.leaderstats.Clicks.Value = infMath.new(profile.Clicks):GetSuffix(true);
     profile.ActualClicks = infMath.new(profile.ActualClicks + infMath.new(1));
