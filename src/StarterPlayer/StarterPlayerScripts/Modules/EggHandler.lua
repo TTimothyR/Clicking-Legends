@@ -124,9 +124,9 @@ local function HideUI()
     boost:TweenPosition(UDim2.new(0.292,0,-0.3,0), dir, style, animTime);
     popUps.Visible = false;
 
-    if closedFrame then
-        menuHandler.openFrame(closedFrame);
-        closedFrame = nil;
+    if menuHandler.activeFrame then
+        closedFrame = menuHandler.activeFrame;
+        menuHandler.closeFrame(closedFrame);
     end
 end
 
@@ -136,10 +136,9 @@ local function UnHideUI()
     clickButton:TweenPosition(UDim2.new(0.517,0,0.91,0), dir, style, animTime);
     boost:TweenPosition(UDim2.new(0.292,0,0.013,0), dir, style, animTime);
     popUps.Visible = true;
-
-    if menuHandler.activeFrame then
-        closedFrame = menuHandler.activeFrame;
-        menuHandler.closeFrame(closedFrame);
+    if closedFrame then
+        menuHandler.openFrame(closedFrame);
+        closedFrame = nil;
     end
 end
 

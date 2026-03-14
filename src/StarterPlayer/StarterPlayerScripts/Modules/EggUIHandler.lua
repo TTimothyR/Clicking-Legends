@@ -14,9 +14,10 @@ local player: Player = players.LocalPlayer;
 
 local eggs: Folder = workspace:WaitForChild('Eggs');
 
-local framework: Folder = rs:WaitForChild('Framework');
-local library: Folder = framework:WaitForChild('Library');
-local assets: Folder = rs:WaitForChild('Assets');
+local framework = rs:WaitForChild('Framework');
+local library = framework:WaitForChild('Library');
+local classes = rs:WaitForChild('Classes');
+local assets = rs:WaitForChild('Assets');
 
 local closestEgg2;
 local adornees = {};
@@ -28,6 +29,8 @@ local autoHatching = false;
 local playerGui = player:WaitForChild('PlayerGui');
 local eggUI: BillboardGui = assets:WaitForChild('EggUI');
 local eggHolder: ScreenGui = playerGui:WaitForChild('EggUI');
+local frames: ScreenGui = playerGui:WaitForChild('Frames');
+local infoFrame: Frame = frames:WaitForChild('Info');
 
 -- Modules
 local eggStats = require(library.EggStats);
@@ -35,6 +38,8 @@ local petStats = require(library.PetStats);
 local network = require(framework.Network);
 local globals = require(framework.Globals);
 local dataSync = require(script.Parent.DataSyncClient);
+local menuHandler = require(script.Parent.MenuHandler);
+local infoClass = require(classes.InfoPopup);
 
 local function SetupTemplate(ui)
     local petHolder = ui.Main.PetsFrame.Holder;
@@ -239,6 +244,24 @@ function EggUIHandler.AutoHatch(eggName: string)
     --     task.wait(0.5);
     -- until closestEgg2 ~= egg;
     -- autoHatching = false;
+end
+
+function EggUIHandler.UnableToOpen(message: string)
+    local previousFrame = menuHandler.activeFrame;
+    local popup = infoClass.new(
+        nil,
+        message,
+        function()
+            if previousFrame then
+                menuHandler.handleOpenClose(previousFrame)
+            else
+                menuHandler.closeFrame(infoFrame);
+            end
+        end,
+        infoFrame
+    )
+
+    menuHandler.handleOpenClose(infoFrame);
 end
 
 local function HatchComplete()

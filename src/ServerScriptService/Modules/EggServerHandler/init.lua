@@ -51,11 +51,13 @@ function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
     if not ValidateDistance(player, eggName) then
         EggHandler.ToggleAutoHatch(player, '', false);
         print('Too far away from egg.')
+        network:FireClient(player, 'UnableToOpen', 'You are too far away from the egg.');
         return
     end
     if not eggStats[eggName] then
         EggHandler.ToggleAutoHatch(player, '', false);
         warn('Invalid egg name', eggName);
+        network:FireClient(player, 'UnableToOpen', 'Invalid egg name, please report this to a developer.');
         return;
     end
 
@@ -63,6 +65,7 @@ function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
     if not profile then
         EggHandler.ToggleAutoHatch(player, '', false);
         warn('Could not fetch profile for player', player.Name)
+        network:FireClient(player, 'UnableToOpen', 'Failed to get profile, please report this to a developer.');
         return;
     end
 
@@ -83,6 +86,7 @@ function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
         else
             EggHandler.ToggleAutoHatch(player, '', false);
             warn('Not enough currency');
+            network:FireClient(player, 'UnableToOpen', 'You do not have enough currency to afford this egg.');
             return;
         end
     end
