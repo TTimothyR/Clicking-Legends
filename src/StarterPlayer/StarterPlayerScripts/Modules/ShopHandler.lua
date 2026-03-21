@@ -36,6 +36,7 @@ local exclusivePetFrame: Frame = scrollingHolder:WaitForChild('ExclusivePets');
 local dataSync = require(script.Parent.DataSyncClient);
 local menuHandler = require(script.Parent.MenuHandler);
 local inventoryHandler = require(script.Parent.InventoryHandler);
+local rebirthHandler = require(script.Parent.RebirthHandler);
 local shopStats = require(library.ShopStats);
 local infoPopup = require(classes.InfoPopup);
 local infMath = require(framework.InfiniteMath);
@@ -190,6 +191,7 @@ function ShopHandler.Initialize()
         UpdateGemPacks(new);
     end)
 
+    rebirthHandler.ParseShopHandler(ShopHandler);
     -- task.spawn(function()
     --     while true do
     --         local tween1: Tween = ts:Create(shopFrame.Shine, TweenInfo.new(30, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {Rotation = 360});

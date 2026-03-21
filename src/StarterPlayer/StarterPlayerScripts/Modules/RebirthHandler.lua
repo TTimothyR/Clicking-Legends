@@ -4,18 +4,20 @@ local db = false;
 -- Services
 local players = game:GetService('Players');
 local rs = game:GetService('ReplicatedStorage');
-local http = game:GetService('HttpService');
+local mps = game:GetService('MarketplaceService');
 
 -- Variables
 repeat task.wait() until players.LocalPlayer;
 local player: Player = players.LocalPlayer;
 
-local framework: Folder = rs:WaitForChild('Framework');
-local library: Folder = framework:WaitForChild('Library');
+local framework = rs:WaitForChild('Framework');
+local library = framework:WaitForChild('Library');
 local autoRebirthStatus = false;
 local autoRebirthSelect = false;
-local selectedIndex = 0;
+local selectedIndex = nil;
 local isLoaded = false;
+
+local unlimRebirthPurchaseCon: RBXScriptConnection = nil;
 
 -- UI
 local playerGui = player:WaitForChild('PlayerGui');
@@ -32,10 +34,12 @@ local autoRebirthSettings: ImageButton = rebirthFrame:WaitForChild('AutoSettings
 
 -- Modules
 local rebirthStats = require(library.RebirthStats);
+local shopStats = require(library.ShopStats);
 local globals = require(framework.Globals);
 local infMath = require(framework.InfiniteMath);
 local network = require(framework.Network);
 local dataSync = require(script.Parent.DataSyncClient);
+local shopHandler
 
 local function UpdateButtonColor(inner: Frame, color: string)
     inner.Click.Frame.UIGradient.Color = globals.ButtonPresets[color].Gradient;
@@ -56,7 +60,9 @@ end
 local function UpdateButton(inner: Frame, price)
     local color = '';
     local currentClicks = dataSync.Get('Clicks');
-    if currentClicks >= price then
+    if price == nil then
+        color = 'Red';
+    elseif currentClicks >= price then
         color = 'Green';
     else
         color = 'Red';
@@ -68,9 +74,25 @@ local function UpdateButtons(fromSignal: boolean)
     if not isLoaded then return end;
     local currentRebirths = dataSync.Get('Rebirths');
     local currentClicks = dataSync.Get('Clicks');
+    local ownedGamepasses = dataSync.Get('OwnedGamepasses');
     if (rebirthFrame.Visible or not fromSignal) and not autoRebirthSelect then
         for index, rebirths in ipairs(rebirthStats) do
             local clone: Frame = holder:FindFirstChild(index);
+            
+            if index == 1 and rebirths == 0 then
+                rebirths = infMath.new(currentClicks / (globals.RebirthBasePrice * currentRebirths));
+                rebirths = infMath.floor(rebirths);
+
+                if not ownedGamepasses['Unlimited Rebirths'] then
+                    clone.Inner.Locked.Visible = true;
+                    unlimRebirthPurchaseCon = clone.Inner.Locked.Buy.MouseButton1Click:Connect(function()
+                        if not db then db = true task.delay(.15, function() db = false end)
+                            mps:PromptGamePassPurchase(player, shopStats.Gamepasses['Unlimited Rebirths'].GamepassID);
+                            shopHandler.ShowGreyFrame();
+                        end
+                    end)
+                end
+            end
             
             local word = (rebirths == 1) and 'Rebirth' or 'Rebirths';
             
@@ -78,7 +100,11 @@ local function UpdateButtons(fromSignal: boolean)
             
             local inner: Frame = clone.Inner;
             inner.Amount.Text = '+'..tostring(rebirths)..' '..word..' ('..cost:GetSuffix(true)..' Clicks)';
-            UpdateButton(inner, cost);
+            if rebirths == infMath.new(0) then
+                UpdateButton(inner, nil);
+            else
+                UpdateButton(inner, cost);
+            end
             
             inner.AutoStroke.Enabled = (selectedIndex == index);
             
@@ -111,6 +137,19 @@ local function UpdateAutoRebirthButton(status: boolean)
     autoRebirthToggle.Title.Text = text;
 end
 
+local function CheckUnlimitedRebirthsOwned(newData)
+    print(newData);
+    if newData['Unlimited Rebirths'] then
+        if holder:FindFirstChild('1') then
+            holder:FindFirstChild('1').Inner.Locked.Visible = false;
+    
+            if unlimRebirthPurchaseCon.Connected then
+                unlimRebirthPurchaseCon:Disconnect();
+            end
+        end
+    end
+end
+
 function RebirthHandler.LoadRebirthButtons()
     if #holder:GetChildren() - 1 == #rebirthStats then
         UpdateButtons(false);
@@ -126,6 +165,7 @@ function RebirthHandler.LoadRebirthButtons()
         inner.Click.MouseButton1Click:Connect(function()
             if not db then db = true task.delay(.15, function() db = false end)
                 if autoRebirthSelect then
+                    if index == 1 then return end;
                     network:FireServer('SetAutoRebirthIndex', index);
                     autoRebirthSelect = false;
                 else
@@ -136,6 +176,10 @@ function RebirthHandler.LoadRebirthButtons()
     end
     isLoaded = true;
     UpdateButtons(false);
+end
+
+function RebirthHandler.ParseShopHandler(module)
+    shopHandler = module;
 end
 
 function RebirthHandler.Initialize()
@@ -166,6 +210,10 @@ function RebirthHandler.Initialize()
         UpdateButtons(false);
     end)
 
+    dataSync.OnChanged('OwnedGamepasses', function(new, old)
+        CheckUnlimitedRebirthsOwned(new);
+    end)
+
     autoRebirthToggle.MouseButton1Click:Connect(function()
         if not db then db = true task.delay(.15, function() db = false end)
             network:FireServer('ToggleAutoRebirth');
@@ -178,6 +226,9 @@ function RebirthHandler.Initialize()
                 autoRebirthSelect = true;
                 for _, child in ipairs(holder:GetChildren()) do
                     if child:IsA('Frame') then
+                        if child.Name == '1' then
+                            child.Visible = false;
+                        end
                         UpdateButtonColor(child.Inner, 'Purple');
                     end
                 end

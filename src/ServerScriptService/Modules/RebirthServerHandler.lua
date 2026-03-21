@@ -6,9 +6,9 @@ local rs = game:GetService('ReplicatedStorage');
 local http = game:GetService('HttpService');
 
 -- Variables
-local dataModules: Folder = sss:WaitForChild('DataModules');
-local framework: Folder = rs:WaitForChild('Framework');
-local library: Folder = framework:WaitForChild('Library');
+local dataModules = sss:WaitForChild('DataModules');
+local framework = rs:WaitForChild('Framework');
+local library = framework:WaitForChild('Library');
 
 -- Modules
 local playerData = require(dataModules.PlayerData);
@@ -32,9 +32,18 @@ function RebirthHandler.AttemptRebirth(player: Player, rebirthIndex: number)
     local profile = playerData.GetData(player);
 
     local rebirthAmount = rebirthStats[rebirthIndex];
-
     local clicks = infMath.new(profile.Clicks);
     local rebirths = infMath.new(profile.Rebirths);
+    
+    if rebirthIndex == 1 then
+        if not profile.OwnedGamepasses['Unlimited Rebirths'] then
+            return;
+        end
+
+        rebirthAmount = infMath.new(clicks / (globals.RebirthBasePrice * rebirths));
+        rebirthAmount = infMath.floor(rebirthAmount);
+    end
+
     local price = infMath.new(globals.RebirthBasePrice * rebirthAmount * rebirths);
 
     local petGems = GetPetGems(profile.Pets);
@@ -73,6 +82,10 @@ end
 function RebirthHandler.SetAutoRebirthIndex(player: Player, rebirthIndex: number)
     local profile = playerData.GetData(player);
     if not profile then return end
+
+    if rebirthIndex == 1 then
+        return;
+    end
 
     if rebirthIndex == profile.AutoRebirthIndex then
         profile.AutoRebirthIndex = 0;
