@@ -105,7 +105,53 @@ local function ClickAnimation()
     clone:Destroy();
 end
 
-local function PopUp(increment, currencyStr: string, critical: boolean, position: UDim2)
+local function CriticalHitEffect()
+    local character = plr.Character;
+    local root = character.HumanoidRootPart;
+
+    if not root then return end;
+    for _, child: Instance in ipairs(root:GetChildren()) do
+        if child:IsA('ParticleEmitter') then
+            child:Emit(50);
+        end
+    end
+
+    for i = 1, 10 do
+        task.spawn(function()
+            local clone: Model = criticalModel:Clone();
+
+            if not clone.PrimaryPart then
+                clone:Destroy();
+            end
+
+            for _, part in ipairs(clone:GetDescendants()) do
+                if part:IsA('BasePart') then
+                    part.CanQuery = false;
+                    part.CollisionGroup = debrisGroup;
+                end
+            end
+
+            clone:PivotTo(root.CFrame * CFrame.new(0,2,0));
+            clone.Parent = workspace;
+            local force = 15
+            local xForce = rng:NextNumber(-force, force);
+            local zForce = rng:NextNumber(-force, force);
+            local yForce = rng:NextNumber(30, 60);
+
+            local jumpVector = Vector3.new(xForce,yForce,zForce);
+
+            clone.PrimaryPart:ApplyImpulse(jumpVector * clone.PrimaryPart.AssemblyMass);
+            
+            local randomRot = Vector3.new(rng:NextNumber(-10, 10),rng:NextNumber(-10, 10),rng:NextNumber(-10, 10));
+            
+            clone.PrimaryPart:ApplyAngularImpulse(randomRot * clone.PrimaryPart.AssemblyMass);
+
+            debris:AddItem(clone, 5);
+        end)
+    end
+end
+
+function ClickHandler.PopUp(increment, currencyStr: string, critical: boolean, position: UDim2)
     if not increment or increment == infMath.new(0) then
         return
     end
@@ -124,6 +170,7 @@ local function PopUp(increment, currencyStr: string, critical: boolean, position
 
     if critical then
         clone.Icon.ImageColor3 = Color3.fromRGB(237,98,255);
+        task.spawn(CriticalHitEffect);
     end
 
     clone.Position = position;
@@ -178,52 +225,6 @@ local function PopUp(increment, currencyStr: string, critical: boolean, position
     clone:Destroy();
 end
 
-local function CriticalHitEffect()
-    local character = plr.Character;
-    local root = character.HumanoidRootPart;
-
-    if not root then return end;
-    for _, child: Instance in ipairs(root:GetChildren()) do
-        if child:IsA('ParticleEmitter') then
-            child:Emit(50);
-        end
-    end
-
-    for i = 1, 10 do
-        task.spawn(function()
-            local clone: Model = criticalModel:Clone();
-
-            if not clone.PrimaryPart then
-                clone:Destroy();
-            end
-
-            for _, part in ipairs(clone:GetDescendants()) do
-                if part:IsA('BasePart') then
-                    part.CanQuery = false;
-                    part.CollisionGroup = debrisGroup;
-                end
-            end
-
-            clone:PivotTo(root.CFrame * CFrame.new(0,2,0));
-            clone.Parent = workspace;
-            local force = 15
-            local xForce = rng:NextNumber(-force, force);
-            local zForce = rng:NextNumber(-force, force);
-            local yForce = rng:NextNumber(30, 60);
-
-            local jumpVector = Vector3.new(xForce,yForce,zForce);
-
-            clone.PrimaryPart:ApplyImpulse(jumpVector * clone.PrimaryPart.AssemblyMass);
-            
-            local randomRot = Vector3.new(rng:NextNumber(-10, 10),rng:NextNumber(-10, 10),rng:NextNumber(-10, 10));
-            
-            clone.PrimaryPart:ApplyAngularImpulse(randomRot * clone.PrimaryPart.AssemblyMass);
-
-            debris:AddItem(clone, 5);
-        end)
-    end
-end
-
 local function UpdateStatDisplay(currencyStr: string, newValue)
     if not statsLoaded then return end;
     local currencyFrame: Frame = statsFrame[currencyStr]
@@ -244,7 +245,7 @@ local function UpdateStatDisplay(currencyStr: string, newValue)
     local delta = infMath.new(newValue - startValue);
 
     if currencyStr == 'Gems' then
-        task.spawn(PopUp, delta, currencyStr)
+        task.spawn(ClickHandler.PopUp, delta, currencyStr)
     end
 
     data.tweenNumber.Value = 0;
@@ -258,25 +259,19 @@ local function UpdateStatDisplay(currencyStr: string, newValue)
 end
 
 local function ClickByButton()
-    local increment, critical = network:InvokeServer('Click');
-
-    if critical then
-        task.spawn(CriticalHitEffect);
-    end
+    local s, increment, critical = network:InvokeServer('Click');
+    if not s then return end;
     
     task.spawn(ClickAnimation);
-    task.spawn(PopUp, increment, 'Clicks', critical);
+    task.spawn(ClickHandler.PopUp, increment, 'Clicks', critical);
 end
 
 local function ClickByScreen(inputPosition)
-    local increment, critical = network:InvokeServer('Click');
+    local s, increment, critical = network:InvokeServer('Click');
+    if not s then return end;
     local guiInset = guiService:GetGuiInset();
-
-    if critical then
-        task.spawn(CriticalHitEffect);
-    end
     
-    task.spawn(PopUp, increment, 'Clicks', critical, UDim2.fromOffset(
+    task.spawn(ClickHandler.PopUp, increment, 'Clicks', critical, UDim2.fromOffset(
         inputPosition.X,
         inputPosition.Y + guiInset.Y
     ));
@@ -334,17 +329,17 @@ local function StartCPSTrack()
     end
 end
 
-local function AutoClick()
-    while task.wait(debounceTime) do
-        if not autoClickStatus then continue end
+-- local function AutoClick()
+--     while task.wait(debounceTime) do
+--         if not autoClickStatus then continue end
         
-        local increment, critical = network:InvokeServer('Click');
-        if critical then
-            task.spawn(CriticalHitEffect);
-        end
-        task.spawn(PopUp, increment, 'Clicks', critical);
-    end
-end
+--         local increment, critical = network:InvokeServer('Click');
+--         if critical then
+--             task.spawn(CriticalHitEffect);
+--         end
+--         task.spawn(PopUp, increment, 'Clicks', critical);
+--     end
+-- end
 
 local function UpdateAutoClickButton(status: boolean)
     local color = '';
@@ -381,7 +376,7 @@ function ClickHandler.Initialize()
 
     task.spawn(AnimateShine);
     task.spawn(StartCPSTrack);
-    task.spawn(AutoClick);
+    -- task.spawn(AutoClick);
 
     SetupCharacter(plr.Character);
 
@@ -430,6 +425,16 @@ function ClickHandler.Initialize()
     dataSync.OnChanged('AutoClickerStatus', function(new)
         autoClickStatus = new;
         UpdateAutoClickButton(autoClickStatus);
+    end)
+
+    dataSync.OnChanged('UpgradeLevels', function(new, old)
+        if new and old then
+            if new['Faster Auto Click'] and old['Faster Auto Click'] then
+                if new['Faster Auto Click'] ~= old['Faster Auto Click'] then
+                    network:FireServer('IncreaseAutoClickSpeed');
+                end
+            end
+        end
     end)
 
     -- plr:GetAttributeChangedSignal('Clicks'):Connect(function()

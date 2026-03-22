@@ -22,8 +22,8 @@ local eggModels: Folder = assets:WaitForChild('EggModels');
 local clickModels: Folder = assets:WaitForChild('ClickModels');
 local sounds: Folder = assets:WaitForChild('Sounds');
 
-local framework: Folder = rs:WaitForChild('Framework');
-local library: Folder = framework:WaitForChild('Library');
+local framework = rs:WaitForChild('Framework');
+local library = framework:WaitForChild('Library');
 
 local secretAnimation: Folder = workspace:WaitForChild('SecretAnimation');
 local technical: Model = secretAnimation:WaitForChild('Technical');
@@ -54,6 +54,7 @@ local soundHandler = require(script.Parent.SoundHandler);
 local globals = require(framework.Globals);
 local interfaceUtility = require(framework.InterfaceUtility);
 local dataSync = require(script.Parent.DataSyncClient);
+local upgrades = require(library.Upgrades);
 
 -- Constants
 local dir, style, animTime = Enum.EasingDirection.Out, Enum.EasingStyle.Sine, 0.3;
@@ -145,9 +146,12 @@ end
 function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
     local speed = 1
     local ownedGamepsses = dataSync.Get('OwnedGamepasses');
+    local upgradeLevels = dataSync.Get('UpgradeLevels');
+    
     if ownedGamepsses['Fast Hatch'] then
         speed += 0.35;
     end
+    speed += upgradeLevels['Faster Egg Open'] * (upgrades['Faster Egg Open'].Increment/100)
 
     local eggData = {};
     local eggAnimationConnections = {};

@@ -90,7 +90,7 @@ local function handlePets(folder: Folder)
             local center, size = v:GetBoundingBox();
 			local distanceOffset = 10;
 			if secret then
-				distanceOffset = size.Z/1.5
+				distanceOffset = distanceOffset/2 + size.Z/1.5
 			end
 			
 			local posX = humanoidRootPart.Position.X + (distanceOffset * math.cos(radius * i))

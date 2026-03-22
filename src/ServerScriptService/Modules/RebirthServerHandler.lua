@@ -17,6 +17,7 @@ local petStats = require(library.PetStats);
 local infMath = require(framework.InfiniteMath);
 local globals = require(framework.Globals);
 local dataSync = require(dataModules.DataSyncServer);
+local upgrades = require(library.Upgrades);
 
 local function GetPetGems(pets)
     local totalGems = 0
@@ -49,6 +50,7 @@ function RebirthHandler.AttemptRebirth(player: Player, rebirthIndex: number)
     local petGems = GetPetGems(profile.Pets);
     local gemsPerRebirth = petGems < 1 and 10 or 10 * petGems;
 
+    
     if clicks >= price then
         if profile.OwnedGamepasses['Double Rebirths'] then
             rebirthAmount *= 2;
@@ -56,6 +58,10 @@ function RebirthHandler.AttemptRebirth(player: Player, rebirthIndex: number)
         if profile.OwnedGamepasses['Double Gems'] then
             gemsPerRebirth *= 2;
         end
+        
+        local upgradeLevels = profile.UpgradeLevels;
+        gemsPerRebirth *= 1 + upgradeLevels['More Gems'] * (upgrades['More Gems'].Increment/100);
+        
         profile.Clicks = infMath.new(0);
         -- player:SetAttribute('Clicks', http:JSONEncode(profile.Clicks));
         player.leaderstats.Clicks.Value = profile.Clicks:GetSuffix(true);

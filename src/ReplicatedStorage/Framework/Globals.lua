@@ -12,6 +12,7 @@ local eggStats = require(library.EggStats);
 local petStats = require(library.PetStats);
 
 Globals.RebirthBasePrice = 2250
+Globals.UpgradeMultiplier = 1.35;
 -- Globals.CostCoefficient = 5
 -- Globals.MultiplierCoefficient = 0.8
 Globals.BaseXP = 20;
@@ -55,6 +56,13 @@ Globals.ButtonPresets = {
 		Gradient = ColorSequence.new({
 			ColorSequenceKeypoint.new(0, Color3.new(1, 0.533333, 0)),
 			ColorSequenceKeypoint.new(1, Color3.new(1, 0.729411, 0.4))
+		})
+	},		
+	['Gray'] = {
+		StrokeColor = Color3.fromRGB(96, 96, 96),
+		Gradient = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.new(0.623529, 0.615686, 0.615686)),
+			ColorSequenceKeypoint.new(1, Color3.new(0.650980, 0.650980, 0.650980))
 		})
 	},	
 	['Purple'] = {

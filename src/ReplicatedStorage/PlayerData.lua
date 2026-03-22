@@ -34,6 +34,7 @@ Shared.DEFAULT_PLAYER_DATA = {
         ['Eggs'] = {},
         ['ActualClicks'] = {}
     },
+    UpgradeLevels = {},
     OwnedGamepasses = {},
     RedeemedCodes = {},
 
@@ -48,7 +49,6 @@ Shared.DEFAULT_PLAYER_DATA = {
     IsAutoHatching = false,
     TargetAutoHatchEgg = '',
 
-    ClickDebounce = false,
     HatchDebounce = false,
 }
 

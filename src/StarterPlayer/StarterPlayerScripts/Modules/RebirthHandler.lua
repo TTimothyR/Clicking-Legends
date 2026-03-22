@@ -138,7 +138,6 @@ local function UpdateAutoRebirthButton(status: boolean)
 end
 
 local function CheckUnlimitedRebirthsOwned(newData)
-    print(newData);
     if newData['Unlimited Rebirths'] then
         if holder:FindFirstChild('1') then
             holder:FindFirstChild('1').Inner.Locked.Visible = false;

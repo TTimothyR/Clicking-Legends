@@ -4,19 +4,21 @@ local StatHandler = {};
 local players = game:GetService('Players');
 local sss = game:GetService('ServerScriptService');
 local rs = game:GetService('ReplicatedStorage');
-local http = game:GetService('HttpService');
 local physicsService = game:GetService('PhysicsService');
+local runService = game:GetService('RunService');
 
 
 -- Variables
 local dataModules: Folder = sss:WaitForChild('DataModules');
-local framework: Folder = rs:WaitForChild('Framework');
-local library: Folder = framework:WaitForChild('Library');
+local framework = rs:WaitForChild('Framework');
+local library = framework:WaitForChild('Library');
 
 local characterGroup = "CHAR";
 local debrisGroup = 'DEBRIS';
 
 local rng = Random.new();
+
+local playerDBs = {};
 
 -- Modules
 local playerData = require(dataModules.PlayerData);
@@ -26,9 +28,8 @@ local petStats = require(library.PetStats);
 local globals = require(framework.Globals);
 local petHandler = require(script.Parent.PetServerHandler);
 local dataSync = require(dataModules.DataSyncServer);
+local upgrades = require(library.Upgrades);
 
--- Constants
-local clickDebounce = 0.15;
 
 local function SetupCollision()
     pcall(function()
@@ -53,12 +54,50 @@ local function GetPetClicks(pets)
     return totalClicks;
 end
 
-function StatHandler.Click(player: Player)
+local function IntializeDebounces(player: Player)
+    local profile = playerData.GetData(player);
+    local multiplier = (profile.UpgradeLevels['Faster Auto Click'] == 1) and upgrades['Faster Auto Click'].Increment or 1;
+    playerDBs[player.Name] = {
+        ClickDB = 0.15, 
+        ClickOnDB = false, 
+        
+        AutoClickerEnabled = profile.AutoClickerStatus,
+        AutoClickDB = 0.25 / multiplier, 
+        AutoClickElapsedInterval = 0,
+    };
+end
+
+local function HandleAutoClickers()
+    runService.Heartbeat:Connect(function(deltaTime)
+        for playerName, data in pairs(playerDBs) do
+            task.spawn(function()
+                if not data.AutoClickerEnabled then return end;
+                
+                data.AutoClickElapsedInterval += deltaTime;
+                
+                if data.AutoClickElapsedInterval < data.AutoClickDB then return end;
+    
+                data.AutoClickElapsedInterval -= data.AutoClickDB;
+                
+                task.spawn(StatHandler.Click, players:FindFirstChild(playerName), true);
+            end)
+        end
+        task.wait();
+    end)
+end
+
+function StatHandler.Click(player: Player, fromAutoClick: boolean)
     local profile = playerData.GetData(player);
 
-    if not profile or profile.ClickDebounce then return end;
+    if not profile then return end;
+    if playerDBs[player.Name].ClickOnDB and not fromAutoClick then return end;
 
-    profile.ClickDebounce = true;
+    if not fromAutoClick then
+        playerDBs[player.Name].ClickOnDB = true;
+        task.delay(playerDBs[player.Name].ClickDB, function()
+            playerDBs[player.Name].ClickOnDB = false
+        end)
+    end
 
     task.spawn(function()
         for _, petData in ipairs(profile.Pets) do
@@ -83,6 +122,22 @@ function StatHandler.Click(player: Player)
         critical = true;
     end
 
+    local upgradeLevels = profile.UpgradeLevels;
+    local criticalChance = upgradeLevels['x2 Click Chance'] * (upgrades['x2 Click Chance'].Increment/100);
+
+    if criticalChance > 0 then
+        criticalChance = 100 / criticalChance;
+
+        local roll = rng:NextInteger(1, criticalChance);
+        if roll == 1 then
+            increment *= 2;
+        end
+    end
+
+    if fromAutoClick then
+        network:FireClient(player, 'PopUp', increment, 'Clicks', critical);
+    end
+
     local ownedGamepasses = profile.OwnedGamepasses;
     if ownedGamepasses['Double Clicks'] then
         increment *= 2;
@@ -95,20 +150,30 @@ function StatHandler.Click(player: Player)
     -- player:SetAttribute("Clicks", http:JSONEncode(profile.Clicks));
     -- player:SetAttribute("ActualClicks", http:JSONEncode(profile.ActualClicks));
 
-    task.delay(clickDebounce, function()
-        profile.ClickDebounce = false;
-    end)
-
     dataSync.SyncPlayer(player, profile);
 
-    return increment, critical
+    return true, increment, critical
+end
+
+function StatHandler.IncreaseAutoClickSpeed(player: Player)
+    local profile = playerData.GetData(player);
+    if not profile then return end;
+    if not playerDBs[player.Name] then return end;
+    local multiplier = (profile.UpgradeLevels['Faster Auto Click'] == 1) and upgrades['Faster Auto Click'].Increment or 1;
+    playerDBs[player.Name].AutoClickDB = 0.25 / multiplier;
 end
 
 function StatHandler.ToggleAutoClicker(player: Player)
     local profile = playerData.GetData(player);
     if not profile then return false end;
 
+    if profile.UpgradeLevels['Auto Clicker'] == 0 then
+        return false;
+    end
+
     profile.AutoClickerStatus = not profile.AutoClickerStatus;
+    playerDBs[player.Name].AutoClickElapsedInterval = 0
+    playerDBs[player.Name].AutoClickerEnabled = profile.AutoClickerStatus
     dataSync.SyncPlayer(player, profile);
 end
 
@@ -116,6 +181,19 @@ function StatHandler.Initialize()
     if not game.Loaded then game.Loaded:Wait() end;
 
     SetupCollision();
+    HandleAutoClickers();
+    
+    for _, player: Player in ipairs(players:GetPlayers()) do
+        task.spawn(IntializeDebounces, player);
+    end
+
+    players.PlayerAdded:Connect(function(player)
+        task.spawn(IntializeDebounces, player);
+    end)
+
+    players.PlayerRemoving:Connect(function(player, reason)
+        playerDBs[player.Name] = nil;
+    end)
 end
 
 return StatHandler;

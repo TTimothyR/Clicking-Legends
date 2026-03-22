@@ -40,5 +40,14 @@ return{
         Clicks = 23165456,
         GemMulti = 105,
         Secret = true
-    },
+	},
+	
+	--
+	['King Star'] = {
+		Rarity = 'Legendary',
+		State = 'Fly',
+		Clicks = 23165456,
+		GemMulti = 105,
+		Secret = true
+	},
 }
