@@ -16,6 +16,7 @@ local plr: Player = players.LocalPlayer;
 
 local framework: Folder = rs:WaitForChild('Framework');
 local assets: Folder = rs:WaitForChild('Assets');
+local classes = rs:WaitForChild('Classes');
 local clickModels: Folder = assets:WaitForChild('ClickModels');
 local criticalModel: Model = clickModels:WaitForChild('CriticalClick');
 local library: Folder = framework:WaitForChild('Library');
@@ -47,7 +48,6 @@ local animationFrames: Folder = clickButton:WaitForChild('AnimationFrames');
 -- Modules
 local network = require(framework.Network);
 local infMath = require(framework.InfiniteMath);
-local util = require(framework.Utility);
 local globals = require(framework.Globals);
 local imageService = require(library.ImageService);
 local dataSync = require(script.Parent.DataSyncClient);
@@ -69,7 +69,7 @@ local autoClickStatus = false;
 local function SetupCharacter(character)
     for _, effect: ParticleEmitter in ipairs(criticalEffects:GetChildren()) do
         local clone: ParticleEmitter = effect:Clone();
-        clone.Parent = character.HumanoidRootPart;
+        clone.Parent = character:WaitForChild('HumanoidRootPart');
     end
     for _, part in ipairs(character:GetDescendants()) do
         if part:IsA('BasePart') then
@@ -371,6 +371,12 @@ local function LoadStatDisplay(currency, value)
     };
 end
 
+local function LoadAutoClickerUnlock()
+    local upgradeLevels = dataSync.Get('UpgradeLevels');
+
+    toggleButton.Locked.Visible = (upgradeLevels['Auto Clicker'] == 0)
+end
+
 function ClickHandler.Initialize()
     if not game.Loaded then game.Loaded:Wait() end;
 
@@ -407,6 +413,7 @@ function ClickHandler.Initialize()
         task.spawn(UpdateStatDisplay, 'Gems', targetGems);
         task.spawn(LoadStatDisplay, 'Clicks', targetClicks);
         task.spawn(LoadStatDisplay, 'Gems', targetGems);
+        task.spawn(LoadAutoClickerUnlock);
 
         autoClickStatus = dataSync.Get('AutoClickerStatus');
         UpdateAutoClickButton(autoClickStatus);
@@ -428,6 +435,9 @@ function ClickHandler.Initialize()
     end)
 
     dataSync.OnChanged('UpgradeLevels', function(new, old)
+        if new['Auto Clicker'] == 1 then
+            toggleButton.Locked.Visible = false;
+        end
         if new and old then
             if new['Faster Auto Click'] and old['Faster Auto Click'] then
                 if new['Faster Auto Click'] ~= old['Faster Auto Click'] then

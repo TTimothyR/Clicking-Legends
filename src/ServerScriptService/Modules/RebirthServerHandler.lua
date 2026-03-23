@@ -81,6 +81,10 @@ function RebirthHandler.ToggleAutoRebirth(player: Player)
     local profile = playerData.GetData(player);
     if not profile then return end;
 
+    if profile.UpgradeLevels['Auto Rebirth'] == 0 then
+        return;
+    end
+
     profile.AutoRebirthStatus = not profile.AutoRebirthStatus;
     dataSync.SyncPlayer(player, profile);
 end
@@ -88,6 +92,10 @@ end
 function RebirthHandler.SetAutoRebirthIndex(player: Player, rebirthIndex: number)
     local profile = playerData.GetData(player);
     if not profile then return end
+
+    if profile.UpgradeLevels['Auto Rebirth'] == 0 then
+        return;
+    end
 
     if rebirthIndex == 1 then
         return;

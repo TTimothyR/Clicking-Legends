@@ -177,6 +177,14 @@ function RebirthHandler.LoadRebirthButtons()
     UpdateButtons(false);
 end
 
+local function LoadAutoRebirthLocked()
+    local upgradeLevels = dataSync.Get('UpgradeLevels');
+    local autoRebirthUnlocked = (upgradeLevels['Auto Rebirth'] == 1)
+
+    autoRebirthSettings.Locked.Visible = not autoRebirthUnlocked;
+    autoRebirthToggle.Locked.Visible = not autoRebirthUnlocked;
+end
+
 function RebirthHandler.ParseShopHandler(module)
     shopHandler = module;
 end
@@ -189,6 +197,7 @@ function RebirthHandler.Initialize()
         selectedIndex = dataSync.Get('AutoRebirthIndex');
 
         UpdateAutoRebirthButton(autoRebirthStatus);
+        LoadAutoRebirthLocked();
     end)
 
     dataSync.OnChanged('Clicks', function()
@@ -213,6 +222,13 @@ function RebirthHandler.Initialize()
         CheckUnlimitedRebirthsOwned(new);
     end)
 
+    dataSync.OnChanged('UpgradeLevels', function(new, old)
+        if new['Auto Rebirth'] == 1 then
+            autoRebirthSettings.Locked.Visible = false;
+            autoRebirthToggle.Locked.Visible = false;
+        end
+    end)
+
     autoRebirthToggle.MouseButton1Click:Connect(function()
         if not db then db = true task.delay(.15, function() db = false end)
             network:FireServer('ToggleAutoRebirth');
@@ -221,6 +237,7 @@ function RebirthHandler.Initialize()
 
     autoRebirthSettings.MouseButton1Click:Connect(function()
         if not db then db = true task.delay(.15, function() db = false end)
+            if dataSync.Get('UpgradeLevels')['Auto Rebirth'] == 0 then return end;
             if not autoRebirthSelect then
                 autoRebirthSelect = true;
                 for _, child in ipairs(holder:GetChildren()) do
