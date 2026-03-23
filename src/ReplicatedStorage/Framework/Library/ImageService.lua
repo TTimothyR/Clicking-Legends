@@ -1,4 +1,6 @@
 return{
+    ['Placeholder'] = 'rbxasset://textures/ui/GuiImagePlaceholder.png',
+
     ['Clicks'] = 'rbxassetid://111160873357689',
     ['ActualClicks'] = 'rbxassetid://111160873357689',
     ['Gems'] = 'rbxassetid://135513247600517',

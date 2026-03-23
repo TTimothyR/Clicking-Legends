@@ -21,6 +21,8 @@ local headers = {
 
 -- Modules
 local petStats = require(library.PetStats);
+local eggStats = require(library.EggStats);
+local imageService = require(library.ImageService);
 
 local function Sanitise(value, depth)
 	depth = depth or 0
@@ -78,15 +80,62 @@ local function Post(endPoint, payload)
     return decoded;
 end
 
-local function SyncPetStats()
-    local payload = {};
-    for name, data in pairs(petStats) do
-        payload[name] = {
-            rarity = data.Rarity,
-            clicks = data.Clicks,
-            gems = data.GemMulti,
-            secret = data.Secret
+local function SyncEggStats()
+	if not game:GetService('RunService'):IsStudio() then return end;
+    local payload = {}
+    for eggName, data in pairs(eggStats) do
+        local pets = {}
+        if type(data.Pets) == "table" then
+            for petName, _ in pairs(data.Pets) do
+                if type(petName) == "string" then
+                    table.insert(pets, petName)
+                end
+            end
+        end
+        payload[eggName] = {
+            price   = { tostring(data.Price[1]), tonumber(data.Price[2]) or 0 },
+            world   = tostring(data.World or ""),
+            limited = data.Limited == true,
+            pets    = pets,
+			image 	= imageService[eggName] or imageService['Placeholder']
         }
+    end
+
+    local testOk, testErr = pcall(httpService.JSONEncode, httpService, { eggs = payload })
+    if not testOk then
+        warn("[BotBridge] EggStats payload failed JSON encoding: " .. tostring(testErr))
+        return
+    end
+
+    local result = Post("/sync-eggs", { eggs = payload })
+    if result and result.ok then
+        print(("[BotBridge] Synced %d eggs to Discord bot."):format(result.synced))
+    else
+        warn("[BotBridge] sync-eggs failed.")
+    end
+end
+
+task.spawn(SyncEggStats)
+
+local function SyncPetStats()
+	if not game:GetService('RunService'):IsStudio() then return end;
+    local payload = {}
+    for eggName, eggData in pairs(eggStats) do
+        if type(eggData.Pets) == "table" then
+            for petName, _ in pairs(eggData.Pets) do
+                if petStats[petName] then
+                    local data = petStats[petName]
+                    payload[petName] = {
+                        rarity = tostring(data.Rarity or "Unknown"),
+                        clicks = tonumber(data.Clicks) or 0,
+                        gems   = tonumber(data.GemMulti) or 0,
+                        secret = data.Secret == true,
+                        egg    = eggName,  -- link pet to its egg
+						image  = imageService[petName] or imageService['Placeholder']
+                    }
+                end
+            end
+        end
     end
    
     local testOk, testErr = pcall(httpService.JSONEncode, httpService, { pets = payload })
