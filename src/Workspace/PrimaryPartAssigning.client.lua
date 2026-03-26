@@ -18,7 +18,7 @@ for _, model: Model in ipairs(folder:GetChildren()) do
 
     model.PrimaryPart = new;
 
-    for _, child in ipairs(model:GetChildren()) do
+    for _, child in ipairs(model:GetDescendants()) do
         if child:IsA('BasePart') then
             child.CanCollide = false;
             child.Anchored = true;

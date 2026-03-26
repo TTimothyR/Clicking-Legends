@@ -74,6 +74,7 @@ local infMath = require(framework.InfiniteMath);
 local petStats = require(library.PetStats);
 local eggStats = require(library.EggStats);
 local shopStats = require(library.ShopStats);
+local imageService = require(library.ImageService);
 local globals = require(framework.Globals);
 local tblUtil = require(framework.TableUtility);
 local warning = require(classes.WarningPopup);
@@ -312,6 +313,7 @@ local function CreateEquippedPet(petData, template)
     clone.Name = petData.id;
     clone.Frame.Locked.Visible = petData.locked;
     CreateFullNameVariable(clone, petData);
+    clone.Frame.ImageLabel.Image = imageService[petData.fullName] or imageService['Placeholder'];
     if clone.Frame:FindFirstChild('PetName') then
         local egg = tblUtil.FindEgg(eggStats, petData.petName);
         local chance = eggStats[egg].Pets[petData.petName][1]
@@ -350,6 +352,7 @@ local function CreateNormalPet(petData)
 
     local rarity = petStats[petData.petName].Rarity;
     clone.Frame.BackgroundColor3 = globals.RarityColors[rarity];
+    clone.Frame.ImageLabel.Image = imageService[petData.fullName] or imageService['Placeholder'];
     if rarity == 'Legendary' then
         clone.Glow.Visible = true;
         clone.Frame.Legendary.Enabled = true;
@@ -376,6 +379,7 @@ local function CreateSecretPet(petData)
     
     local egg = tblUtil.FindEgg(eggStats, petData.petName);
     local chance = eggStats[egg].Pets[petData.petName][1]
+    clone.Frame.ImageLabel.Image = imageService[petData.fullName] or imageService['Placeholder'];
     if chance == 0 then
         clone.Frame.Chance.Text = 'Unknown'
     else

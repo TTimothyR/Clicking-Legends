@@ -5,6 +5,23 @@ return{
     ['ActualClicks'] = 'rbxassetid://111160873357689',
     ['Gems'] = 'rbxassetid://135513247600517',
     ['Eggs'] = 'rbxassetid://103327510554655',
+    
+    -- Common Egg
+    ['Doggy'] = 'rbxassetid://88856572686957',
+    ['Kitty'] = 'rbxassetid://134792579497071',
+    ['Bunny'] = 'rbxassetid://81020665901395',
+    ['Bear'] = 'rbxassetid://120182922128985',
+    ['Fox'] = 'rbxassetid://113466678505879',
+    ['Shiny Doggy'] = 'rbxassetid://123773536487635',
+    ['Shiny Kitty'] = 'rbxassetid://89642742942009',
+    ['Shiny Bunny'] = 'rbxassetid://105495181938376',
+    ['Shiny Bear'] = 'rbxassetid://87168364162494',
+    ['Shiny Fox'] = 'rbxassetid://126912023828973',
+    
+    -- Water Egg
+    ['King Star'] = 'rbxassetid://114567640390226',
+    ['Shiny King Star'] = 'rbxassetid://124330606176085',
+
 
     ['Faster Walkspeed'] = 'rbxassetid://90031078660862',
     ['Faster Egg Open'] = 'rbxassetid://103327510554655',
