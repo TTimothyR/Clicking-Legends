@@ -29,6 +29,10 @@ Shared.DEFAULT_PLAYER_DATA = {
 
     Pets = {},
     PetIndex = {},
+    Items = {
+        ['Potions'] = {},
+    },
+    ActivePotions = {},
     AutoDeletedPets = {},
     ClaimedPrizes = {
         ['Eggs'] = {},

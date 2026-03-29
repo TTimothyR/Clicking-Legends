@@ -36,6 +36,18 @@ Globals.RarityOrder = {
 	["Common"] = 1,
 }
 
+Globals.BuffColors = {
+	['Lucky'] = Color3.fromRGB(35, 255, 64),
+	['Rebirths'] = Color3.fromRGB(255, 44, 44),
+	['Speed'] = Color3.fromRGB(255, 212, 148),
+}
+
+Globals.PotionDescriptions = {
+	['Lucky'] = 'Grants <font color="%s">+%s%%</font> more luck!',
+	['Rebirths'] = 'Grants <font color="%s">+%s%%</font> more rebirths!',
+	['Speed'] = 'Increase hatch speed by <font color="%s">+%s%%</font>!'
+}
+
 Globals.ButtonPresets = {
 	['Green'] = {
 		StrokeColor = Color3.fromRGB(0,131,0),

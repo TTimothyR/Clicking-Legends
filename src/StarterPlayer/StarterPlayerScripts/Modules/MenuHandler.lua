@@ -113,7 +113,10 @@ function ButtonHandler.Initialize()
         ButtonHandler.handleOpenClose(indexFrame, indexHandler.LoadIndex);
     end)
 	inventoryButton.MouseButton1Click:Connect(function()
-        ButtonHandler.handleOpenClose(inventoryFrame, inventoryHandler.LoadInventory);
+        ButtonHandler.handleOpenClose(inventoryFrame, function()
+			inventoryHandler.LoadInventory();
+			inventoryHandler.LoadItems();
+		end);
     end)
 	prizesButton.MouseButton1Click:Connect(function()
         ButtonHandler.handleOpenClose(prizesFrame, prizeHandler.LoadPrizes);

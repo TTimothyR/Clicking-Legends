@@ -32,6 +32,18 @@ local function PackInfiniteMath(num)
     return {first = num.first, second = num.second};
 end
 
+local function DeepClone(value)
+    if type(value) ~= 'table' then
+        return value;
+    end
+
+    local cloned = {};
+    for k, v in pairs(value) do
+        cloned[k] = DeepClone(v);
+    end
+    return cloned;
+end
+
 local function PackData(data, includePrivate)
     local out = {};
     for key, value in pairs(data) do
@@ -41,26 +53,27 @@ local function PackData(data, includePrivate)
         if infMathStats[key] then
             out[key] = PackInfiniteMath(value);
         elseif type(value) == 'table' then
-            if key == 'Pets' then
-                local cloned = {};
-                for i, pet in ipairs(value) do
-                    cloned[i] = table.clone(pet);
-                end
-                out[key] = cloned;
-            elseif key == 'ClaimedPrizes' then
-                out[key] = {
-                    Eggs = table.clone(value.Eggs);
-                    ActualClicks = table.clone(value.ActualClicks);
-                }
-            else
-                out[key] = table.clone(value);
-            end
+            out[key] = DeepClone(value);
         else
             out[key] = value;
         end
     end
-    
+
     return out;
+end
+
+local function DeepEqual(a, b)
+    if type(a) ~= type(b) then return false end;
+    if type(a) ~= 'table' then return a == b end;
+
+    for k, v in pairs(a) do
+        if not DeepEqual(v, b[k]) then return false end;
+    end
+    for k in pairs(b) do
+        if a[k] == nil then return false end;
+    end
+
+    return true;
 end
 
 local function CalculateDifference(old, new)
@@ -95,18 +108,7 @@ local function CalculateDifference(old, new)
                 end
             end
         elseif type(newValue) == 'table' then
-            if oldValue == nil then
-                changed = true;
-            else
-                for k, v in pairs(newValue) do
-                    if oldValue[k] ~= v then changed = true break end;
-                end
-                if not changed then
-                    for k in pairs(oldValue) do
-                        if newValue[k] == nil then changed = true break end;
-                    end
-                end
-            end
+            changed = not DeepEqual(oldValue, newValue);
         else
             changed = (oldValue ~= newValue);
         end

@@ -15,8 +15,12 @@ local library = framework:WaitForChild('Library');
 local classes: Folder = rs:WaitForChild('Classes');
 
 local selectedPetID: string = nil;
+local selectedItemName: string = nil;
+local loadedPetInfoIcon = nil;
 -- local clickConnections = {};
 local petInfoConnections = {};
+local itemInfoConnections = {};
+local itemConnections = {};
 local petConnections = {};
 local bulkButtonsConnected = false;
 local mutliDeleteActive = false;
@@ -26,13 +30,16 @@ local selectedPetAmount = 0;
 local increaseEquippedButtonCon: RBXScriptConnection
 local increaseStorageButtonCon: RBXScriptConnection
 
-local CreateClickConnection
+local CreatePetClickConnection
+local CreateItemClickConnection
 
 -- UI
 local playerGui = player:WaitForChild('PlayerGui');
 local frames: ScreenGui = playerGui:WaitForChild('Frames');
 local inventoryFrame: Frame = frames:WaitForChild('Inventory');
 local warningFrame: Frame = frames:WaitForChild('Warning');
+
+-- Anything pet or idk
 local templates: Folder = inventoryFrame:WaitForChild('Templates');
 local normalTemplate: ImageButton = templates:WaitForChild('Normal');
 local secretTemplate: ImageButton = templates:WaitForChild('Secret');
@@ -57,6 +64,22 @@ local petsTag: TextLabel = holder:WaitForChild('Pets');
 local equippedHolder: Folder = holder:WaitForChild('Equipped');
 local notEquippedHolder: Folder = holder:WaitForChild('NotEquipped');
 
+-- Anything potion
+local sideButtons = main:WaitForChild('SideButtons');
+local sideButtonsHolder = sideButtons:WaitForChild('Holder');
+local petsButton: ImageButton = sideButtonsHolder:WaitForChild('Pets');
+local itemsButton: ImageButton = sideButtonsHolder:WaitForChild('Items');
+local itemInventoryFrame = main:WaitForChild('ItemInventory');
+local itemHolder = itemInventoryFrame:WaitForChild('ScrollingFrame');
+
+local potionTemplates = inventoryFrame:WaitForChild('PotionTemplates');
+local potionTemplate = templates:WaitForChild('PotionTemplate');
+local categoryTag = templates:WaitForChild('CategoryTag');
+
+local itemInfo = main:WaitForChild('ItemInfo');
+local itemInfoHolder = itemInfo:WaitForChild('Holder');
+
+
 local searchFrame: Frame = main:WaitForChild('Search');
 local searchBox: TextBox = searchFrame:WaitForChild('TextBox');
 
@@ -74,6 +97,7 @@ local infMath = require(framework.InfiniteMath);
 local petStats = require(library.PetStats);
 local eggStats = require(library.EggStats);
 local shopStats = require(library.ShopStats);
+local items = require(library.Items);
 local imageService = require(library.ImageService);
 local globals = require(framework.Globals);
 local tblUtil = require(framework.TableUtility);
@@ -86,10 +110,57 @@ local menuHandler = nil;
 local maxColSecret = 3;
 local maxColNormal = 6;
 
+
+-- Credits to: https://devforum.roblox.com/t/converting-a-color-to-a-hex-string/793018/2
+local function toInteger(color)
+	return math.floor(color.r*255)*256^2+math.floor(color.g*255)*256+math.floor(color.b*255)
+end
+
+local function toHex(color)
+	local int = toInteger(color)
+	
+	local current = int
+	local final = ""
+	
+	local hexChar = {
+		"A", "B", "C", "D", "E", "F"
+	}
+	
+	repeat local remainder = current % 16
+		local char = tostring(remainder)
+		
+		if remainder >= 10 then
+			char = hexChar[1 + remainder - 10]
+		end
+		
+		current = math.floor(current/16)
+		final = final..char
+	until current <= 0
+	
+	return "#"..string.reverse(final)
+end
+
+local function GetBuffPercentage(buff, tier)
+    for _, data in ipairs(items.Potions[tier].Buffs) do
+        if data[1] == buff then
+            return data[2];
+        end
+    end
+
+    return 0;
+end
+
 local function RemovePetConnection(id: string)
     if petConnections[id] then
         petConnections[id]:Disconnect();
         petConnections[id] = nil;
+    end
+end
+
+local function RemoveItemConnection(itemName: string)
+    if itemConnections[itemName] then
+        itemConnections[itemName]:Disconnect();
+        itemConnections[itemName] = nil;
     end
 end
 
@@ -162,6 +233,78 @@ local function SetEquipButtonColor(newStatus: boolean)
     equipButton.Frame.UIStroke.Color = globals.ButtonPresets[color].StrokeColor;
     equipButton.Title.UIStroke.Color = globals.ButtonPresets[color].StrokeColor;
     equipButton.Title.Text = text;
+end
+
+local function LoadItemInfo(itemName: string)
+    local playerItems = dataSync.Get('Items');
+    local isPotion = playerItems.Potions[itemName] ~= nil;
+
+    for _, con: RBXScriptConnection in ipairs(itemInfoConnections) do
+        if con.Connected then
+            con:Disconnect();
+        end
+    end
+
+    if isPotion then
+        local nameSplit = string.split(itemName, '_');
+        local buff, tier = nameSplit[1], nameSplit[2];
+        local amount = playerItems.Potions[itemName];
+
+        itemInfoHolder.ItemName.Text = buff..' '..tier;
+        itemInfoHolder.Amount.Text = 'x'..amount;
+
+        if itemInfoHolder:FindFirstChild(tier) then
+            local potionImage: Frame = itemInfoHolder:FindFirstChild(tier)
+            local color = globals.BuffColors[buff];
+            potionImage.Liquid.ImageColor3 = color;
+        else
+            if loadedPetInfoIcon then
+                loadedPetInfoIcon:Destroy();
+            end
+            local potionImage: Frame = potionTemplates:FindFirstChild(tier):Clone();
+            local uiaspectratio = itemInfoHolder.Icon.UIAspectRatioConstraint:Clone();
+            uiaspectratio.Parent = potionImage;
+            
+            local color = globals.BuffColors[buff];
+            potionImage.Liquid.ImageColor3 = color;
+            potionImage.Parent = itemInfoHolder;
+            potionImage.Position = itemInfoHolder.Icon.Position;
+            potionImage.Size = itemInfoHolder.Icon.Size;
+            potionImage.LayoutOrder = itemInfoHolder.Icon.LayoutOrder;
+            potionImage.Visible = true;
+            loadedPetInfoIcon = potionImage;
+        end
+
+        local buffPercentage = GetBuffPercentage(buff, tier);
+        local itemDescription = itemInfoHolder.Info;
+        itemDescription.Description.Text = string.format(
+            globals.PotionDescriptions[buff],
+            toHex(globals.BuffColors[buff]),
+            buffPercentage
+        );
+        itemDescription.Duration.Text = string.format('Lasts for %s minutes', items.Potions[tier].Duration/60);
+
+        local itemInfoButtons = itemInfoHolder.Buttons;
+
+        local useCon: RBXScriptConnection;
+        local useAllCon: RBXScriptConnection;
+
+        useCon = itemInfoButtons.Use.MouseButton1Click:Connect(function()
+            if not db then db = true task.delay(.15, function() db = false end)
+                network:FireServer('UsePotion', itemName, false);
+            end
+        end)
+        useAllCon = itemInfoButtons.UseAll.MouseButton1Click:Connect(function()
+            if not db then db = true task.delay(.15, function() db = false end)
+                network:FireServer('UsePotion', itemName, true);
+            end
+        end)
+
+        table.insert(itemInfoConnections, useCon);
+        table.insert(itemInfoConnections, useAllCon);
+    end
+
+    itemInfoHolder.Visible = true;
 end
 
 local function LoadPetInfo(id: string)
@@ -258,7 +401,7 @@ local function LoadPetInfo(id: string)
             petData.locked = newState;
             -- LoadPetInfo(id);
             local petClone = holder:FindFirstChild(id, true)
-            CreateClickConnection(petClone, petData)
+            CreatePetClickConnection(petClone, petData)
             petClone.Frame.Locked.Visible = newState;
         end
     end)
@@ -271,7 +414,24 @@ local function LoadPetInfo(id: string)
     petInfoHolder.Visible = true;
 end
 
-CreateClickConnection = function(clone: ImageButton, petData)
+CreateItemClickConnection = function(clone: ImageButton, itemName)
+    RemoveItemConnection(itemName);
+    local clickCon: RBXScriptConnection = clone.MouseButton1Click:Connect(function()
+        if not db then db = true task.delay(.15, function() db = false end)
+            if selectedItemName == itemName then
+                selectedItemName = nil;
+                itemInfoHolder.Visible = false;
+            else
+                selectedItemName = itemName;
+                LoadItemInfo(itemName);
+            end
+        end
+    end)
+    
+    itemConnections[itemName] = clickCon;
+end
+
+CreatePetClickConnection = function(clone: ImageButton, petData)
     RemovePetConnection(petData.id);
     local clickCon: RBXScriptConnection = clone.MouseButton1Click:Connect(function()
         if not db then db = true task.delay(.15, function() db = false end)
@@ -340,7 +500,7 @@ local function CreateEquippedPet(petData, template)
     --         petConnections[petData.id] = nil;
     --     end
     -- end)
-    CreateClickConnection(clone, petData);
+    CreatePetClickConnection(clone, petData);
 end
 
 local function CreateNormalPet(petData)
@@ -365,7 +525,7 @@ local function CreateNormalPet(petData)
     --         petConnections[petData.id] = nil;
     --     end
     -- end)
-    CreateClickConnection(clone, petData);
+    CreatePetClickConnection(clone, petData);
 end
 
 local function CreateSecretPet(petData)
@@ -394,7 +554,7 @@ local function CreateSecretPet(petData)
     --         petConnections[petData.id] = nil;
     --     end
     -- end)
-    CreateClickConnection(clone, petData);
+    CreatePetClickConnection(clone, petData);
 end
 
 local function ReloadPetInfo()
@@ -402,6 +562,12 @@ local function ReloadPetInfo()
     if not inventoryFrame.Visible then return end;
     if mutliDeleteActive then return end;
     LoadPetInfo(selectedPetID);
+end
+
+local function ReloadItemInfo()
+    if not selectedItemName then return end;
+    if not inventoryFrame.Visible then return end;
+    LoadItemInfo(selectedItemName);
 end
 
 function InventoryHandler.LoadInventory()
@@ -763,6 +929,92 @@ function InventoryHandler.LoadInventory()
     end
 end
 
+function InventoryHandler.LoadItems()
+    local playerItems = dataSync.Get('Items');
+    local potions = playerItems.Potions;
+
+    local sortedPotions = {};
+
+    for potionName, amount in pairs(potions) do
+        local nameSplit = string.split(potionName, '_');
+        local buff, tier = nameSplit[1], nameSplit[2];
+        local rarity = items.Potions[tier].Rarity;
+
+        table.insert(sortedPotions, {potionName = potionName, buff = buff, tier = tier, rarity = rarity, amount = amount});
+    end
+
+    table.sort(sortedPotions, function(a, b)
+        local orderA = globals.RarityOrder[a.rarity];
+        local orderB = globals.RarityOrder[b.rarity];
+
+        if orderA ~= orderB then
+            return orderA > orderB;
+        end
+
+        return a.buff < b.buff;
+    end)
+
+    local currentOrder = 0
+
+    if not itemHolder:FindFirstChild('PotionTag') then
+        if next(potions) ~= nil then
+            local tagClone = categoryTag:Clone();
+            tagClone.Parent = itemHolder;
+            tagClone.Name = 'PotionTag';
+            tagClone.Text = '~ Potions ~';
+            tagClone.LayoutOrder = currentOrder;
+            tagClone.Visible = true;
+        end
+    else
+        if next(potions) == nil then
+            itemHolder:FindFirstChild('PotionTag'):Destroy();
+        end
+    end
+
+    for _, child in ipairs(itemHolder:GetChildren()) do
+        if child:IsA('ImageButton') then
+            if not potions[child.Name] then
+                child:Destroy();
+                RemoveItemConnection(child.Name);
+            end
+        end
+    end
+
+    for i, data in ipairs(sortedPotions) do
+        if itemHolder:FindFirstChild(data.potionName) then
+            local clone: ImageButton = itemHolder:FindFirstChild(data.potionName);
+            clone.Frame.Amount.Text = 'x'..data.amount;
+        else
+            currentOrder += 1;
+            local clone: ImageButton = potionTemplate:Clone();
+            local potionImage: Frame = potionTemplates:WaitForChild(data.tier):Clone();
+            local color = globals.BuffColors[data.buff];
+            potionImage.Liquid.ImageColor3 = color;
+            
+            potionImage.Parent = clone.Frame;
+            potionImage.Visible = true;
+        
+            local rarity = data.rarity
+            clone.Frame.BackgroundColor3 = globals.RarityColors[rarity];
+            if rarity == 'Legendary' then
+                clone.Glow.Visible = true;
+                clone.Frame.Legendary.Enabled = true;
+            end
+            
+            clone.Name = data.potionName;
+            clone.Frame.PotionName.Text = data.buff..' '..data.tier;
+            clone.Frame.Amount.Text = 'x'..data.amount;
+            
+            clone.LayoutOrder = currentOrder;
+            clone.Parent = itemHolder;
+
+            CreateItemClickConnection(clone, data.potionName);
+
+            clone.Visible = true;
+        end
+    end
+end
+
 function InventoryHandler.ParseMenuHandler(handler)
     menuHandler = handler;
 end
@@ -785,12 +1037,36 @@ function InventoryHandler.Initialize()
         InventoryHandler.LoadInventory();
     end)
     dataSync.OnChanged('CurrentEquips', function()
+        if not inventoryFrame.Visible then return end;
         InventoryHandler.LoadInventory();
     end)
 
     dataSync.OnChanged('PetStorage', function()
         if not inventoryFrame.Visible then return end;
         InventoryHandler.LoadInventory();
+    end)
+
+    dataSync.OnChanged('Items', function()
+        if not inventoryFrame.Visible then return end;
+        InventoryHandler.LoadItems();
+        ReloadItemInfo();
+    end)
+
+    petsButton.MouseButton1Click:Connect(function()
+        if not db then db = true task.delay(.15, function() db = false end)
+            itemInventoryFrame.Visible = false;
+            itemInfo.Visible = false;
+            inventory.Visible = true;
+            petInfo.Visible = true;
+        end
+    end)
+    itemsButton.MouseButton1Click:Connect(function()
+        if not db then db = true task.delay(.15, function() db = false end)
+            itemInventoryFrame.Visible = true;
+            itemInfo.Visible = true;
+            inventory.Visible = false;
+            petInfo.Visible = false;
+        end
     end)
 
     -- task.spawn(function()
