@@ -8,7 +8,7 @@ local ProfileStore = require(sss.DataModules.ProfileStore)
 local leaderstats = require(sss.DataModules.leaderstats)
 local dataSync = require(script.Parent.DataSyncServer);
 
-local v = "32"
+local v = "33"
 local dataKey = "OfficialV"..v
 if runService:IsStudio() then
 	dataKey = "TestV"..v
@@ -62,9 +62,25 @@ function Local.LoadProfile(player: Player)
 	dataSync.InitializePlayer(player, profile.Data);
 end
 
+function Local.SaveRemainingPotionTime(player: Player, profile)
+	local activePotions = profile.ActivePotions
+	
+	for boostType, tiers in pairs(activePotions) do
+		local tier, data = next(tiers.Active)
+		
+		if tier and data then
+			local endTime = data.EndTime
+			local newRemainingTime = endTime - os.time()
+			data.RemainingDuration = newRemainingTime
+			activePotions[boostType].Active[tier] = data
+		end
+	end
+end
+
 function Local.RemoveProfile(player: Player)
 	local profile = Profiles[player]
 	if profile ~= nil then
+		Local.SaveRemainingPotionTime(player, profile.Data);
 		profile:EndSession()
 	end
 end

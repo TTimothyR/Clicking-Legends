@@ -172,4 +172,14 @@ function Globals.GetPetChance(gpOwned: boolean, luckPercentage, petName: string,
     return chance;
 end
 
+function Globals.FormatTime(seconds)
+	if seconds <= 0 then
+		return "00:00:00"
+	end
+	local hours = math.floor(seconds/3600)
+	local minutes = math.floor((seconds%3600)/60)
+	local secondsLeft = math.floor(seconds%60)
+	return string.format("%02d:%02d:%02d", hours, minutes, secondsLeft)
+end
+
 return Globals;

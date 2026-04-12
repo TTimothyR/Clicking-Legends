@@ -14,12 +14,7 @@ local activePlayerBoost = {};
 local playerData = require(script.Parent.Parent.DataModules.PlayerData);
 local dataSync = require(script.Parent.Parent.DataModules.DataSyncServer);
 local items = require(library.Items);
-
-local function CheckBetterBoost(tbl, toCheck)
-	local activeTier, _ = next(tbl)
-	if not activeTier then activeTier = "" end
-	return activeTier, activeTier > toCheck
-end
+local network = require(framework.Network);
 
 local function GiveAllPotions(player: Player)
     local profile = playerData.GetData(player);
@@ -33,6 +28,92 @@ local function GiveAllPotions(player: Player)
     end
 
     dataSync.SyncPlayer(player, profile);
+end
+
+local function CheckBetterBoost(tbl, toCheck)
+	local activeTier, _ = next(tbl)
+	if not activeTier then activeTier = "" end
+	return activeTier, activeTier > toCheck
+end
+
+local function GetBestTier(tbl)
+	local bestTier = ""
+	for tier, data in pairs(tbl) do
+		if tier > bestTier then
+			bestTier = tier
+		end
+	end
+	return bestTier
+end
+
+local function LoadPotions(player: Player)
+	local profile = playerData.GetData(player)
+	local activePotions = profile.ActivePotions
+	
+	activePlayerBoost[player.UserId] = {}
+	
+	for boostType, tiers in pairs(activePotions) do
+		local tier, data = next(tiers.Active)
+		
+		if tier and data then
+			local remainingTime = data.RemainingDuration
+			local currentTime = os.time()
+			local endTime = currentTime + remainingTime
+			
+			activePotions[boostType].Active[tier] = {EndTime = endTime, RemainingDuration = remainingTime}
+			activePlayerBoost[player.UserId][boostType] = {EndTime = endTime, Tier = tier}
+		end
+	end
+	dataSync.SyncPlayer(player, profile);
+	
+	network:FireClient(player, "UpdateActivePotions")
+end
+
+local function EndPotion(player: Player, boostType)
+	local profile = playerData.GetData(player)
+	local activePotions = profile.ActivePotions
+
+	activePotions[boostType].Active = {}
+	activePlayerBoost[player.UserId][boostType] = nil
+	
+	local queue = activePotions[boostType].Queued
+	local bestQueued = GetBestTier(queue)
+	
+	if bestQueued ~= "" then
+		local data = queue[bestQueued]
+		local remainingTime = data.RemainingDuration
+		local currentTime = os.time()
+		local endTime = currentTime + remainingTime
+		
+		activePotions[boostType].Active[bestQueued] = {EndTime = endTime, RemainingDuration = remainingTime}
+		activePotions[boostType].Queued[bestQueued] = nil
+		activePlayerBoost[player.UserId][boostType] = {EndTime = endTime, Tier = bestQueued}
+	end
+	dataSync.SyncPlayer(player, profile);
+	
+	network:FireClient(player, "UpdateActivePotions")
+end
+
+local function StartBoostController()
+	task.spawn(function()
+		while true do
+			task.wait(1)
+			local currentTime = os.time()
+			for userId, boostData in pairs(activePlayerBoost) do
+				local player = players:GetPlayerByUserId(userId)
+				for boostType, data in pairs(boostData) do
+					if data and data.EndTime then
+						local endTime = data.EndTime
+						if currentTime >= endTime then
+							EndPotion(player, boostType)
+						end
+					else
+						boostData[boostType] = nil
+					end
+				end
+			end
+		end
+	end)
 end
 
 function ItemHandler.UsePotion(player: Player, potionName: string, all: boolean)
@@ -116,16 +197,23 @@ function ItemHandler.UsePotion(player: Player, potionName: string, all: boolean)
 	end
 
     dataSync.SyncPlayer(player, profile);
+	network:FireClient(player, "UpdateActivePotions")
 end
 
 function ItemHandler.Initialize()
     for _, player: Player in ipairs(players:GetPlayers()) do
         GiveAllPotions(player);
+		task.spawn(LoadPotions, player);
     end
-
+	
     players.PlayerAdded:Connect(function(player)
         GiveAllPotions(player);
+		task.spawn(LoadPotions, player);
     end)
+	players.PlayerRemoving:Connect(function(player, reason)
+		activePlayerBoost[player.UserId] = nil
+	end)
+	StartBoostController();
 end
 
 return ItemHandler;
