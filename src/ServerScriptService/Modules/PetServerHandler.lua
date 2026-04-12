@@ -41,6 +41,8 @@ function PetHandler.LevelUp(player: Player, id: string)
     if petData.xp >= xpNeeded then
         petData.xp = 0;
         petData.level += 1;
+    else
+        return;
     end
 
     dataSync.SyncPlayer(player, profile);

@@ -14,6 +14,9 @@ local framework = rs:WaitForChild('Framework');
 local library = framework:WaitForChild('Library');
 local classes: Folder = rs:WaitForChild('Classes');
 
+local menuHandlerLoaded = false;
+local shopHandlerLoaded = false;
+
 local selectedPetID: string = nil;
 local selectedItemName: string = nil;
 local loadedPetInfoIcon = nil;
@@ -1016,10 +1019,14 @@ function InventoryHandler.LoadItems()
 end
 
 function InventoryHandler.ParseMenuHandler(handler)
+    if menuHandlerLoaded then return end;
+    menuHandlerLoaded = true;
     menuHandler = handler;
 end
 
 function InventoryHandler.ParseShopHandler(handler)
+    if shopHandlerLoaded then return end;
+    shopHandlerLoaded = true;
     shopHandler = handler;
 end
 

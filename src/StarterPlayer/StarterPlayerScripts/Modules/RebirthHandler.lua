@@ -10,6 +10,8 @@ local mps = game:GetService('MarketplaceService');
 repeat task.wait() until players.LocalPlayer;
 local player: Player = players.LocalPlayer;
 
+local shopHandlerLoaded = false;
+
 local framework = rs:WaitForChild('Framework');
 local library = framework:WaitForChild('Library');
 local autoRebirthStatus = false;
@@ -186,6 +188,8 @@ local function LoadAutoRebirthLocked()
 end
 
 function RebirthHandler.ParseShopHandler(module)
+    if shopHandlerLoaded then return end;
+    shopHandlerLoaded = true;
     shopHandler = module;
 end
 
