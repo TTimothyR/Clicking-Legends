@@ -182,4 +182,8 @@ function Globals.FormatTime(seconds)
 	return string.format("%02d:%02d:%02d", hours, minutes, secondsLeft)
 end
 
+function Globals.FormatNumber(number)
+	return string.format("%.0f", number):gsub("(%d%d%d)", "%1,")
+end
+
 return Globals;

@@ -144,6 +144,7 @@ function StatHandler.Click(player: Player, fromAutoClick: boolean)
     end
 
     profile.Clicks = infMath.new(profile.Clicks + increment);
+    profile.TotalClicks = infMath.new(profile.TotalClicks + increment);
     player.leaderstats.Clicks.Value = infMath.new(profile.Clicks):GetSuffix(true);
     profile.ActualClicks = infMath.new(profile.ActualClicks + infMath.new(1));
 

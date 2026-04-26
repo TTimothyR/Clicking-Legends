@@ -33,6 +33,7 @@ local tradeFrame: Frame = frames:WaitForChild('Trade');
 local warningFrame: Frame = frames:WaitForChild('Warning');
 local infoFrame: Frame = frames:WaitForChild('Info');
 local upgradesFrame: Frame = frames:WaitForChild('Upgrades');
+local statsFrame: Frame = frames:WaitForChild('Stats');
 
 local hud: ScreenGui = playerGui:WaitForChild('HUD');
 local left: Frame = hud:WaitForChild('Left');
@@ -44,6 +45,7 @@ local rebirthButton: ImageButton = buttons:WaitForChild('Rebirth');
 local shopButton: ImageButton = buttons:WaitForChild('Shop');
 local tradeButton: ImageButton = buttons:WaitForChild('Trading');
 local upgradeButton: ImageButton = buttons:WaitForChild('Upgrades');
+local statsButton: ImageButton = buttons:WaitForChild('Stats');
 
 -- Modules
 local inventoryHandler = require(script.Parent.InventoryHandler);
@@ -65,6 +67,7 @@ local sizePos = {
     ["Info"] = {UDim2.new(0.45,0,0.45,0), UDim2.new(0.5,0,0.5,0)},
     ["Warning"] = {UDim2.new(0.45,0,0.45,0), UDim2.new(0.5,0,0.5,0)},
     ["Upgrades"] = {UDim2.new(0.6,0,0.6,0), UDim2.new(0.5,0,0.5,0)},
+    ["Stats"] = {UDim2.new(0.6,0,0.6,0), UDim2.new(0.5,0,0.5,0)},
 };
 local animationTime = .15;
 local fov = camera.FieldOfView;
@@ -132,6 +135,9 @@ function ButtonHandler.Initialize()
     end)	
 	upgradeButton.MouseButton1Click:Connect(function()
         ButtonHandler.handleOpenClose(upgradesFrame);
+    end)
+	statsButton.MouseButton1Click:Connect(function()
+        ButtonHandler.handleOpenClose(statsFrame);
     end)
 
 	for _, frame: Frame in ipairs(frames:GetChildren()) do

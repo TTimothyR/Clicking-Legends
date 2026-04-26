@@ -67,6 +67,11 @@ function RebirthHandler.AttemptRebirth(player: Player, rebirthIndex: number)
         player.leaderstats.Clicks.Value = profile.Clicks:GetSuffix(true);
 
         profile.Gems = infMath.new(profile.Gems + (gemsPerRebirth * rebirthAmount));
+        if infMath.new(profile.TotalGems) == 0 then
+            profile.TotalGems = infMath.new(gemsPerRebirth * rebirthAmount);
+        else
+            profile.TotalGems = infMath.new(profile.Gems + (gemsPerRebirth * rebirthAmount));
+        end
         -- player:SetAttribute('Gems', http:JSONEncode(profile.Gems));
         player.leaderstats.Gems.Value = profile.Gems:GetSuffix(true);
         profile.Rebirths = infMath.new(profile.Rebirths + rebirthAmount);

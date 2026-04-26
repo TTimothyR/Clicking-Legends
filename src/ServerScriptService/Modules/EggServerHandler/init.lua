@@ -34,6 +34,14 @@ local function ValidateDistance(player: Player, eggName: string)
     return distance <= maxDistance;
 end
 
+local function GetRawChanceFromPetName(eggName: string, petName: string, shiny: boolean)
+    local tbl = eggStats[eggName].Pets;
+    if shiny then
+        return tbl[petName][1] / 40;
+    end
+    return tbl[petName][1];
+end
+
 function EggHandler.ToggleAutoHatch(player: Player, eggName: string, new: boolean)
     local profile = playerData.GetData(player);
     if not profile then return end;
@@ -107,7 +115,19 @@ function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
 
     for _ = 1, amount do
         local petName, shiny = luckHandler.RollPet(player, eggName);
+        local rawChance = GetRawChanceFromPetName(eggName, petName, shiny);
+        local calculatedChance = 100 / rawChance;
+        if calculatedChance > profile.RarestHatch then
+            profile.RarestHatch = calculatedChance;
+        end
         local rarity = petStats[petName].Rarity;
+        if petStats[petName].Secret then
+            if shiny then
+                profile.ShinySecretsHatched += 1;
+            else
+                profile.SecretsHatched += 1;
+            end
+        end
         local fullName = shiny and 'Shiny '..petName or petName;
         local id = generateID.NewID();
 

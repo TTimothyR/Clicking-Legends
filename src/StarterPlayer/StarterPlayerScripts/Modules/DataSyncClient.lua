@@ -19,6 +19,8 @@ local playerDataTemplate = require(rs.PlayerData);
 -- Constants
 local infMathStats = {
     ActualClicks = true,
+    TotalClicks = true,
+    TotalGems = true,
     Clicks = true,
     Gems = true,
     Rebirths = true

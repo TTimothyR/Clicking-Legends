@@ -12,12 +12,17 @@ local infMath = require(framework.InfiniteMath);
 Shared.DEFAULT_PLAYER_DATA = {
     ActualClicks = infMath.new(0),
     Clicks = infMath.new(0),
+    TotalClicks = infMath.new(0),
     Gems = infMath.new(0),
+    TotalGems = infMath.new(0),
     Rebirths = infMath.new(1),
     Eggs = infMath.new(0),
 
     LuckPercentage = 50,
     EggHatches = 3,
+    RarestHatch = 0,
+    SecretsHatched = 0,
+    ShinySecretsHatched = 0,
 
     ClickMultiplier = 0,
 
@@ -26,6 +31,7 @@ Shared.DEFAULT_PLAYER_DATA = {
     PetStorage = 250,
 
     TotalRobuxSpent = 0,
+    TimePlayed = 0,
 
     Pets = {},
     PetIndex = {},
