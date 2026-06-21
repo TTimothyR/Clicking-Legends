@@ -51,7 +51,7 @@ local rewardFormat = {
             EggHatches = '+'..data[3]..' Egg Hatches',
             HatchSpeed = '+'..data[3]..'% Hatch Speed',
             LuckPercentage = '+'..data[3]..'% Luck',
-            ClickMutliplier = '+'..data[3]..'% Click Multiplier'
+            ClickMultiplier = '+'..data[3]..'% Click Multiplier'
         }
         return perkFormat[data[2]] or 'N/A';
     end

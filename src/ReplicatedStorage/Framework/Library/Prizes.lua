@@ -24,7 +24,7 @@ return{
     ['ActualClicks'] = {
         [1] = {
             Target = 10,
-            Reward = {"Perk", "ClickMutliplier", 25},
+            Reward = {"Perk", "ClickMultiplier", 25},
         },        
         [2] = {
             Target = 100,

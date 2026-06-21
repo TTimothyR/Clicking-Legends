@@ -158,20 +158,30 @@ local function handlePets(folder: Folder)
 end
 
 local function LoadPets(player: Player)
+	local character = workspace:FindFirstChild(player.Name);
+	if not character then return end;
     -- local profile = dataSync.GetOtherData(player.UserId);
-    local pets;
-	if player == plr then
-		pets = dataSync.Get('Pets');
-	else
-		local profile = dataSync.GetOtherData(player.UserId)
-		pets = profile.Pets;
-	end
+    local pets = nil;
+	repeat
+		if player == plr then
+			pets = dataSync.Get('Pets');
+		else
+			local profile = dataSync.GetOtherData(player.UserId)
+			if not profile then break end;
+			pets = profile.Pets;
+		end
+		if type(pets) ~= "table" then
+			task.wait(0.1)
+		end
+	until type(pets) == "table"
 
-    for _, data in ipairs(pets) do
-        if data.equipped then
-            PetHandler.UpdatePet(player, data, true);
-        end
-    end
+	if pets then
+		for _, data in ipairs(pets) do
+			if data.equipped then
+				PetHandler.UpdatePet(player, data, true);
+			end
+		end
+	end
 end
 
 function PetHandler.UpdatePets(player: Player, pets)
@@ -186,6 +196,8 @@ function PetHandler.UpdatePets(player: Player, pets)
 end
 
 function PetHandler.UpdatePet(player: Player, petData, equip: boolean)
+	local character = workspace:FindFirstChild(player.Name);
+	if not character then return end;
     if equip then
         local model: Model
         if petModels:FindFirstChild(petData.fullName) then

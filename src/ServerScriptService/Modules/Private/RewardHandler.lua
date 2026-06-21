@@ -69,6 +69,9 @@ end
 
 function RewardHandler.ClaimPerk(player: Player, perkStr: string, amount: number)
     local profile = playerData.GetData(player);
+    print(profile);
+    print(perkStr);
+    print(profile[perkStr]);
 
     if not profile[perkStr] then
         return false, 'SERVER - Perk not found, unable to claim prize.';

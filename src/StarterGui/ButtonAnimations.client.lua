@@ -16,10 +16,9 @@ local function animateButton(button: ImageButton)
 		local mouseLeave: RBXScriptConnection
 		local mouseDown: RBXScriptConnection
 		local mouseUp: RBXScriptConnection
-		local removeConnection: RBXScriptConnection
+		local attributeChange: RBXScriptConnection
 
 		local originalSize: UDim2 = button.Size
-		local originalPosition: UDim2 = button.Position
 		local originalRotation: UDim2 = button.Rotation
 
 		local hoverScale: number = button:GetAttribute("Scale") or 1;
@@ -54,7 +53,7 @@ local function animateButton(button: ImageButton)
 				button:TweenSize(originalSize, Enum.EasingDirection.Out, Enum.EasingStyle.Quint, .2, true)
 			end
 		end)
-		removeConnection = button:GetPropertyChangedSignal("Parent"):Once(function()
+		button:GetPropertyChangedSignal("Parent"):Once(function()
 			if button.Parent == nil then
 				mouseEnter:Disconnect()
 				mouseLeave:Disconnect()
@@ -62,12 +61,13 @@ local function animateButton(button: ImageButton)
 				mouseUp:Disconnect()
 			end
 		end)
-		button:GetAttributeChangedSignal('Scale'):Connect(function()
+		attributeChange = button:GetAttributeChangedSignal('Scale'):Connect(function()
 			if button:GetAttribute('Scale') == nil then
 				mouseEnter:Disconnect()
 				mouseLeave:Disconnect()
 				mouseDown:Disconnect()
 				mouseUp:Disconnect()
+				attributeChange:Disconnect()
 			end
 		end)
 	end)

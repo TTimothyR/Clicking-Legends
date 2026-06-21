@@ -183,7 +183,19 @@ function Globals.FormatTime(seconds)
 end
 
 function Globals.FormatNumber(number)
-	return string.format("%.0f", number):gsub("(%d%d%d)", "%1,")
+	local s = tostring(math.floor(number))
+	local result = ""
+	local count = 0
+
+	for i = #s, 1, -1 do
+		if count > 0 and count % 3 == 0 then
+			result = "," .. result
+		end
+		result = s:sub(i, i) .. result
+		count += 1
+	end
+
+	return result
 end
 
 return Globals;

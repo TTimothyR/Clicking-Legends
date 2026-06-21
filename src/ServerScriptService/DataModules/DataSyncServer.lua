@@ -154,10 +154,14 @@ function DataSync.SyncPlayer(player, data)
 end
 
 function DataSync.GetOtherDataSync(requestingPlayer, targetUserId)
-    if type(targetUserId) ~= 'number' then return nil end;
+    if type(targetUserId) ~= 'number' then 
+        return nil 
+    end;
     
     local targetPlayer: Player = players:GetPlayerByUserId(targetUserId);
-    if not targetPlayer or targetPlayer == requestingPlayer then return nil end;
+    if not targetPlayer or targetPlayer == requestingPlayer then 
+        return nil 
+    end;
 
     local cache = lastSentData[targetPlayer];
     if not cache then return nil end;

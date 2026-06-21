@@ -35,7 +35,7 @@ local function InitializeStats()
     ChangeStat(infMath.new(profile.TotalGems):GetSuffix(true), 'Total Gems: ', scrollingHolder.TotalGems.Title);
     ChangeStat(infMath.new(profile.Rebirths):GetSuffix(true), 'Total Rebirths: ', scrollingHolder.TotalRebirths.Title);
 
-    ChangeStat(profile.RarestHatch, 'Rarest Hatch: 1/', scrollingHolder.RarestHatch.Title);
+    ChangeStat(globals.FormatNumber(profile.RarestHatch), 'Rarest Hatch: 1/', scrollingHolder.RarestHatch.Title);
     ChangeStat(profile.SecretsHatched, 'Secrets Hatched: ', scrollingHolder.SecretsHatched.Title);
     ChangeStat(profile.ShinySecretsHatched, 'Shiny Secrets Hatched: ', scrollingHolder.ShinySecretsHatched.Title);
     ChangeStat(infMath.new(profile.Eggs):GetSuffix(true), 'Eggs: ', scrollingHolder.EggsHatched.Title);
@@ -76,7 +76,7 @@ function StatsUIHandler.Initialize()
     end)
 
     dataSync.OnChanged('RarestHatch', function(newValue, oldValue)
-        ChangeStat(newValue, 'Rarest Hatch: 1/', scrollingHolder.RarestHatch.Title);
+        ChangeStat(globals.FormatNumber(newValue), 'Rarest Hatch: 1/', scrollingHolder.RarestHatch.Title);
     end)
 
     dataSync.OnChanged('SecretsHatched', function(newValue, oldValue)

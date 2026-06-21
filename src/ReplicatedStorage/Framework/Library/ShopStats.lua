@@ -51,7 +51,7 @@ return {
             LayoutOrder = 30,
         },
         ["+100 Pet Storage"] = { --
-            Description = "Increase Pet Storage by 500!",
+            Description = "Increase Pet Storage by 100!",
             GamepassID = 1740768138,
             LayoutOrder = 31,
         },
