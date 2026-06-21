@@ -16,29 +16,33 @@ local globals = require(framework.Globals)
 
 function PotionItem.new(inventoryHandler, data, templateClone)
 	local self = setmetatable({}, PotionItem)
-	
+
 	self.amount = data.amount
 	self.potionName = data.name
 	self.rarity = potionsStats[self.potionName].Rarity or "Common"
 	self.clone = templateClone
 	self.selectButton = templateClone.Click
-	
+
 	self.image = imageService[self.potionName] or imageService["Placeholder"]
-	
+
 	self.connections = {}
-	
+
 	self:setupUI()
-	
+
 	self.connections.click = self.selectButton.MouseButton1Click:Connect(function()
-		if not db then db = true task.delay(.15, function() db = false end)
+		if not db then
+			db = true
+			task.delay(0.15, function()
+				db = false
+			end)
 			inventoryHandler.SelectPotion(self)
 		end
 	end)
-	
+
 	self.connections.parentChange = self.clone:GetPropertyChangedSignal("Parent"):Once(function()
 		self:Destroy()
 	end)
-	
+
 	return self
 end
 
@@ -47,19 +51,21 @@ function PotionItem:setupUI()
 	if self.rarity == "Legendary" then
 		self.selectButton.Legendary.Enabled = true
 	end
-	
+
 	self.selectButton.ItemName.Text = self.potionName:gsub("_", " ")
-	self.selectButton.Amount.Text = "x"..self.amount
-	
+	self.selectButton.Amount.Text = "x" .. self.amount
+
 	self.selectButton.ItemIcon.Image = self.image
-	
+
 	self.clone.Visible = true
 end
 
 function PotionItem:updateAmount(newAmount)
-	if newAmount <= 0 then return true end
-	
-	self.selectButton.Amount.Text = "x"..newAmount
+	if newAmount <= 0 then
+		return true
+	end
+
+	self.selectButton.Amount.Text = "x" .. newAmount
 	return false
 end
 

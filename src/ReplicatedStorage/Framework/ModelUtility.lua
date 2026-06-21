@@ -3,10 +3,10 @@ local ModelUtil = {}
 -- Services
 local rs = game:GetService("RunService")
 local ts = game:GetService("TweenService")
-local repl = game:GetService("ReplicatedStorage")
 
-function ModelUtil.NewClickDetector(isntance: any)
-	local clickDetector: ClickDetector = Instance.new("ClickDetector", isntance)
+function ModelUtil.NewClickDetector(instance: any)
+	local clickDetector: ClickDetector = Instance.new("ClickDetector")
+	clickDetector.Parent = instance
 	clickDetector.Name = "Click"
 
 	return clickDetector
@@ -14,15 +14,14 @@ end
 
 function ModelUtil.Rainbowify(i: Part | ParticleEmitter, v: number)
 	local colorConnection: RBXScriptConnection
-	local destroyConnection: RBXScriptConnection
-	
+
 	if i:IsA("BasePart") then
 		colorConnection = rs.Heartbeat:Connect(function()
 			local t = tick() * 0.4 % 1
 			local color = Color3.fromHSV(t, 0.7, v)
 			i.Color = color
 		end)
-		destroyConnection = i:GetPropertyChangedSignal("Parent"):Once(function()
+		i:GetPropertyChangedSignal("Parent"):Once(function()
 			colorConnection:Disconnect()
 		end)
 	elseif i:IsA("ParticleEmitter") then
@@ -30,10 +29,10 @@ function ModelUtil.Rainbowify(i: Part | ParticleEmitter, v: number)
 			local t = tick() * 0.4 % 1
 			i.Color = ColorSequence.new({
 				ColorSequenceKeypoint.new(0, Color3.fromHSV(t, 0.7, v)),
-				ColorSequenceKeypoint.new(1, Color3.fromHSV(t, 0.7, v))
+				ColorSequenceKeypoint.new(1, Color3.fromHSV(t, 0.7, v)),
 			})
 		end)
-		destroyConnection = i:GetPropertyChangedSignal("Parent"):Once(function()
+		i:GetPropertyChangedSignal("Parent"):Once(function()
 			colorConnection:Disconnect()
 		end)
 	end
@@ -41,7 +40,6 @@ end
 
 function ModelUtil.Mythicify(i: Part | ParticleEmitter, v: number)
 	local colorConnection: RBXScriptConnection
-	local destroyConnection: RBXScriptConnection
 
 	if i:IsA("BasePart") then
 		colorConnection = rs.Heartbeat:Connect(function()
@@ -58,7 +56,7 @@ function ModelUtil.Mythicify(i: Part | ParticleEmitter, v: number)
 			i.Color = color
 		end)
 
-		destroyConnection = i:GetPropertyChangedSignal("Parent"):Once(function()
+		i:GetPropertyChangedSignal("Parent"):Once(function()
 			colorConnection:Disconnect()
 		end)
 	elseif i:IsA("ParticleEmitter") then
@@ -74,10 +72,10 @@ function ModelUtil.Mythicify(i: Part | ParticleEmitter, v: number)
 			local t = minHue + hueOffset
 			i.Color = ColorSequence.new({
 				ColorSequenceKeypoint.new(0, Color3.fromHSV(t, 0.7, v)),
-				ColorSequenceKeypoint.new(1, Color3.fromHSV(t, 0.7, v))
+				ColorSequenceKeypoint.new(1, Color3.fromHSV(t, 0.7, v)),
 			})
 		end)
-		destroyConnection = i:GetPropertyChangedSignal("Parent"):Once(function()
+		i:GetPropertyChangedSignal("Parent"):Once(function()
 			colorConnection:Disconnect()
 		end)
 	end
@@ -100,7 +98,7 @@ function ModelUtil.AnimateScale(startScale: number, endScale: number, ti: TweenI
 	connection = rs.Heartbeat:Connect(function(deltaTime)
 		elapsed = math.min(elapsed + deltaTime, ti.Time)
 
-		local alpha = ts:GetValue(elapsed/ti.Time, style, dir)
+		local alpha = ts:GetValue(elapsed / ti.Time, style, dir)
 
 		scale = startScale + alpha * (endScale - startScale)
 		model:ScaleTo(scale)
@@ -111,19 +109,27 @@ function ModelUtil.AnimateScale(startScale: number, endScale: number, ti: TweenI
 	end)
 end
 
-function ModelUtil.SquishModel(model: Model, scaleFactor: number, duration: number, ogPosition, jumpHeight: number, Repeat: boolean)
+function ModelUtil.SquishModel(
+	model: Model,
+	scaleFactor: number,
+	duration: number,
+	ogPosition,
+	jumpHeight: number,
+	Repeat: boolean
+)
 	local completed: number = 0
 	local toComplete: number = #model:GetChildren()
 
 	local originalSizes = {}
-	local originalHeights = model.PrimaryPart.Size
-	for _, part: Part in pairs(model:GetChildren()) do
+	local primaryPart = model.PrimaryPart :: BasePart?
+	local originalHeights = primaryPart and primaryPart.Size or 0
+	for _, part: Instance in pairs(model:GetChildren()) do
 		if part:IsA("BasePart") then
 			originalSizes[part] = part.Size
 		end
 	end
 
-	for _, part: Part in pairs(model:GetChildren()) do
+	for _, part: Instance in pairs(model:GetChildren()) do
 		if part:IsA("BasePart") then
 			task.spawn(function()
 				local newModelPos
@@ -131,7 +137,7 @@ function ModelUtil.SquishModel(model: Model, scaleFactor: number, duration: numb
 				local originalSize = originalSizes[part]
 				local newSize = Vector3.new(originalSize.X, originalSize.Y * scaleFactor, originalSize.Z)
 
-				local yOffset = part.Position.Y - model.PrimaryPart.Position.Y
+				local yOffset = part.Position.Y - primaryPart.Position.Y
 				local newOffset = yOffset * scaleFactor
 				local newPos = part.Position + Vector3.new(0, newOffset - yOffset, 0)
 
@@ -143,10 +149,18 @@ function ModelUtil.SquishModel(model: Model, scaleFactor: number, duration: numb
 					model:PivotTo(pos.Value)
 				end)
 
-				local heightDiff = (originalHeights.Y - originalHeights.Y * scaleFactor)/2
+				local heightDiff = (originalHeights.Y - originalHeights.Y * scaleFactor) / 2
 				newModelPos = ogPosition * CFrame.new(0, -heightDiff, 0)
-				local t1 = ts:Create(part, TweenInfo.new(duration, Enum.EasingStyle.Sine, Enum.EasingDirection.Out, 0, Repeat), {Size = newSize, Position = newPos + Vector3.new(0, jumpHeight, 0)})
-				local t2 = ts:Create(pos, TweenInfo.new(duration, Enum.EasingStyle.Sine, Enum.EasingDirection.Out, 0 , Repeat), {Value = newModelPos + Vector3.new(0, jumpHeight, 0)})
+				local t1 = ts:Create(
+					part,
+					TweenInfo.new(duration, Enum.EasingStyle.Sine, Enum.EasingDirection.Out, 0, Repeat),
+					{ Size = newSize, Position = newPos + Vector3.new(0, jumpHeight, 0) }
+				)
+				local t2 = ts:Create(
+					pos,
+					TweenInfo.new(duration, Enum.EasingStyle.Sine, Enum.EasingDirection.Out, 0, Repeat),
+					{ Value = newModelPos + Vector3.new(0, jumpHeight, 0) }
+				)
 				t1:Play()
 				t2:Play()
 				t2.Completed:Wait()
@@ -156,7 +170,9 @@ function ModelUtil.SquishModel(model: Model, scaleFactor: number, duration: numb
 			end)
 		end
 	end
-	repeat task.wait() until completed == toComplete
+	repeat
+		task.wait()
+	until completed == toComplete
 	return true
 end
 
@@ -175,11 +191,7 @@ function ModelUtil.SetupPetModel(model: Model, variant: boolean)
 			local NEAR_WHITE_V = 0.95
 			local NEAR_ACHROMATIC_S = 0.05
 
-			if v < NEAR_BLACK_V then
-				newH = h
-				newS = s
-				newV = v
-			elseif v > NEAR_WHITE_V and s < NEAR_ACHROMATIC_S then
+			if v < NEAR_BLACK_V or (v > NEAR_WHITE_V and s < NEAR_ACHROMATIC_S) then
 				newH = h
 				newS = s
 				newV = v
@@ -212,6 +224,5 @@ function ModelUtil.SetupPetModel(model: Model, variant: boolean)
 	--	return
 	--end
 end
-
 
 return ModelUtil

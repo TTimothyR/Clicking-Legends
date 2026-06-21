@@ -2,7 +2,6 @@ local module = {}
 
 -- Services
 local rs = game:GetService("ReplicatedStorage")
-local http = game:GetService('HttpService');
 
 -- Variables
 local framework = rs:WaitForChild("Framework")
@@ -11,26 +10,32 @@ local framework = rs:WaitForChild("Framework")
 local infMath = require(framework.InfiniteMath)
 
 function module:CreateLeaderstats(player: Player, profile)
-	local leaderstats = Instance.new("Folder", player)
+	local leaderstats = Instance.new("Folder")
+	leaderstats.Parent = player
 	leaderstats.Name = "leaderstats"
-	
-	local clicks = Instance.new("StringValue", leaderstats)
+
+	local clicks = Instance.new("StringValue")
+	clicks.Parent = leaderstats
 	clicks.Name = "Clicks"
 	clicks.Value = infMath.new(profile.Data.Clicks):GetSuffix(true)
-	
-	local rebirths = Instance.new("StringValue", leaderstats)
+
+	local rebirths = Instance.new("StringValue")
+	rebirths.Parent = leaderstats
 	rebirths.Name = "Rebirths"
 	rebirths.Value = infMath.new(profile.Data.Rebirths):GetSuffix(true)
-	
-	local gems = Instance.new("StringValue", leaderstats)
+
+	local gems = Instance.new("StringValue")
+	gems.Parent = leaderstats
 	gems.Name = "Gems"
 	gems.Value = infMath.new(profile.Data.Gems):GetSuffix(true)
-	
-	local eggs = Instance.new("StringValue", leaderstats)
+
+	local eggs = Instance.new("StringValue")
+	eggs.Parent = leaderstats
 	eggs.Name = "Eggs"
 	eggs.Value = infMath.new(profile.Data.Eggs):GetSuffix(true)
 
-	local uiLock = Instance.new("BoolValue", player)
+	local uiLock = Instance.new("BoolValue")
+	uiLock.Parent = player
 	uiLock.Name = "UILock"
 	uiLock.Value = false
 

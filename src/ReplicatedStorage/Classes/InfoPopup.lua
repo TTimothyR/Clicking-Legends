@@ -15,19 +15,25 @@ function Popup.new(title, message, confirmCallback, frame)
 	self.frame.Message.Text = self.message
 	self.confirmButton = self.frame.Main.Buttons.Yes
 
-	table.insert(self.connections, self.confirmButton.MouseButton1Click:Connect(function()
-		if type(self.confirmCallback) == "function" then
-			self.confirmCallback()
-		end
-		self:Cleanup()
-	end))
+	table.insert(
+		self.connections,
+		self.confirmButton.MouseButton1Click:Connect(function()
+			if type(self.confirmCallback) == "function" then
+				self.confirmCallback()
+			end
+			self:Cleanup()
+		end)
+	)
 
-	table.insert(self.connections, self.frame.Close.MouseButton1Click:Connect(function()
-		if type(self.confirmCallback) == "function" then
-			self.confirmCallback();
-		end
-		self:Cleanup();
-	end))
+	table.insert(
+		self.connections,
+		self.frame.Close.MouseButton1Click:Connect(function()
+			if type(self.confirmCallback) == "function" then
+				self.confirmCallback()
+			end
+			self:Cleanup()
+		end)
+	)
 
 	return self
 end

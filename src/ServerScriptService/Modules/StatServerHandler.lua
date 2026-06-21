@@ -55,8 +55,7 @@ end
 
 local function IntializeDebounces(player: Player)
 	local profile = playerData.GetData(player)
-	local multiplier = (profile.UpgradeLevels["Faster Auto Click"] == 1) and upgrades["Faster Auto Click"].Increment
-		or 1
+	local multiplier = (profile.UpgradeLevels["Faster Auto Click"] == 1) and upgrades["Faster Auto Click"].Increment or 1
 	playerDBs[player.Name] = {
 		ClickDB = 0.15,
 		ClickOnDB = false,
@@ -153,7 +152,8 @@ function StatHandler.Click(player: Player, fromAutoClick: boolean)
 
 	profile.Clicks = infMath.new(profile.Clicks + increment)
 	profile.TotalClicks = infMath.new(profile.TotalClicks + increment)
-	player.leaderstats.Clicks.Value = infMath.new(profile.Clicks):GetSuffix(true)
+	local leaderstats = player:FindFirstChild("leaderstats") :: Folder
+	leaderstats.Clicks.Value = infMath.new(profile.Clicks):GetSuffix(true)
 	profile.ActualClicks = infMath.new(profile.ActualClicks + infMath.new(1))
 
 	-- player:SetAttribute("Clicks", http:JSONEncode(profile.Clicks));
@@ -172,8 +172,7 @@ function StatHandler.IncreaseAutoClickSpeed(player: Player)
 	if not playerDBs[player.Name] then
 		return
 	end
-	local multiplier = (profile.UpgradeLevels["Faster Auto Click"] == 1) and upgrades["Faster Auto Click"].Increment
-		or 1
+	local multiplier = (profile.UpgradeLevels["Faster Auto Click"] == 1) and upgrades["Faster Auto Click"].Increment or 1
 	playerDBs[player.Name].AutoClickDB = 0.25 / multiplier
 end
 
@@ -191,6 +190,7 @@ function StatHandler.ToggleAutoClicker(player: Player)
 	playerDBs[player.Name].AutoClickElapsedInterval = 0
 	playerDBs[player.Name].AutoClickerEnabled = profile.AutoClickerStatus
 	dataSync.SyncPlayer(player, profile)
+	return true
 end
 
 function StatHandler.Initialize()
@@ -209,7 +209,7 @@ function StatHandler.Initialize()
 		task.spawn(IntializeDebounces, player)
 	end)
 
-	players.PlayerRemoving:Connect(function(player, reason)
+	players.PlayerRemoving:Connect(function(player, _)
 		playerDBs[player.Name] = nil
 	end)
 end

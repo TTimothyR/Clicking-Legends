@@ -1,58 +1,58 @@
 local LuckHandler = {}
 
 -- Services
-local rs = game:GetService('ReplicatedStorage');
-local sss = game:GetService('ServerScriptService');
+local rs = game:GetService("ReplicatedStorage")
+local sss = game:GetService("ServerScriptService")
 
 -- Variables
-local rng = Random.new();
-local dataModules = sss:WaitForChild('DataModules');
-local framework = rs:WaitForChild('Framework');
-local library = framework:WaitForChild('Library');
+local rng = Random.new()
+local dataModules = sss:WaitForChild("DataModules")
+local framework = rs:WaitForChild("Framework")
+local library = framework:WaitForChild("Library")
 
 -- Modules
-local playerData = require(dataModules.PlayerData);
-local eggStats = require(library.EggStats);
-local petStats = require(library.PetStats);
+local playerData = require(dataModules.PlayerData)
+local eggStats = require(library.EggStats)
+local petStats = require(library.PetStats)
 
 local function RollShiny()
-    local shinyChance = 1;
+	local shinyChance = 40
 
-    local roll = rng:NextInteger(1, shinyChance);
-    if roll == 1 then
-        return true;
-    else
-        return false;
-    end
+	local roll = rng:NextInteger(1, shinyChance)
+	if roll == 1 then
+		return true
+	else
+		return false
+	end
 end
 
 function LuckHandler.RollPet(player: Player, eggName: string)
-    local profile = playerData.GetData(player);
-    local luckPercentage = profile.LuckPercentage;
-	local ownedGamepasses = profile.OwnedGamepasses;
+	local profile = playerData.GetData(player)
+	local luckPercentage = profile.LuckPercentage
+	local ownedGamepasses = profile.OwnedGamepasses
 
-    local gamepass = ownedGamepasses['Double Luck'] and true or false;
-    local upgrade = false;
-    if gamepass then
-        luckPercentage *= 2;
-    end
-    if upgrade then
-        luckPercentage *= 1.25;
-    end
+	local gamepass = ownedGamepasses["Double Luck"] and true or false
+	local upgrade = false
+	if gamepass then
+		luckPercentage *= 2
+	end
+	if upgrade then
+		luckPercentage *= 1.25
+	end
 
-    local tbl = eggStats[eggName].Pets;
-    local boosted = {['Epic'] = true, ['Legendary'] = true};
+	local tbl = eggStats[eggName].Pets
+	local boosted = { ["Epic"] = true, ["Legendary"] = true }
 
-    local rawChances = {};
-    local boostedChances = {};
-    local chances = {};
-    local addedChance = 0;
-    local totalNonBoosted = 0;
-    local totalWeight = 0
+	local rawChances = {}
+	local boostedChances = {}
+	local chances = {}
+	local addedChance = 0
+	local totalNonBoosted = 0
+	local totalWeight = 0
 
-    local luckBoost = 1 + (luckPercentage/100);
+	local luckBoost = 1 + (luckPercentage / 100)
 
-    for item, chance in pairs(tbl) do
+	for item, chance in pairs(tbl) do
 		rawChances[item] = chance[1]
 		local rarity = petStats[item].Rarity
 		if boosted[rarity] and luckBoost > 1 then
@@ -78,17 +78,18 @@ function LuckHandler.RollPet(player: Player, eggName: string)
 		totalWeight += chances[item]
 	end
 
-    local roll = math.random() * totalWeight
+	local roll = math.random() * totalWeight
 	local currentWeight = 0
 
 	for item, chance in pairs(chances) do
 		currentWeight += chance
 		if roll <= currentWeight then
-            local pet = item;
+			local pet = item
 			local shiny = RollShiny()
 			return pet, shiny
 		end
 	end
+	return
 end
 
 return LuckHandler

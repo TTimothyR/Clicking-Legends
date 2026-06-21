@@ -11,7 +11,7 @@ end
 
 function TableUtility.FindEgg(eggStats, petName)
 	for egg, data in pairs(eggStats) do
-		for pet, petData in pairs(data.Pets) do
+		for pet, _ in pairs(data.Pets) do
 			if pet == petName then
 				return egg
 			end

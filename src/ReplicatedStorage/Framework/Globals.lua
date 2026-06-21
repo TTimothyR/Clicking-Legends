@@ -1,24 +1,24 @@
-local Globals = {};
+local Globals = {}
 
 -- Services
-local rs = game:GetService('ReplicatedStorage');
+local rs = game:GetService("ReplicatedStorage")
 
 -- Variables
-local framework = rs:WaitForChild('Framework');
-local library = framework:WaitForChild('Library');
+local framework = rs:WaitForChild("Framework")
+local library = framework:WaitForChild("Library")
 
 -- Modules
-local eggStats = require(library.EggStats);
-local petStats = require(library.PetStats);
+local eggStats = require(library.EggStats)
+local petStats = require(library.PetStats)
 
 Globals.RebirthBasePrice = 2250
-Globals.UpgradeMultiplier = 1.35;
+Globals.UpgradeMultiplier = 1.35
 -- Globals.CostCoefficient = 5
 -- Globals.MultiplierCoefficient = 0.8
-Globals.BaseXP = 20;
-Globals.XPMulti = 2.1;
-Globals.MaxLevel = 50;
-Globals.ShinyMulti = 1.5;
+Globals.BaseXP = 20
+Globals.XPMulti = 2.1
+Globals.MaxLevel = 50
+Globals.ShinyMulti = 1.5
 
 Globals.RarityColors = {
 	["Common"] = Color3.fromRGB(255, 214, 133),
@@ -37,52 +37,52 @@ Globals.RarityOrder = {
 }
 
 Globals.BuffColors = {
-	['Lucky'] = Color3.fromRGB(35, 255, 64),
-	['Rebirths'] = Color3.fromRGB(255, 44, 44),
-	['Speed'] = Color3.fromRGB(255, 212, 148),
+	["Lucky"] = Color3.fromRGB(35, 255, 64),
+	["Rebirths"] = Color3.fromRGB(255, 44, 44),
+	["Speed"] = Color3.fromRGB(255, 212, 148),
 }
 
 Globals.PotionDescriptions = {
-	['Lucky'] = 'Grants <font color="%s">+%s%%</font> more luck!',
-	['Rebirths'] = 'Grants <font color="%s">+%s%%</font> more rebirths!',
-	['Speed'] = 'Increase hatch speed by <font color="%s">+%s%%</font>!'
+	["Lucky"] = 'Grants <font color="%s">+%s%%</font> more luck!',
+	["Rebirths"] = 'Grants <font color="%s">+%s%%</font> more rebirths!',
+	["Speed"] = 'Increase hatch speed by <font color="%s">+%s%%</font>!',
 }
 
 Globals.ButtonPresets = {
-	['Green'] = {
-		StrokeColor = Color3.fromRGB(0,131,0),
+	["Green"] = {
+		StrokeColor = Color3.fromRGB(0, 131, 0),
 		Gradient = ColorSequence.new({
 			ColorSequenceKeypoint.new(0, Color3.new(0, 1, 0)),
-			ColorSequenceKeypoint.new(1, Color3.new(0.6666667, 1, 0))
-		})
-	},	
-	['Red'] = {
-		StrokeColor = Color3.fromRGB(131,0,2),
+			ColorSequenceKeypoint.new(1, Color3.new(0.6666667, 1, 0)),
+		}),
+	},
+	["Red"] = {
+		StrokeColor = Color3.fromRGB(131, 0, 2),
 		Gradient = ColorSequence.new({
 			ColorSequenceKeypoint.new(0, Color3.new(1, 0, 0)),
-			ColorSequenceKeypoint.new(1, Color3.new(1, 0.4, 0.41))
-		})
-	},		
-	['Orange'] = {
+			ColorSequenceKeypoint.new(1, Color3.new(1, 0.4, 0.41)),
+		}),
+	},
+	["Orange"] = {
 		StrokeColor = Color3.fromRGB(131, 70, 0),
 		Gradient = ColorSequence.new({
 			ColorSequenceKeypoint.new(0, Color3.new(1, 0.533333, 0)),
-			ColorSequenceKeypoint.new(1, Color3.new(1, 0.729411, 0.4))
-		})
-	},		
-	['Gray'] = {
+			ColorSequenceKeypoint.new(1, Color3.new(1, 0.729411, 0.4)),
+		}),
+	},
+	["Gray"] = {
 		StrokeColor = Color3.fromRGB(96, 96, 96),
 		Gradient = ColorSequence.new({
 			ColorSequenceKeypoint.new(0, Color3.new(0.623529, 0.615686, 0.615686)),
-			ColorSequenceKeypoint.new(1, Color3.new(0.650980, 0.650980, 0.650980))
-		})
-	},	
-	['Purple'] = {
-		StrokeColor = Color3.fromRGB(91,0,136),
+			ColorSequenceKeypoint.new(1, Color3.new(0.650980, 0.650980, 0.650980)),
+		}),
+	},
+	["Purple"] = {
+		StrokeColor = Color3.fromRGB(91, 0, 136),
 		Gradient = ColorSequence.new({
 			ColorSequenceKeypoint.new(0, Color3.new(0.6666667, 0, 1)),
-			ColorSequenceKeypoint.new(1, Color3.new(0.6666667, 0.3333333, 1))
-		})
+			ColorSequenceKeypoint.new(1, Color3.new(0.6666667, 0.3333333, 1)),
+		}),
 	},
 }
 
@@ -90,12 +90,12 @@ function Globals.XPForNextLevel(currentLevel, shiny: boolean)
 	if currentLevel < 50 then
 		local xpNeeded
 		if currentLevel == 1 then
-			xpNeeded = Globals.BaseXP;
+			xpNeeded = Globals.BaseXP
 		else
-			xpNeeded = Globals.BaseXP * ((currentLevel - 1) * Globals.XPMulti);
+			xpNeeded = Globals.BaseXP * ((currentLevel - 1) * Globals.XPMulti)
 		end
 		if shiny then
-			xpNeeded *= Globals.ShinyMulti;
+			xpNeeded *= Globals.ShinyMulti
 		end
 		return xpNeeded
 	end
@@ -103,43 +103,42 @@ function Globals.XPForNextLevel(currentLevel, shiny: boolean)
 end
 
 function Globals.GetPetClicks(petData)
-	local stats = petStats[petData.petName];
-	
-	local clicks = stats.Clicks;
-	local total = clicks * (1+(2*(petData.level-1))/49);
+	local stats = petStats[petData.petName]
+
+	local clicks = stats.Clicks
+	local total = clicks * (1 + (2 * (petData.level - 1)) / 49)
 	if petData.shiny then
-		total *= 1.5;
+		total *= 1.5
 	end
-	return total;
+	return total
 end
 
 function Globals.GetPetGems(petData)
-	local stats = petStats[petData.petName];
-	
-	local gems = stats.GemMulti;
-	local total = gems * (1+(2*(petData.level-1))/49);
+	local stats = petStats[petData.petName]
+
+	local gems = stats.GemMulti
+	local total = gems * (1 + (2 * (petData.level - 1)) / 49)
 	if petData.shiny then
-		total *= 1.5;
+		total *= 1.5
 	end
-	return total;
+	return total
 end
 
 function Globals.GetPetChance(gpOwned: boolean, luckPercentage, petName: string, eggName: string, shiny: boolean)
-    local tbl = eggStats[eggName].Pets;
-    local boosted = {['Epic'] = true, ['Legendary'] = true};
+	local tbl = eggStats[eggName].Pets
+	local boosted = { ["Epic"] = true, ["Legendary"] = true }
 
-    local raw = {};
-    local boostedChances = {};
-    local chances = {};
-    local addedChance = 0;
-    local totalNonBoosted = 0;
-    local totalWeight = 0;
+	local raw = {}
+	local boostedChances = {}
+	local chances = {}
+	local addedChance = 0
+	local totalNonBoosted = 0
+	local totalWeight = 0
 	if gpOwned then
-		luckPercentage *= 2;
+		luckPercentage *= 2
 	end
 
-    local luckBoost = 1 + (luckPercentage/100);
-
+	local luckBoost = 1 + (luckPercentage / 100)
 
 	for item, chance in pairs(tbl) do
 		raw[item] = chance[1]
@@ -167,18 +166,18 @@ function Globals.GetPetChance(gpOwned: boolean, luckPercentage, petName: string,
 		totalWeight += chances[item]
 	end
 
-    local chance = 0
-    chance = shiny and chance/40 or chances[petName];
-    return chance;
+	local chance = 0
+	chance = shiny and chance / 40 or chances[petName]
+	return chance
 end
 
 function Globals.FormatTime(seconds)
 	if seconds <= 0 then
 		return "00:00:00"
 	end
-	local hours = math.floor(seconds/3600)
-	local minutes = math.floor((seconds%3600)/60)
-	local secondsLeft = math.floor(seconds%60)
+	local hours = math.floor(seconds / 3600)
+	local minutes = math.floor((seconds % 3600) / 60)
+	local secondsLeft = math.floor(seconds % 60)
 	return string.format("%02d:%02d:%02d", hours, minutes, secondsLeft)
 end
 
@@ -198,4 +197,4 @@ function Globals.FormatNumber(number)
 	return result
 end
 
-return Globals;
+return Globals

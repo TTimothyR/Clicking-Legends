@@ -42,7 +42,9 @@ local function loadJobModules()
 				end
 			end
 			loaded += 1
-			if isStudio then warn(`- CLIENT - {descendant.Name} ({loaded}/{total}) finished loading!`) end
+			if isStudio then
+				warn(`- CLIENT - {descendant.Name} ({loaded}/{total}) finished loading!`)
+			end
 		end
 	end
 end
@@ -53,7 +55,7 @@ event.OnClientEvent:Connect(function(job, ...)
 	if jobs[job] then
 		jobs[job](...)
 	else
-		error("No handler for job: "..job)
+		error("No handler for job: " .. job)
 	end
 end)
 
@@ -61,7 +63,7 @@ funct.OnClientInvoke = function(job, ...)
 	if jobs[job] then
 		return jobs[job](...)
 	else
-		error("No handler for job: "..job)
+		error("No handler for job: " .. job)
 		return nil
 	end
 end

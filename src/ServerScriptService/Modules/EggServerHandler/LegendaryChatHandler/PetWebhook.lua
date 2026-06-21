@@ -1,3 +1,0 @@
-local PetWebhook = {}
-
-return PetWebhook

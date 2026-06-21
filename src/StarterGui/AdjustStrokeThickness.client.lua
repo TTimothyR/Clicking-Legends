@@ -3,7 +3,9 @@ local players = game:GetService("Players")
 local workspace = game:GetService("Workspace")
 
 -- Variables
-repeat task.wait() until players.LocalPlayer
+repeat
+	task.wait()
+until players.LocalPlayer
 local plr: Player = players.LocalPlayer
 
 local camera = workspace.CurrentCamera

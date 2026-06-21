@@ -13,3 +13,4 @@ Make auto hatch locked behind group joining
 Gamepass Gifting
 Make clicking visually more satisfying
 More trading protection
+Auto reconnect

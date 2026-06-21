@@ -1,6 +1,42 @@
 {
-    "cSpell.words": [
-        "Gamepass",
-        "leaderstats"
-    ]
+	"editor.formatOnSave": true,
+	"editor.snippetSuggestions": "top",
+	"[lua]": {
+		"editor.defaultFormatter": "JohnnyMorganz.stylua"
+	},
+	"luau-lsp.sourcemap.enabled": true,
+	"luau-lsp.sourcemap.autogenerate": true,
+	"luau-lsp.sourcemap.rojoProjectFile": "default.project.json",
+	"luau-lsp.types.robloxSecurityLevel": "PluginSecurity",
+	"luau-lsp.sourcemap.rojoPath": "C:\\Users\\timst\\.aftman\\bin\\rojo.exe",
+	"selene.userTablePaths": [
+		"selene.toml"
+	],
+	"files.associations": {
+		"*.luau": "luau",
+	},
+	"cSpell.words": [
+		"Bloxlink",
+		"Cframe",
+		"Combi",
+		"cooldown",
+		"Gamepass",
+		"Gamepasses",
+		"gsub",
+		"hatchspeed",
+		"INVOKECLIENT",
+		"ipairs",
+		"Keypoint",
+		"leaderstats",
+		"Legendaries",
+		"Mythicify",
+		"pcall",
+		"Rainbowify",
+		"rbxasset",
+		"rbxassetid",
+		"Robux",
+		"tonumber",
+		"tostring",
+		"Walkspeed"
+	],
 }
