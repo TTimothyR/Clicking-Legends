@@ -52,6 +52,15 @@ local function SetupTemplate(ui)
 	local gpsOwned = dataSync.Get("OwnedGamepasses")
 	local luckPassOwned = gpsOwned["Double Luck"] and true or false
 
+	local activePotions = dataSync.Get("ActivePotions")
+	if activePotions["Lucky"] then
+		local tier, data = next(activePotions["Lucky"].Active)
+
+		if tier and data then
+			luckPercentage += globals.GetPotionBuffAmount(tier, "Lucky")
+		end
+	end
+
 	for _, item in ipairs(petHolder:GetChildren()) do
 		if item:IsA("ImageButton") then
 			local clickConnection: RBXScriptConnection
@@ -73,7 +82,7 @@ local function SetupTemplate(ui)
 
 			local chance = globals.GetPetChance(luckPassOwned, luckPercentage, item.Name, ui.Name, false)
 
-			item.Chance.Text = tostring(chance) .. "%"
+			item.Chance.Text = globals.FormatChance(chance) .. "%"
 
 			clickConnection = item.MouseButton1Click:Connect(function()
 				if not db then
@@ -201,6 +210,15 @@ local function ConfigureEggUI(egg: Model)
 	local gpsOwned = dataSync.Get("OwnedGamepasses")
 	local luckPassOwned = gpsOwned["Double Luck"] and true or false
 
+	local activePotions = dataSync.Get("ActivePotions")
+	if activePotions["Lucky"] then
+		local tier, data = next(activePotions["Lucky"].Active)
+
+		if tier and data then
+			luckPercentage += globals.GetPotionBuffAmount(tier, "Lucky")
+		end
+	end
+
 	clone.Adornee = egg:FindFirstChild("View")
 	table.insert(adornees, {
 		part = egg:FindFirstChild("View"),
@@ -229,7 +247,7 @@ local function ConfigureEggUI(egg: Model)
 		petClone.Parent = holder
 		petClone.Name = petName
 
-		petClone.Chance.Text = tostring(chance) .. "%"
+		petClone.Chance.Text = globals.FormatChance(chance) .. "%"
 		petClone.Chance.TextColor3 = globals.RarityColors[rarity]
 		if rarity == "Legendary" then
 			local colorConnection = runService.Heartbeat:Connect(function()
@@ -314,8 +332,6 @@ function EggUIHandler.Initialize()
 	end)
 
 	task.spawn(GetClosestEgg)
-
-	print("Grand Patriotic Overlord Exist Count:" .. rs.GetPetExist:InvokeServer("Grand Patriotic Overlord", false))
 
 	uis.InputBegan:Connect(function(input, gameProcessedEvent)
 		if gameProcessedEvent then

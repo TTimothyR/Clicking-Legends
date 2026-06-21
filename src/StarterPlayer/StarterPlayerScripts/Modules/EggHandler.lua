@@ -145,6 +145,16 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
 	local ownedGamepsses = dataSync.Get("OwnedGamepasses")
 	local upgradeLevels = dataSync.Get("UpgradeLevels")
 
+	local activePotions = dataSync.Get("ActivePotions")
+	if activePotions["Speed"] then
+		local tier, data = next(activePotions["Speed"].Active)
+
+		if tier and data then
+			speed += globals.GetPotionBuffAmount(tier, "Speed") / 100
+		end
+	end
+	print(speed)
+
 	if ownedGamepsses["Fast Hatch"] then
 		speed += 0.35
 	end

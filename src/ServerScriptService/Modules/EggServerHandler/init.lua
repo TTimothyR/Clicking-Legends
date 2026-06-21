@@ -129,6 +129,7 @@ function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
 			else
 				profile.SecretsHatched += 1
 			end
+			Discord.SecretPet(player, petName, (shiny == true and "Shiny" or nil), eggName)
 		end
 		local fullName = shiny and "Shiny " .. petName or petName
 		local id = generateID.NewID()
@@ -150,8 +151,6 @@ function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
 			autoDeleted = autoDeleted,
 			new = new,
 		})
-
-		Discord.SecretPet(player, petName, (shiny == true and "Shiny" or nil), eggName)
 
 		if not autoDeleted then
 			table.insert(profile.Pets, {

@@ -1,6 +1,7 @@
 local LuckHandler = {}
 
 -- Services
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local rs = game:GetService("ReplicatedStorage")
 local sss = game:GetService("ServerScriptService")
 
@@ -11,12 +12,13 @@ local framework = rs:WaitForChild("Framework")
 local library = framework:WaitForChild("Library")
 
 -- Modules
+local Globals = require(ReplicatedStorage.Framework.Globals)
 local playerData = require(dataModules.PlayerData)
 local eggStats = require(library.EggStats)
 local petStats = require(library.PetStats)
 
 local function RollShiny()
-	local shinyChance = 40
+	local shinyChance = Globals.ShinyChance
 
 	local roll = rng:NextInteger(1, shinyChance)
 	if roll == 1 then
@@ -30,6 +32,15 @@ function LuckHandler.RollPet(player: Player, eggName: string)
 	local profile = playerData.GetData(player)
 	local luckPercentage = profile.LuckPercentage
 	local ownedGamepasses = profile.OwnedGamepasses
+
+	local activePotions = profile.ActivePotions
+	if activePotions["Lucky"] then
+		local tier, data = next(activePotions["Lucky"].Active)
+
+		if tier and data then
+			luckPercentage += Globals.GetPotionBuffAmount(tier, "Lucky")
+		end
+	end
 
 	local gamepass = ownedGamepasses["Double Luck"] and true or false
 	local upgrade = false

@@ -15,6 +15,8 @@ local Modules = ServerScriptService.Modules
 local DiscordHandlers = Modules.DiscordHandlers
 local DiscordManager = require(DiscordHandlers.DiscordManager)
 local FormatBigNumbers = require(script.FormatBigNumbers)
+local Globals = require(Framework:WaitForChild("Globals"))
+
 local Testing = RunService:IsStudio()
 local DataStore = Testing and DataStoreService:GetDataStore("Testing_Pet_Count_01")
 	or DataStoreService:GetDataStore("Pet_Count_01")
@@ -66,13 +68,8 @@ local function GetDiscordIDAsync(RobloxID)
 	if BloxlinkCache[RobloxID] then
 		return BloxlinkCache[RobloxID]
 	end
-
-	warn(BloxlinkCache)
-
-	warn(DiscordServer, RobloxID)
-
 	local url = string.format("https://api.blox.link/v4/public/guilds/%s/roblox-to-discord/%d", DiscordServer, RobloxID)
-	warn(url)
+
 	local discordId = nil
 	local success, response = pcall(function()
 		return HttpService:GetAsync(url, true, { ["Authorization"] = BloxlinkAPI })
@@ -82,7 +79,6 @@ local function GetDiscordIDAsync(RobloxID)
 
 	if success then
 		local data = HttpService:JSONDecode(response)
-		warn(data)
 		if data.discordIDs and #data.discordIDs > 0 then
 			discordId = data.discordIDs[1]
 			BloxlinkCache[RobloxID] = discordId
@@ -97,6 +93,7 @@ function Discord.SecretPet(Player, PetName, Tier, EggName)
 		Increment(PetName, Tier)
 
 		local PetChance = (EggName and EggStats[EggName].Pets[PetName][1] or 100)
+		PetChance /= (Tier == "Shiny" and Globals.ShinyChance or 1)
 		local IsProduct = false
 		local FormattedChance = PetChance < 1 and ("1 / **%s**"):format(FormatBigNumbers(100 / PetChance))
 			or ("**%i%s**"):format(PetChance, "%")
@@ -117,7 +114,7 @@ function Discord.SecretPet(Player, PetName, Tier, EggName)
 		local FinalColor = IsMythic and (Tier and 0x00ff77 or 0x0a37ff) or (Tier and 0xffb246 or 0x000000)
 		local FinalTitle = ("%s%s"):format(Tier and Tier .. " " or "", IsMythic and ("Mythic " .. SecretName) or PetName)
 
-		local ImageID = ImageService[PetName]
+		local ImageID = ImageService[(Tier == "Shiny" and "Shiny " .. PetName or PetName)]
 		local NewImageID = ImageID
 		for i = 1, string.len(ImageID) do
 			if tonumber(NewImageID) then
@@ -143,8 +140,8 @@ function Discord.SecretPet(Player, PetName, Tier, EggName)
 			task.spawn(function()
 				local DiscordID = GetDiscordIDAsync(Player.UserId)
 				warn(DiscordID)
-				local Content = DiscordID and ("Wow! <@" .. DiscordID .. "> hatched an Ancient Pet (" .. PetName .. "), congrats!")
-					or ("Wow! " .. Player.Name .. " hatched an Ancient Pet (" .. PetName .. "), congrats!")
+				local Content = DiscordID and ("Wow! <@" .. DiscordID .. "> hatched an SECRET Pet (" .. PetName .. "), congrats!")
+					or ("Wow! " .. Player.Name .. " hatched a SECRET Pet (" .. PetName .. "), congrats!")
 				DiscordManager:Send({
 					Type = Testing and "Test" or "Hatch",
 					Content = Content,

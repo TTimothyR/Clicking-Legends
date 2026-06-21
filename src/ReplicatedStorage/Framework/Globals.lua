@@ -1,6 +1,7 @@
 local Globals = {}
 
 -- Services
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local rs = game:GetService("ReplicatedStorage")
 
 -- Variables
@@ -8,6 +9,7 @@ local framework = rs:WaitForChild("Framework")
 local library = framework:WaitForChild("Library")
 
 -- Modules
+local items = require(ReplicatedStorage.Framework.Library.Items)
 local eggStats = require(library.EggStats)
 local petStats = require(library.PetStats)
 
@@ -19,6 +21,7 @@ Globals.BaseXP = 20
 Globals.XPMulti = 2.1
 Globals.MaxLevel = 50
 Globals.ShinyMulti = 1.5
+Globals.ShinyChance = 100
 
 Globals.RarityColors = {
 	["Common"] = Color3.fromRGB(255, 214, 133),
@@ -86,6 +89,16 @@ Globals.ButtonPresets = {
 	},
 }
 
+function Globals.GetPotionBuffAmount(tier, buff)
+	for _, data in pairs(items["Potions"][tier].Buffs) do
+		if data[1] == buff then
+			return data[2]
+		end
+	end
+
+	return 0
+end
+
 function Globals.XPForNextLevel(currentLevel, shiny: boolean)
 	if currentLevel < 50 then
 		local xpNeeded
@@ -106,7 +119,29 @@ function Globals.GetPetClicks(petData)
 	local stats = petStats[petData.petName]
 
 	local clicks = stats.Clicks
-	local total = clicks * (1 + (2 * (petData.level - 1)) / 49)
+	local total = clicks * (1 + (2 * (petData.level - 1)) / (Globals.MaxLevel - 1))
+	if petData.shiny then
+		total *= 1.5
+	end
+	return total
+end
+
+function Globals.GetMaxLevelClicks(petData)
+	local stats = petStats[petData.petName]
+
+	local clicks = stats.Clicks
+	local total = clicks * (1 + (2 * (Globals.MaxLevel - 1)) / (Globals.MaxLevel - 1))
+	if petData.shiny then
+		total *= 1.5
+	end
+	return total
+end
+
+function Globals.GetMaxLevelGems(petData)
+	local stats = petStats[petData.petName]
+
+	local gems = stats.Gems
+	local total = gems * (1 + (2 * (Globals.MaxLevel - 1)) / (Globals.MaxLevel - 1))
 	if petData.shiny then
 		total *= 1.5
 	end
@@ -117,7 +152,7 @@ function Globals.GetPetGems(petData)
 	local stats = petStats[petData.petName]
 
 	local gems = stats.GemMulti
-	local total = gems * (1 + (2 * (petData.level - 1)) / 49)
+	local total = gems * (1 + (2 * (petData.level - 1)) / (Globals.MaxLevel - 1))
 	if petData.shiny then
 		total *= 1.5
 	end
@@ -195,6 +230,28 @@ function Globals.FormatNumber(number)
 	end
 
 	return result
+end
+
+function Globals.FormatChance(chance: number): string
+	if chance == 0 then
+		return "0"
+	end
+
+	if chance == math.floor(chance) then
+		return tostring(chance)
+	end
+
+	local absChance = math.abs(chance)
+	local exponent = math.floor(math.log10(absChance))
+	local decimalPlaces = math.max(2, -exponent + 1)
+
+	local formatStr = "%." .. tostring(decimalPlaces) .. "f"
+	local formatted = string.format(formatStr, chance)
+
+	formatted = string.gsub(formatted, "0+$", "")
+	formatted = string.gsub(formatted, "%.$", "")
+
+	return formatted
 end
 
 return Globals

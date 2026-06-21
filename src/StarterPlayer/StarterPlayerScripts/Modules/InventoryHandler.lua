@@ -1181,6 +1181,9 @@ function InventoryHandler.Initialize()
 			itemInfo.Visible = false
 			inventory.Visible = true
 			petInfo.Visible = true
+			bulkButtons.Visible = true
+			utilityButtons.Visible = true
+			searchFrame.Visible = true
 		end
 	end)
 	itemsButton.MouseButton1Click:Connect(function()
@@ -1193,6 +1196,9 @@ function InventoryHandler.Initialize()
 			itemInfo.Visible = true
 			inventory.Visible = false
 			petInfo.Visible = false
+			bulkButtons.Visible = false
+			utilityButtons.Visible = false
+			searchFrame.Visible = false
 		end
 	end)
 end

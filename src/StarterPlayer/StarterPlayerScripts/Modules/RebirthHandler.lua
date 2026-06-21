@@ -84,47 +84,62 @@ local function UpdateButtons(fromSignal: boolean)
 	local currentRebirths = dataSync.Get("Rebirths")
 	local currentClicks = dataSync.Get("Clicks")
 	local ownedGamepasses = dataSync.Get("OwnedGamepasses")
-	if (rebirthFrame.Visible or not fromSignal) and not autoRebirthSelect then
-		for index, rebirths in ipairs(rebirthStats) do
+
+	if autoRebirthSelect then
+		for index, _ in ipairs(rebirthStats) do
 			local clone = holder:FindFirstChild(index)
-
-			if index == 1 and rebirths == 0 then
-				rebirths = infMath.new(currentClicks / (globals.RebirthBasePrice * currentRebirths))
-				rebirths = infMath.floor(rebirths)
-
-				if not ownedGamepasses["Unlimited Rebirths"] then
-					clone.Inner.Locked.Visible = true
-					unlimRebirthPurchaseCon = clone.Inner.Locked.Buy.MouseButton1Click:Connect(function()
-						if not db then
-							db = true
-							task.delay(0.15, function()
-								db = false
-							end)
-							mps:PromptGamePassPurchase(player, shopStats.Gamepasses["Unlimited Rebirths"].GamepassID)
-							shopHandler.ShowGreyFrame()
-						end
-					end)
-				end
-			end
-
-			local word = (rebirths == 1) and "Rebirth" or "Rebirths"
-
-			local cost = infMath.new(globals.RebirthBasePrice * rebirths * currentRebirths)
-
 			local inner = clone.Inner
-			inner.Amount.Text = "+" .. tostring(rebirths) .. " " .. word .. " (" .. cost:GetSuffix(true) .. " Clicks)"
-			if rebirths == infMath.new(0) then
-				UpdateButton(inner, nil)
-			else
-				UpdateButton(inner, cost)
-			end
-
 			inner.AutoStroke.Enabled = (selectedIndex == index)
 
-			clone.Visible = true
+			if selectedIndex == index then
+				inner.Click.Title.Text = "Selected"
+			else
+				inner.Click.Title.Text = "Select"
+			end
 		end
-		main.Rebirths.Amount.Text = "Rebirths: " .. currentRebirths:GetSuffix(true)
+	else
+		if rebirthFrame.Visible or not fromSignal then
+			for index, rebirths in ipairs(rebirthStats) do
+				local clone = holder:FindFirstChild(index)
+
+				if index == 1 and rebirths == 0 then
+					rebirths = infMath.new(currentClicks / (globals.RebirthBasePrice * currentRebirths))
+					rebirths = infMath.floor(rebirths)
+
+					if not ownedGamepasses["Unlimited Rebirths"] then
+						clone.Inner.Locked.Visible = true
+						unlimRebirthPurchaseCon = clone.Inner.Locked.Buy.MouseButton1Click:Connect(function()
+							if not db then
+								db = true
+								task.delay(0.15, function()
+									db = false
+								end)
+								mps:PromptGamePassPurchase(player, shopStats.Gamepasses["Unlimited Rebirths"].GamepassID)
+								shopHandler.ShowGreyFrame()
+							end
+						end)
+					end
+				end
+
+				local word = (rebirths == 1) and "Rebirth" or "Rebirths"
+
+				local cost = infMath.new(globals.RebirthBasePrice * rebirths * currentRebirths)
+
+				local inner = clone.Inner
+				inner.Amount.Text = "+" .. tostring(rebirths) .. " " .. word .. " (" .. cost:GetSuffix(true) .. " Clicks)"
+				if rebirths == infMath.new(0) then
+					UpdateButton(inner, nil)
+				else
+					UpdateButton(inner, cost)
+				end
+
+				inner.AutoStroke.Enabled = (selectedIndex == index)
+
+				clone.Visible = true
+			end
+		end
 	end
+	main.Rebirths.Amount.Text = "Rebirths: " .. currentRebirths:GetSuffix(true)
 
 	for index, rebirths in ipairs(rebirthStats) do
 		local cost = infMath.new(globals.RebirthBasePrice * rebirths * currentRebirths)
@@ -185,7 +200,8 @@ function RebirthHandler.LoadRebirthButtons()
 						return
 					end
 					network:FireServer("SetAutoRebirthIndex", index)
-					autoRebirthSelect = false
+					-- autoRebirthSelect = false
+					UpdateButtons(false)
 				else
 					network:FireServer("AttemptRebirth", index)
 				end

@@ -94,7 +94,7 @@ function PetHandler.EquipBest(player: Player)
 			profile.CurrentEquips -= 1
 		end
 
-		table.insert(statTable, { petData = petData, Clicks = globals.GetPetClicks(petData) })
+		table.insert(statTable, { petData = petData, Clicks = globals.GetMaxLevelClicks(petData) })
 	end
 
 	table.sort(statTable, function(a, b)

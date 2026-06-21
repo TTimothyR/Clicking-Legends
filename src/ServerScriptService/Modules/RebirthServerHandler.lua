@@ -51,6 +51,14 @@ function RebirthHandler.AttemptRebirth(player: Player, rebirthIndex: number)
 	local gemsPerRebirth = petGems < 1 and 10 or 10 * petGems
 
 	if clicks >= price then
+		local activePotions = profile.ActivePotions
+		if activePotions["Rebirths"] then
+			local tier, data = next(activePotions["Rebirths"].Active)
+
+			if tier and data then
+				rebirthAmount *= 1 + (globals.GetPotionBuffAmount(tier, "Rebirths") / 100)
+			end
+		end
 		if profile.OwnedGamepasses["Double Rebirths"] then
 			rebirthAmount *= 2
 		end
@@ -70,7 +78,7 @@ function RebirthHandler.AttemptRebirth(player: Player, rebirthIndex: number)
 		if infMath.new(profile.TotalGems) == infMath.new(0) then
 			profile.TotalGems = infMath.new(gemsPerRebirth * rebirthAmount)
 		else
-			profile.TotalGems = infMath.new(profile.Gems + (gemsPerRebirth * rebirthAmount))
+			profile.TotalGems = infMath.new(profile.TotalGems + (gemsPerRebirth * rebirthAmount))
 		end
 		-- player:SetAttribute('Gems', http:JSONEncode(profile.Gems));
 		leaderstats.Gems.Value = profile.Gems:GetSuffix(true)

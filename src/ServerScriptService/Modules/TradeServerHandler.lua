@@ -179,7 +179,7 @@ function TradeHandler.RequestAnswer(you: Player, me: Player, choice: boolean)
 	local profile1 = playerData.GetData(you)
 	local profile2 = playerData.GetData(me)
 	if not choice then
-		if pendingRequests[you.Name] then
+		if pendingRequests[you.Name] and pendingRequests[you.Name].fromPlayerName == me.Name then
 			pendingRequests[you.Name] = nil
 			profile1.TradeRequestFrom = ""
 			network:FireClient(me, "UpdateTradeButtons")
@@ -188,7 +188,7 @@ function TradeHandler.RequestAnswer(you: Player, me: Player, choice: boolean)
 	end
 
 	if pendingRequests[you.Name] then
-		if pendingRequests[you.Name] == me.Name then
+		if pendingRequests[you.Name].fromPlayerName == me.Name then
 			pendingRequests[you.Name] = nil
 			profile1.TradeRequestFrom = ""
 
@@ -237,35 +237,28 @@ function TradeHandler.SendTradeRequest(me: Player, you: Player)
 		return
 	end
 	local profile = playerData.GetData(you)
-	if pendingRequests[you.Name] == me.Name then
-		return
-	end
-	if pendingRequests[me.Name] == you.Name then
-		return
-	end
 
 	if profile.IsInTrade or profile.HasTradingDisabled then
 		return
 	end
 
+	if pendingRequests[you.Name] then
+		profile.TradeRequestFrom = ""
+
+		local fromPlayerInstance = players:FindFirstChild(pendingRequests[you.Name].fromPlayerName) :: Player?
+
+		if fromPlayerInstance then
+			network:FireClient(fromPlayerInstance, "UpdateTradeButtons")
+		end
+	end
+
+	profile.TradeRequestFrom = me.Name
+	pendingRequests[you.Name] = { fromPlayerName = me.Name, timestamp = os.time() }
+	dataSync.SyncPlayer(you, profile)
+
 	network:FireClient(me, "UpdateTradeButtons")
 
 	network:FireClient(you, "TradeRequest", me)
-
-	profile.TradeRequestFrom = me.Name
-	pendingRequests[you.Name] = me.Name
-
-	dataSync.SyncPlayer(you, profile)
-
-	task.delay(10, function()
-		if pendingRequests[you.Name] and (pendingRequests[you.Name] == me.Name) then
-			pendingRequests[you.Name] = nil
-			profile.TradeRequestFrom = ""
-			dataSync.SyncPlayer(you, profile)
-			network:FireClient(you, "HideTradeRequest")
-			network:FireClient(me, "UpdateTradeButtons")
-		end
-	end)
 end
 
 function TradeHandler.TogglePet(me: Player, id: string)
@@ -322,6 +315,11 @@ function TradeHandler.DeclineTrade(me: Player)
 		local plr: Player = players:FindFirstChild(playerName)
 		if not plr then
 			continue
+		end
+		local profile = playerData.GetData(plr)
+		if profile then
+			profile.IsInTrade = false
+			dataSync.SyncPlayer(plr, profile)
 		end
 		network:FireClient(plr, "DeclineTrade", me)
 	end
@@ -408,6 +406,39 @@ function TradeHandler.Initialize()
 	end)
 	players.PlayerRemoving:Connect(function(player, _)
 		TradeHandler.DeclineTrade(player)
+	end)
+
+	task.spawn(function()
+		while true do
+			local time = os.time()
+			for receivingPlayer, data in pairs(pendingRequests) do
+				print(time - data.timestamp)
+				if time - data.timestamp >= 10 then
+					print("a trade should be disappearing")
+					local receivingPlayerInstance = players:FindFirstChild(receivingPlayer) :: Player?
+					local fromPlayerInstance = players:FindFirstChild(data.fromPlayerName) :: Player?
+
+					print(receivingPlayerInstance, fromPlayerInstance)
+
+					pendingRequests[receivingPlayer] = nil
+
+					if receivingPlayerInstance then
+						local profile = playerData.GetData(players:FindFirstChild(receivingPlayer))
+						if profile then
+							profile.TradeRequestFrom = ""
+							dataSync.SyncPlayer(players:FindFirstChild(receivingPlayer), profile)
+						end
+						network:FireClient(receivingPlayerInstance, "HideTradeRequest")
+						print("it did some stuff")
+					end
+					if fromPlayerInstance then
+						network:FireClient(fromPlayerInstance, "UpdateTradeButtons")
+						print("it did some more stuff")
+					end
+				end
+			end
+			task.wait(1)
+		end
 	end)
 end
 

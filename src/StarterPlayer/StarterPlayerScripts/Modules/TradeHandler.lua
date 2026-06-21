@@ -19,9 +19,11 @@ local classes = rs:WaitForChild("Classes")
 local playerConnections = {}
 local tradeConnections = {}
 local timerConnection: RBXScriptConnection = nil
+local activeRequestSender = nil
+local acceptConnection = nil
+local declineConnection = nil
 local tradeRequestEndPos = UDim2.fromScale(0.5, 0.1)
 local tradeRequestStartPos = UDim2.fromScale(0.5, -0.1)
-local requestWaitTime = 6
 
 -- UI
 local playerGui = player:WaitForChild("PlayerGui")
@@ -98,6 +100,18 @@ local function CreatePetButton(clone, holder, petData)
 
 	clone.Visible = true
 	return clone
+end
+
+local function CleanUpRequestConnections()
+	if acceptConnection then
+		acceptConnection:Disconnect()
+		acceptConnection = nil
+	end
+	if declineConnection then
+		declineConnection:Disconnect()
+		declineConnection = nil
+	end
+	activeRequestSender = nil
 end
 
 local function CleanUp()
@@ -318,9 +332,7 @@ function TradeHandler.UpdateTradeButtons()
 	for _, child in ipairs(playerHolder:GetChildren()) do
 		if child:IsA("Frame") then
 			local playerName: string = child.Name
-			-- local profile = network:InvokeServer('GetOtherData', playerName);
 			local profile = dataSync.GetOtherData(players:FindFirstChild(playerName).UserId)
-			print(profile)
 			if profile.IsInTrade then
 				UpdateTradeButton("Red", "Busy", child.Inner.Trade)
 			elseif profile.HasTradingDisabled then
@@ -336,13 +348,12 @@ end
 
 function TradeHandler.HideTradeRequest()
 	local frameTime = 0.2
-	local function HideUI()
+
+	if tradeRequestFrame.Position == tradeRequestEndPos then
 		tradeRequestFrame:TweenPosition(tradeRequestStartPos, Enum.EasingDirection.In, Enum.EasingStyle.Back, frameTime)
 	end
 
-	if tradeRequestFrame.Position == tradeRequestEndPos then
-		HideUI()
-	end
+	CleanUpRequestConnections()
 end
 
 function TradeHandler.TradeRequest(me: Player)
@@ -350,62 +361,40 @@ function TradeHandler.TradeRequest(me: Player)
 	local function ShowUI()
 		tradeRequestFrame:TweenPosition(tradeRequestEndPos, Enum.EasingDirection.Out, Enum.EasingStyle.Back, frameTime)
 	end
-	local function HideUI()
-		tradeRequestFrame:TweenPosition(tradeRequestStartPos, Enum.EasingDirection.In, Enum.EasingStyle.Back, frameTime)
-	end
+
+	CleanUpRequestConnections()
+	activeRequestSender = me
+
 	local image, ready =
 		players:GetUserThumbnailAsync(me.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
-
 	requestMain.Title.Text = me.Name .. " sent you a trade request!"
 	requestMain.PlayerImg.Image = ready and image or ""
 	ShowUI()
 
 	local buttons = requestMain.Buttons
 
-	local acceptCon: RBXScriptConnection
-	local declineCon: RBXScriptConnection
-
-	local choice = nil
-	local elapsed = 0
-
-	acceptCon = buttons.Accept.MouseButton1Click:Connect(function()
+	acceptConnection = buttons.Accept.MouseButton1Click:Connect(function()
 		if not db then
 			db = true
 			task.delay(0.15, function()
 				db = false
 			end)
-			if choice == nil then
-				choice = true
-			end
+			local sender = activeRequestSender
+			TradeHandler.HideTradeRequest()
+			network:FireServer("RequestAnswer", sender, true)
 		end
 	end)
-	declineCon = buttons.Decline.MouseButton1Click:Connect(function()
+	declineConnection = buttons.Decline.MouseButton1Click:Connect(function()
 		if not db then
 			db = true
 			task.delay(0.15, function()
 				db = false
 			end)
-			if choice == nil then
-				choice = false
-			end
+			local sender = activeRequestSender
+			TradeHandler.HideTradeRequest()
+			network:FireServer("RequestAnswer", sender, false)
 		end
 	end)
-
-	while choice == nil and elapsed < requestWaitTime do
-		elapsed += 0.1
-		task.wait(0.1)
-	end
-
-	HideUI()
-
-	if acceptCon.Connected then
-		acceptCon:Disconnect()
-	end
-	if declineCon.Connected then
-		declineCon:Disconnect()
-	end
-
-	network:FireServer("RequestAnswer", me, (choice or false))
 end
 
 function TradeHandler.LoadPlayerList()

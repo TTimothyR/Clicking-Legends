@@ -7,20 +7,20 @@ return {
 	["Eggs"] = "rbxassetid://103327510554655",
 
 	-- Common Egg
-	["Doggy"] = "rbxassetid://88856572686957",
-	["Kitty"] = "rbxassetid://134792579497071",
-	["Bunny"] = "rbxassetid://81020665901395",
-	["Bear"] = "rbxassetid://120182922128985",
-	["Fox"] = "rbxassetid://113466678505879",
-	["Shiny Doggy"] = "rbxassetid://123773536487635",
-	["Shiny Kitty"] = "rbxassetid://89642742942009",
-	["Shiny Bunny"] = "rbxassetid://105495181938376",
-	["Shiny Bear"] = "rbxassetid://87168364162494",
-	["Shiny Fox"] = "rbxassetid://126912023828973",
+	["Doggy"] = "rbxassetid://113590768710767",
+	["Kitty"] = "rbxassetid://100456194852605",
+	["Bunny"] = "rbxassetid://71106531109648",
+	["Bear"] = "rbxassetid://111700922885264",
+	["Fox"] = "rbxassetid://128457428186257",
+	["Shiny Doggy"] = "rbxassetid://71233916531422",
+	["Shiny Kitty"] = "rbxassetid://89802927518465",
+	["Shiny Bunny"] = "rbxassetid://79331834546448",
+	["Shiny Bear"] = "rbxassetid://112744771723354",
+	["Shiny Fox"] = "rbxassetid://75485036982565", --
 
 	-- Water Egg
-	["King Star"] = "rbxassetid://82014049760219",
-	["Shiny King Star"] = "rbxassetid://74946503768413",
+	["King Star"] = "rbxassetid://99292979985080",
+	["Shiny King Star"] = "rbxassetid://92713647999978",
 
 	["Faster Walkspeed"] = "rbxassetid://90031078660862",
 	["Faster Egg Open"] = "rbxassetid://103327510554655",
