@@ -188,6 +188,9 @@ function PetHandler.DeletePet(player: Player, id: string)
 	end
 	table.remove(pets, index)
 
+	local dupes = globals.GetPetDuplicates(profile.Pets)
+	profile.TradeBanned = next(dupes) ~= nil
+
 	dataSync.SyncPlayer(player, profile)
 
 	return true
@@ -231,6 +234,9 @@ function PetHandler.DeleteAllUnlocked(player: Player)
 		table.remove(pets, index)
 	end
 
+	local dupes = globals.GetPetDuplicates(profile.Pets)
+	profile.TradeBanned = next(dupes) ~= nil
+
 	dataSync.SyncPlayer(player, profile)
 
 	return true, idsToRemove
@@ -273,6 +279,9 @@ function PetHandler.DeleteSelection(player: Player, selection)
 		table.remove(pets, index)
 	end
 
+	local dupes = globals.GetPetDuplicates(profile.Pets)
+	profile.TradeBanned = next(dupes) ~= nil
+
 	dataSync.SyncPlayer(player, profile)
 
 	return true, idsToRemove
@@ -280,6 +289,9 @@ end
 
 function PetHandler.MakeShiny(player: Player, petName: string)
 	local profile = playerData.GetData(player)
+	if profile.TradeBanned then
+		return false, nil
+	end
 	if not profile then
 		return false, nil
 	end
@@ -328,6 +340,9 @@ function PetHandler.MakeShiny(player: Player, petName: string)
 		locked = false,
 		equipped = false,
 	})
+
+	local dupes = globals.GetPetDuplicates(profile.Pets)
+	profile.TradeBanned = next(dupes) ~= nil
 
 	dataSync.SyncPlayer(player, profile)
 

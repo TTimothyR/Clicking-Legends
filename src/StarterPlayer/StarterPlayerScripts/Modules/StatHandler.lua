@@ -220,8 +220,7 @@ local function getStatIconPosition(currencyName)
 	return UDim2.fromOffset(absPos.X + absSize.X / 2, absPos.Y + absSize.Y / 2)
 end
 
-function ClickHandler.spawnCurrencyPopup(amount)
-	warn(amount)
+function ClickHandler.spawnCurrencyPopup()
 	local iconImage = "rbxassetid://111160873357689"
 	if not iconImage then
 		return
@@ -466,7 +465,7 @@ local function ClickByButton()
 
 	InterfaceUtility.PlayWhiteOutAnim(template, animationFrames, animationTime)
 	task.spawn(ClickHandler.PopUp, increment, "Clicks", critical)
-	ClickHandler.spawnCurrencyPopup(increment)
+	ClickHandler.spawnCurrencyPopup()
 	SoundHandler.PlaySound(Sounds.Tap)
 end
 
@@ -608,7 +607,7 @@ local function ClickByScreen(inputPosition)
 	)
 	PlayClickEFX()
 	ForceButtonAnimation()
-	ClickHandler.spawnCurrencyPopup(increment)
+	ClickHandler.spawnCurrencyPopup()
 	SoundHandler.PlaySound(Sounds.Tap)
 end
 

@@ -22,6 +22,7 @@ Globals.XPMulti = 2.1
 Globals.MaxLevel = 50
 Globals.ShinyMulti = 1.5
 Globals.ShinyChance = 40
+Globals.GroupID = 891290039
 
 Globals.RarityColors = {
 	["Common"] = Color3.fromRGB(255, 214, 133),
@@ -88,6 +89,27 @@ Globals.ButtonPresets = {
 		}),
 	},
 }
+
+-- I dont know if this function should be here, but it will be used on the server for trading
+-- And on the client to indicate which ones are duplicate so the player can delete them
+function Globals.GetPetDuplicates(pets)
+	local scannedIds = {}
+	local dupes = {}
+
+	for _, petData in ipairs(pets) do
+		local id = petData.id
+
+		if scannedIds[id] then
+			if not dupes[id] then
+				dupes[id] = true
+			end
+		else
+			scannedIds[id] = true
+		end
+	end
+
+	return dupes
+end
 
 function Globals.GetPotionBuffAmount(tier, buff)
 	for _, data in pairs(items["Potions"][tier].Buffs) do

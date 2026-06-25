@@ -343,6 +343,7 @@ local function LoadPetInfo(id: string)
 
 	local xpNeeded = globals.XPForNextLevel(petData.level, petData.shiny)
 
+	petInfoHolder.Icon.Image = imageService[petData.fullName] or imageService["Placeholder"]
 	petInfoHolder.PetName.Text = petData.fullName
 	petInfoHolder.FoundDate.Text = "Found on " .. date.day .. "/" .. date.month .. "/" .. (date.year - 2000)
 	petInfoHolder.Level.Text = "Level " .. petData.level
@@ -840,6 +841,7 @@ function InventoryHandler.LoadInventory()
 	end
 
 	local pets = dataSync.Get("Pets")
+	local dupes = globals.GetPetDuplicates(pets)
 	local normalTbl, secretTbl = SeparatePets(pets, false)
 	local equippedNormalTbl, equippedSecretTbl = SeparatePets(pets, true)
 	local totalEquipped = #equippedNormalTbl + #equippedSecretTbl
@@ -914,6 +916,16 @@ function InventoryHandler.LoadInventory()
 		end
 	end
 
+	local function SetImageColor(clone, petData)
+		local imageHolder = clone:FindFirstChild("Frame") :: Frame?
+		local imageLabel = imageHolder:FindFirstChild("ImageLabel") :: ImageLabel?
+		if dupes[petData.id] then
+			imageLabel.ImageColor3 = Color3.fromRGB(255, 0, 0)
+		else
+			imageLabel.ImageColor3 = Color3.fromRGB(255, 255, 255)
+		end
+	end
+
 	local lastEquippedRow = -1
 
 	for i, petData in ipairs(equippedSecretTbl) do
@@ -921,6 +933,10 @@ function InventoryHandler.LoadInventory()
 		local col = math.floor((i - 1) % maxColNormal)
 
 		local clone: ImageButton = equippedHolder:FindFirstChild(petData.id)
+		if not clone then
+			continue
+		end
+		SetImageColor(clone, petData)
 		clone.Position = UDim2.new(
 			clone.Size.X.Scale * col + clone.Size.X.Scale / 2,
 			0,
@@ -936,6 +952,10 @@ function InventoryHandler.LoadInventory()
 		local col = math.floor((i + #equippedSecretTbl - 1) % maxColNormal)
 
 		local clone: ImageButton = equippedHolder:FindFirstChild(petData.id)
+		if not clone then
+			continue
+		end
+		SetImageColor(clone, petData)
 		clone.Position = UDim2.new(
 			clone.Size.X.Scale * col + clone.Size.X.Scale / 2,
 			0,
@@ -968,6 +988,10 @@ function InventoryHandler.LoadInventory()
 		lastColumn = ((column + 1) % maxColSecret) * 2
 
 		local clone: ImageButton = notEquippedHolder:FindFirstChild(petData.id)
+		if not clone then
+			continue
+		end
+		SetImageColor(clone, petData)
 
 		clone.Position = UDim2.new(
 			clone.Size.X.Scale * column + clone.Size.X.Scale / 2,
@@ -989,6 +1013,10 @@ function InventoryHandler.LoadInventory()
 
 	for i, petData in ipairs(normalTbl) do
 		local clone: ImageButton = notEquippedHolder:FindFirstChild(petData.id)
+		if not clone then
+			continue
+		end
+		SetImageColor(clone, petData)
 
 		if lastColumn > 0 and rowsFilled < 2 then
 			local targetColumn = lastColumn + 1

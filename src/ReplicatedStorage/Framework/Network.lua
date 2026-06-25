@@ -1,6 +1,7 @@
 local Network = {}
 
 local rs = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
 
 do
 	local event: RemoteEvent = rs:WaitForChild("NetworkEvent")
@@ -16,6 +17,12 @@ do
 
 	function Network:FireClient(player, job, ...)
 		event:FireClient(player, job, ...)
+	end
+
+	function Network:FireAllClients(job, ...)
+		for _, player: Player in ipairs(Players:GetPlayers()) do
+			event:FireClient(player, job, ...)
+		end
 	end
 
 	function Network:InvokeClient(player, job, ...)

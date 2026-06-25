@@ -46,6 +46,21 @@ local callbacks = {
 		dataSync.SyncPlayer(player, profile)
 	end,
 
+	["Gift"] = function(player: Player, gamepassName: string)
+		local profile = playerData.GetData(player)
+		if not profile then
+			warn("Profile not found. Gift likely not granted, please contact the developers.")
+		end
+
+		if not profile.Gifts[gamepassName] then
+			profile.Gifts[gamepassName] = 0
+		end
+
+		profile.Gifts[gamepassName] += 1
+
+		dataSync.SyncPlayer(player, profile)
+	end,
+
 	["Pet"] = function(player: Player, petNames)
 		for _, petName in pairs(petNames) do
 			local _ = rewardHandler.ClaimPet(player, petName, false)
@@ -103,6 +118,11 @@ local function ProductPurchaseHandler()
 			productIDToName[data.ProductID] = productName
 		end
 	end
+	for gamepass, data in pairs(shopStats.Gamepasses) do
+		if data.GiftingID then
+			productIDToName[data.GiftingID] = gamepass
+		end
+	end
 
 	mps.PromptProductPurchaseFinished:Connect(function(userId, _, isPurchased)
 		if not isPurchased then
@@ -134,6 +154,8 @@ local function ProductPurchaseHandler()
 			callbacks["Pet"](player, petNames)
 		elseif string.match(productName, "GemPack") then
 			callbacks["Gem"](player, shopStats.DeveloperProducts[productName].BaseGems)
+		else
+			callbacks["Gif"](player, productName)
 		end
 
 		network:FireClient(player, "PurchaseConfirmed")

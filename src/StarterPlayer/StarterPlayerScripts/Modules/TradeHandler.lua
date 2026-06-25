@@ -25,6 +25,12 @@ local declineConnection = nil
 local tradeRequestEndPos = UDim2.fromScale(0.5, 0.1)
 local tradeRequestStartPos = UDim2.fromScale(0.5, -0.1)
 
+local isPrivateServer = false
+local canTrade = true
+local tradeBannedMessage =
+	"You are trade banned because duplicate pets have been detected in your inventory, delete pets indicated red and try again."
+local privateServerMessage = "You cannot trade in a private server, please join a public server to trade."
+
 -- UI
 local playerGui = player:WaitForChild("PlayerGui")
 local frames = playerGui:WaitForChild("Frames")
@@ -34,6 +40,7 @@ local templates = playerListFrame:WaitForChild("Templates")
 local playerTemplate = templates:WaitForChild("PlayerTemplate")
 local main = playerListFrame:WaitForChild("Main")
 local listFrame = main:WaitForChild("List")
+local warningLabel = main:WaitForChild("WarningLabel")
 local playerHolder = listFrame:WaitForChild("ScrollingFrame")
 
 local tradeRequestFrame = frames:WaitForChild("TradeRequest")
@@ -66,13 +73,14 @@ local function UpdateTradeButton(color: string, text: string, button)
 end
 
 local function CreatePlayerFrame(plr: Player)
+	local profile = dataSync.GetOtherData(plr.UserId)
 	local clone = playerTemplate:Clone()
 	clone.Parent = playerHolder
 	clone.Name = plr.Name
 
 	local inner = clone.Inner
 	inner.PlayerName.Text = plr.Name
-	clone.Visible = true
+	clone.Visible = not profile.TradeBanned
 
 	local clickCon: RBXScriptConnection
 	clickCon = inner.Trade.MouseButton1Click:Connect(function()
@@ -333,6 +341,15 @@ function TradeHandler.UpdateTradeButtons()
 		if child:IsA("Frame") then
 			local playerName: string = child.Name
 			local profile = dataSync.GetOtherData(players:FindFirstChild(playerName).UserId)
+
+			if profile.TradeBanned then
+				continue
+			else
+				if not child.Visible then
+					child.Visible = true
+				end
+			end
+
 			if profile.IsInTrade then
 				UpdateTradeButton("Red", "Busy", child.Inner.Trade)
 			elseif profile.HasTradingDisabled then
@@ -356,18 +373,21 @@ function TradeHandler.HideTradeRequest()
 	CleanUpRequestConnections()
 end
 
-function TradeHandler.TradeRequest(me: Player)
+function TradeHandler.TradeRequest(tradeSender: Player)
+	if not canTrade then
+		network:FireServer("RequestAnswer", tradeSender, false)
+	end
 	local frameTime = 0.2
 	local function ShowUI()
 		tradeRequestFrame:TweenPosition(tradeRequestEndPos, Enum.EasingDirection.Out, Enum.EasingStyle.Back, frameTime)
 	end
 
 	CleanUpRequestConnections()
-	activeRequestSender = me
+	activeRequestSender = tradeSender
 
 	local image, ready =
-		players:GetUserThumbnailAsync(me.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
-	requestMain.Title.Text = me.Name .. " sent you a trade request!"
+		players:GetUserThumbnailAsync(tradeSender.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
+	requestMain.Title.Text = tradeSender.Name .. " sent you a trade request!"
 	requestMain.PlayerImg.Image = ready and image or ""
 	ShowUI()
 
@@ -400,6 +420,8 @@ end
 function TradeHandler.LoadPlayerList()
 	for _, plr: Player in ipairs(players:GetPlayers()) do
 		if playerHolder:FindFirstChild(plr.Name) then
+			local tradeBanned = dataSync.GetOtherData(plr.UserId).TradeBanned
+			playerHolder:FindFirstChild(plr.Name).Visible = not tradeBanned
 			continue
 		end
 		if plr ~= player then
@@ -423,7 +445,41 @@ function TradeHandler.Initialize()
 		game.Loaded:Wait()
 	end
 
+	isPrivateServer = network:InvokeServer("GetPrivateServerStatus")
+
+	dataSync.OnReady(function()
+		local tradeBanned = dataSync.Get("TradeBanned")
+
+		if tradeBanned then
+			canTrade = false
+		end
+
+		if tradeBanned or isPrivateServer then
+			listFrame.Visible = false
+			warningLabel.Visible = true
+
+			if tradeBanned then
+				warningLabel.Text = tradeBannedMessage
+			elseif isPrivateServer then
+				warningLabel.Text = privateServerMessage
+			end
+		end
+	end)
+
 	task.spawn(TradeHandler.LoadPlayerList)
+
+	dataSync.OnChanged("TradeBanned", function(new, _)
+		if isPrivateServer then
+			return
+		end
+		listFrame.Visible = not new
+		warningLabel.Visible = new
+
+		if new then
+			warningLabel.Text = tradeBannedMessage
+			canTrade = false
+		end
+	end)
 
 	players.PlayerAdded:Connect(function(_)
 		task.spawn(TradeHandler.LoadPlayerList)

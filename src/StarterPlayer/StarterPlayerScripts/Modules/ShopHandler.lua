@@ -105,7 +105,6 @@ local function LoadShop()
 			end
 		end)
 		clone.Inner.Buttons.Gift.MouseButton1Click:Connect(function()
-			warn("clicked!")
 			if not db then
 				db = true
 				task.delay(0.15, function()
@@ -116,9 +115,11 @@ local function LoadShop()
 					`Are you sure you want to buy a {gamepassName} Gift? This gift will go into your inventory, which can be traded later on.`,
 					function()
 						mps:PromptProductPurchase(player, data.GiftingID)
+						ShopHandler.ShowGreyFrame()
+						menuHandler.handleOpenClose(shopFrame)
 					end,
 					function()
-						menuHandler.handleOpenClose(warningFrame)
+						menuHandler.handleOpenClose(shopFrame)
 					end,
 					warningFrame
 				)
@@ -209,7 +210,7 @@ end
 function ShopHandler.PurchaseConfirmed()
 	ShopHandler.HideGreyFrame()
 
-	local targetFrame = menuHandler.activeFrame
+	local targetFrame = shopFrame
 
 	-- if not shopFrame.Visible then return end;
 

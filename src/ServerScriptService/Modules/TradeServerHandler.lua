@@ -1,6 +1,7 @@
 local TradeHandler = {}
 
 -- Services
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local players = game:GetService("Players")
 local rs = game:GetService("ReplicatedStorage")
 local sss = game:GetService("ServerScriptService")
@@ -13,7 +14,10 @@ local dataModules = sss:WaitForChild("DataModules")
 local trades = {}
 local pendingRequests = {}
 
+local isPrivateServer = false
+
 -- Modules
+local Globals = require(ReplicatedStorage.Framework.Globals)
 local network = require(framework.Network)
 local generateID = require(framework.GenerateID)
 local playerData = require(dataModules.PlayerData)
@@ -24,6 +28,17 @@ local dataSync = require(dataModules.DataSyncServer)
 -- Constants
 local startTime = 7
 local lockInTrigger = 3
+
+local function CheckTradeBan(profile)
+	local dupes = Globals.GetPetDuplicates(profile.Pets)
+	if next(dupes) == nil then
+		print("Player does not have duplicate pets")
+		profile.TradeBanned = false
+	else
+		print("Player has duplicate pets")
+		profile.TradeBanned = true
+	end
+end
 
 local function FindTradeID(player: Player)
 	for id, trade in pairs(trades) do
@@ -111,6 +126,9 @@ local function CompleteTrade(tradeID: string)
 	profile1.IsInTrade = false
 	profile2.IsInTrade = false
 
+	CheckTradeBan(profile1)
+	CheckTradeBan(profile2)
+
 	dataSync.SyncPlayer(player1, profile1)
 	dataSync.SyncPlayer(player2, profile2)
 
@@ -176,6 +194,9 @@ local function StartTimer(tradeID: string)
 end
 
 function TradeHandler.RequestAnswer(you: Player, me: Player, choice: boolean)
+	if isPrivateServer then
+		return
+	end
 	local profile1 = playerData.GetData(you)
 	local profile2 = playerData.GetData(me)
 	if not choice then
@@ -230,6 +251,9 @@ function TradeHandler.RequestAnswer(you: Player, me: Player, choice: boolean)
 end
 
 function TradeHandler.SendTradeRequest(me: Player, you: Player)
+	if isPrivateServer then
+		return
+	end
 	if FindTradeID(me) then
 		return
 	end
@@ -394,10 +418,19 @@ local function ResetVariables(player: Player)
 	local profile = playerData.GetData(player)
 	profile.IsInTrade = false
 	profile.TradeRequestFrom = ""
+	CheckTradeBan(profile)
+
 	dataSync.SyncPlayer(player, profile)
 end
 
+function TradeHandler.GetPrivateServerStatus()
+	return isPrivateServer
+end
+
 function TradeHandler.Initialize()
+	if game.PrivateServerId ~= "" or game.PrivateServerOwnerId ~= 0 then
+		isPrivateServer = true
+	end
 	for _, player: Player in ipairs(players:GetPlayers()) do
 		ResetVariables(player)
 	end
@@ -414,7 +447,6 @@ function TradeHandler.Initialize()
 			for receivingPlayer, data in pairs(pendingRequests) do
 				print(time - data.timestamp)
 				if time - data.timestamp >= 10 then
-					print("a trade should be disappearing")
 					local receivingPlayerInstance = players:FindFirstChild(receivingPlayer) :: Player?
 					local fromPlayerInstance = players:FindFirstChild(data.fromPlayerName) :: Player?
 
@@ -429,11 +461,9 @@ function TradeHandler.Initialize()
 							dataSync.SyncPlayer(players:FindFirstChild(receivingPlayer), profile)
 						end
 						network:FireClient(receivingPlayerInstance, "HideTradeRequest")
-						print("it did some stuff")
 					end
 					if fromPlayerInstance then
 						network:FireClient(fromPlayerInstance, "UpdateTradeButtons")
-						print("it did some more stuff")
 					end
 				end
 			end

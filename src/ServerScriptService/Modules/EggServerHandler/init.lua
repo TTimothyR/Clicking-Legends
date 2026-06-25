@@ -1,11 +1,10 @@
 local EggHandler = {}
 
 -- Services
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local players = game:GetService("Players")
 local rs = game:GetService("ReplicatedStorage")
 local sss = game:GetService("ServerScriptService")
-
-local Discord = require("./DiscordHandlers/Discord")
 
 -- Variables
 local framework = rs:WaitForChild("Framework")
@@ -21,6 +20,8 @@ local generateID = require(framework.GenerateID)
 local network = require(framework.Network)
 local luckHandler = require(script.Parent.LuckHandler)
 local dataSync = require(dataModules.DataSyncServer)
+local Globals = require(ReplicatedStorage.Framework.Globals)
+local Discord = require("./DiscordHandlers/Discord")
 
 local function ValidateDistance(player: Player, eggName: string)
 	local maxDistance = 15
@@ -45,6 +46,9 @@ function EggHandler.ToggleAutoHatch(player: Player, eggName: string, new: boolea
 	if not profile then
 		return
 	end
+	if not player:IsInGroupAsync(Globals.GroupID) then
+		return false
+	end
 	profile.IsAutoHatching = new
 	profile.TargetAutoHatchEgg = eggName
 
@@ -53,6 +57,8 @@ function EggHandler.ToggleAutoHatch(player: Player, eggName: string, new: boolea
 	end
 
 	dataSync.SyncPlayer(player, profile)
+
+	return true
 end
 
 function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)

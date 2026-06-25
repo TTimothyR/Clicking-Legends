@@ -7,6 +7,7 @@ local rs = game:GetService("ReplicatedStorage")
 local workspace = game:GetService("Workspace")
 local runService = game:GetService("RunService")
 local uis = game:GetService("UserInputService")
+local GroupService = game:GetService("GroupService")
 
 -- Variables
 repeat
@@ -280,7 +281,25 @@ local function ConfigureEggUI(egg: Model)
 end
 
 function EggUIHandler.AutoHatch(eggName: string)
-	network:FireServer("ToggleAutoHatch", eggName, true)
+	local success = network:InvokeServer("ToggleAutoHatch", eggName, true)
+
+	if not success then
+		infoClass.new("Hey!", "You have to join our group in order to use Auto Hatch!", function()
+			menuHandler.handleOpenClose(infoFrame)
+			local s, result = pcall(function()
+				return GroupService:PromptJoinAsync(globals.GroupID)
+			end)
+			if s then
+				if result == Enum.GroupMembershipStatus.Joined then
+					infoClass.new("Hey!", "Thank you for joining the group! Perks are now granted.", function()
+						menuHandler.handleOpenClose(infoFrame)
+					end, infoFrame)
+					menuHandler.handleOpenClose(infoFrame)
+				end
+			end
+		end, infoFrame)
+		menuHandler.handleOpenClose(infoFrame)
+	end
 	-- local egg = eggName;
 	-- autoHatching = true;
 	-- repeat

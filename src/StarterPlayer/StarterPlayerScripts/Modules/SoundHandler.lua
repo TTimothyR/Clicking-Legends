@@ -7,7 +7,6 @@ local soundService = game:GetService("SoundService")
 local playingSounds: Folder = soundService:WaitForChild("PlayingSounds")
 
 function SoundHandler.PlaySound(sound: Sound)
-	warn(sound)
 	task.spawn(function()
 		local clone = sound:Clone()
 		clone.Parent = playingSounds

@@ -33,6 +33,7 @@ Shared.DEFAULT_PLAYER_DATA = {
 	TotalRobuxSpent = 0,
 	TimePlayed = 0,
 
+	Gifts = {},
 	Pets = {},
 	PetIndex = {},
 	Items = {
@@ -51,6 +52,7 @@ Shared.DEFAULT_PLAYER_DATA = {
 	IsInTrade = false,
 	HasTradingDisabled = false,
 	TradeRequestFrom = "",
+	TradeBanned = false,
 
 	AutoClickerStatus = false,
 	AutoRebirthStatus = false,
