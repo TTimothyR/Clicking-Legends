@@ -5,7 +5,6 @@ Invite rewards - players can invite friends and claim rewards
 Turn on game notifications for a free legendary
 Make auto hatch locked behind group joining
 Gamepass Gifting
-Make clicking visually more satisfying
 More trading protection
 Auto reconnect
 Leaderboards

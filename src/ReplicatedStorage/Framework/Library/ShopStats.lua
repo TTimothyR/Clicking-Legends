@@ -3,6 +3,7 @@ return {
 		["Unlimited Rebirths"] = {
 			Description = "Rebirth any amount of clicks!",
 			GamepassID = 1741190838,
+			GiftingID = 3606316395,
 			LayoutOrder = 21,
 		},
 		["Double Luck"] = { --

@@ -7,6 +7,8 @@ local rs = game:GetService("ReplicatedStorage")
 local mps = game:GetService("MarketplaceService")
 local ts = game:GetService("TweenService")
 
+local Classes = rs:WaitForChild("Classes")
+
 -- Variables
 repeat
 	task.wait()
@@ -23,6 +25,7 @@ local gpConnections = {}
 local playerGui = player:WaitForChild("PlayerGui")
 local frames = playerGui:WaitForChild("Frames")
 local shopFrame = frames:WaitForChild("Shop")
+local warningFrame = frames:WaitForChild("Warning")
 local greyFrame = frames:WaitForChild("GreyFrame")
 local infoFrame = frames:WaitForChild("Info")
 local templates = shopFrame:WaitForChild("Templates")
@@ -42,6 +45,7 @@ local rebirthHandler = require(script.Parent.RebirthHandler)
 local shopStats = require(library.ShopStats)
 local infoPopup = require(classes.InfoPopup)
 local infMath = require(framework.InfiniteMath)
+local WarningPopup = require(Classes:WaitForChild("WarningPopup"))
 
 local function UpdateGamepasses(newData)
 	for gpName, _ in pairs(newData) do
@@ -101,11 +105,24 @@ local function LoadShop()
 			end
 		end)
 		clone.Inner.Buttons.Gift.MouseButton1Click:Connect(function()
+			warn("clicked!")
 			if not db then
 				db = true
 				task.delay(0.15, function()
 					db = false
 				end)
+				WarningPopup.new(
+					"Buy Gamepass Gift",
+					`Are you sure you want to buy a {gamepassName} Gift? This gift will go into your inventory, which can be traded later on.`,
+					function()
+						mps:PromptProductPurchase(player, data.GiftingID)
+					end,
+					function()
+						menuHandler.handleOpenClose(warningFrame)
+					end,
+					warningFrame
+				)
+				menuHandler.handleOpenClose(warningFrame)
 			end
 		end)
 

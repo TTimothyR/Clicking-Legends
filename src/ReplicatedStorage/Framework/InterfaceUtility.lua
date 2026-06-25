@@ -1,6 +1,7 @@
 local interfaceUtility = {}
 
 -- Services
+local TweenService = game:GetService("TweenService")
 local runService = game:GetService("RunService")
 
 function interfaceUtility.ShakeUI(object, duration, strength, speed)
@@ -70,6 +71,71 @@ function interfaceUtility.RotateGradient(gradient: UIGradient)
 	end)
 
 	return connection
+end
+
+function interfaceUtility.PlayScreenGlow(Glow, color, duration, onScreenDuration)
+	task.spawn(function()
+		for _, v in pairs(Glow:GetChildren()) do
+			v.Visible = true
+			v.ImageColor3 = color
+
+			TweenService:Create(v, TweenInfo.new(duration), { ImageTransparency = 0 }):Play()
+
+			task.delay(onScreenDuration, function()
+				local twn = TweenService:Create(v, TweenInfo.new(duration), { ImageTransparency = 1 })
+				twn:Play()
+				twn.Completed:Wait()
+				v.Visible = false
+
+				--twn.Completed:Connect(function()
+				--	v.Visible = false
+				--end)
+			end)
+		end
+	end)
+end
+
+function interfaceUtility.PlayWhiteOutAnim(template, parent, animationTime, size)
+	task.spawn(function()
+		if not size then
+			size = 1.25
+		end
+		local clone: Frame = template:Clone()
+		clone.Parent = parent
+
+		clone:TweenSize(UDim2.fromScale(size, size), Enum.EasingDirection.Out, Enum.EasingStyle.Sine, animationTime)
+		local tween: Tween = TweenService:Create(
+			clone,
+			TweenInfo.new(animationTime, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
+			{ BackgroundTransparency = 1 }
+		)
+		tween:Play()
+		tween.Completed:Wait()
+
+		clone:Destroy()
+	end)
+end
+
+function interfaceUtility.PlayFOV(goal, reset, resetTo)
+	task.spawn(function()
+		local camera = workspace.CurrentCamera
+		local tween = TweenService:Create(
+			camera,
+			TweenInfo.new(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
+			{ FieldOfView = goal }
+		)
+		tween:Play()
+		tween.Completed:Wait()
+
+		if reset then
+			tween = TweenService:Create(
+				camera,
+				TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
+				{ FieldOfView = resetTo }
+			)
+			tween:Play()
+		end
+	end)
 end
 
 return interfaceUtility

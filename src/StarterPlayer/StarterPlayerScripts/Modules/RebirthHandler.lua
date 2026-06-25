@@ -6,6 +6,13 @@ local players = game:GetService("Players")
 local rs = game:GetService("ReplicatedStorage")
 local mps = game:GetService("MarketplaceService")
 
+local Assets = rs:WaitForChild("Assets")
+
+local Sounds = Assets:WaitForChild("Sounds")
+
+local SoundHandler = require("./SoundHandler")
+local StatHandler = require("./StatHandler")
+
 -- Variables
 repeat
 	task.wait()
@@ -144,7 +151,7 @@ local function UpdateButtons(fromSignal: boolean)
 	for index, rebirths in ipairs(rebirthStats) do
 		local cost = infMath.new(globals.RebirthBasePrice * rebirths * currentRebirths)
 		if autoRebirthStatus and selectedIndex == index and (currentClicks >= cost) then
-			network:FireServer("AttemptRebirth", index)
+			local _ = network:InvokeServer("AttemptRebirth", index)
 		end
 	end
 end
@@ -203,7 +210,12 @@ function RebirthHandler.LoadRebirthButtons()
 					-- autoRebirthSelect = false
 					UpdateButtons(false)
 				else
-					network:FireServer("AttemptRebirth", index)
+					local invoked = network:InvokeServer("AttemptRebirth", index)
+					if invoked then
+						StatHandler.PlayGemAnimation()
+						StatHandler.PlayRebirthAnimation(index)
+						SoundHandler.PlaySound(Sounds.Rebirth)
+					end
 				end
 			end
 		end)

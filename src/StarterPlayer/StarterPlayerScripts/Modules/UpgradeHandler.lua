@@ -5,6 +5,16 @@ local db = false
 local rs = game:GetService("ReplicatedStorage")
 local players = game:GetService("Players")
 
+local Assets = rs:WaitForChild("Assets")
+
+local Sounds = Assets:WaitForChild("Sounds")
+
+local Framework = rs:WaitForChild("Framework")
+
+local InterfaceUtility = require(Framework:WaitForChild("InterfaceUtility"))
+
+local SoundHandler = require("./SoundHandler")
+
 -- Variables
 repeat
 	task.wait()
@@ -76,7 +86,12 @@ local function LoadUpgrades()
 						task.delay(0.15, function()
 							db = false
 						end)
-						network:FireServer("BuyUpgrade", upgradeName)
+						local invoked = network:InvokeServer("BuyUpgrade", upgradeName)
+						if invoked then
+							InterfaceUtility.PlayWhiteOutAnim(upgradeFrame.Template, upgradeFrame.AnimationFrames, 0.25, 1.25)
+							InterfaceUtility.PlayFOV(100, true, 90)
+							SoundHandler.PlaySound(Sounds.Upgrade)
+						end
 					end
 				end)
 			end

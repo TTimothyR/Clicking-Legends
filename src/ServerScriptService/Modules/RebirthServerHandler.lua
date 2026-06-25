@@ -87,7 +87,9 @@ function RebirthHandler.AttemptRebirth(player: Player, rebirthIndex: number)
 		leaderstats.Rebirths.Value = profile.Rebirths:GetSuffix(true)
 
 		dataSync.SyncPlayer(player, profile)
+		return true
 	end
+	return false
 end
 
 function RebirthHandler.ToggleAutoRebirth(player: Player)

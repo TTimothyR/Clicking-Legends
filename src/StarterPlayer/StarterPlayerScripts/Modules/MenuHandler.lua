@@ -19,6 +19,7 @@ local camera = workspace.CurrentCamera
 local playerGui = plr:WaitForChild("PlayerGui")
 
 local frames = playerGui:WaitForChild("Frames")
+local UIShadow = frames.UIShadow
 local indexFrame = frames:WaitForChild("Index")
 local inventoryFrame = frames:WaitForChild("Inventory")
 local prizesFrame = frames:WaitForChild("Prizes")
@@ -72,6 +73,14 @@ function ButtonHandler.openFrame(frame: Frame)
 	frame.Position = UDim2.fromScale(0.5, 0.85)
 	frame.Visible = true
 
+	ts
+		:Create(
+			UIShadow,
+			TweenInfo.new(animationTime, Enum.EasingStyle.Linear, Enum.EasingDirection.Out),
+			{ BackgroundTransparency = 0.5 }
+		)
+		:Play()
+
 	frame:TweenSizeAndPosition(
 		sizePos[frame.Name][1],
 		sizePos[frame.Name][2],
@@ -92,6 +101,13 @@ function ButtonHandler.closeFrame(frame: Frame)
 		Enum.EasingStyle.Sine,
 		animationTime
 	)
+	ts
+		:Create(
+			UIShadow,
+			TweenInfo.new(animationTime, Enum.EasingStyle.Linear, Enum.EasingDirection.Out),
+			{ BackgroundTransparency = 1 }
+		)
+		:Play()
 	ts
 		:Create(camera, TweenInfo.new(animationTime, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), { FieldOfView = fov })
 		:Play()

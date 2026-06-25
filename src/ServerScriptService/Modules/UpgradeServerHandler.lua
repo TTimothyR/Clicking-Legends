@@ -71,6 +71,7 @@ function UpgradeHandler.BuyUpgrade(player: Player, upgradeName: string)
 	profile.UpgradeLevels[upgradeName] += 1
 
 	dataSync.SyncPlayer(player, profile)
+	return true
 end
 
 return UpgradeHandler

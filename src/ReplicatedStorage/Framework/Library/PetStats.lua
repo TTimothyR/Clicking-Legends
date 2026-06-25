@@ -28,7 +28,7 @@ return {
 		Secret = false,
 	},
 	["Fox"] = {
-		Rarity = "Legendary",
+		Rarity = "Epic",
 		State = "Walk",
 		Clicks = 500,
 		GemMulti = 1.05,

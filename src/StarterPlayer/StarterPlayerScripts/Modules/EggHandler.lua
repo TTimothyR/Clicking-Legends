@@ -63,9 +63,19 @@ local closedFrame = nil
 
 local function CalculatePositions(amount: number)
 	local eggDataList = {}
-	local eggSpacing = 3.5
+	local eggSpacing = 3.75
+	local zDepthPerDimensionUnit = 0.2
 
 	local maxCols
+
+	if amount > 3 then
+		if amount == 4 then
+			zDepthPerDimensionUnit = 1.1
+		elseif amount >= 5 then
+			zDepthPerDimensionUnit = 0.7
+		end
+	end
+
 	if amount == 1 then
 		maxCols = 1
 	elseif amount == 2 or amount == 4 then
@@ -83,7 +93,6 @@ local function CalculatePositions(amount: number)
 	local numRows = math.ceil(amount / maxCols)
 
 	local zBase = 0
-	local zDepthPerDimensionUnit = 0.7
 	local maxVisibleDimension = math.max(maxCols, numRows)
 	local dynamicFinalZ = zBase + (maxVisibleDimension - 1) * zDepthPerDimensionUnit
 
@@ -103,12 +112,32 @@ local function CalculatePositions(amount: number)
 		local xOffset = (col - (currentEggsInThisRow - 1) / 2) * eggSpacing
 		local yOffset = (row - (numRows - 1) / 2) * eggSpacing
 
-		local initialPosValue = CFrame.new(xOffset, yOffset - 7, dynamicFinalZ)
-		local finalPosValue = CFrame.new(xOffset, yOffset, dynamicFinalZ)
+		local sideAngle = xOffset * 0.1
+
+		local rowCenter = (numRows - 1) / 2
+		local yTilt = (row - rowCenter) * -0.3
+
+		local colCenter = (currentEggsInThisRow - 1) / 2
+		local horizontalFactor = 0
+		if colCenter ~= 0 then
+			horizontalFactor = math.abs(col - colCenter) / colCenter
+		end
+
+		local MAX_DEPTH = 0
+		if amount <= 3 or amount == 6 or amount == 8 then
+			MAX_DEPTH = 0.7
+		end
+
+		local zOffset = horizontalFactor * MAX_DEPTH
+
+		local finalPosValue = CFrame.new(xOffset, yOffset, dynamicFinalZ + zOffset)
+		local finalCframe = finalPosValue * CFrame.Angles(yTilt, sideAngle, 0)
+
+		local initialPosValue = CFrame.new(xOffset, yOffset + 7, dynamicFinalZ)
 
 		table.insert(eggDataList, {
 			pos0 = initialPosValue,
-			pos1 = finalPosValue,
+			pos1 = finalCframe,
 		})
 	end
 
@@ -183,9 +212,9 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
 		local stats = petStats[petsData[i].petName]
 		local rarity = stats and stats.Rarity or "Common"
 
-		if rarity == "Legendary" then
-			speed = 1
-		end
+		--if rarity == "Legendary" then
+		--	speed = 1
+		--end
 
 		for _, particle: ParticleEmitter in ipairs(script.Confetti:GetChildren()) do
 			local clone: ParticleEmitter = particle:Clone()
@@ -284,7 +313,7 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
 			data.endPos = specialPosValues[i].pos1
 		end
 		eggData = secretEggData
-		speed = 1
+		--speed = 1
 	elseif legendaries > 0 then
 		for _, data in ipairs(eggData) do
 			if not data.special then
@@ -305,7 +334,7 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
 			data.endPos = specialPosValues[i].pos1
 		end
 		eggData = legendaryEggData
-		speed = 1
+		--speed = 1
 	end
 
 	if secrets > 0 then
@@ -340,31 +369,65 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
 		end
 	end
 
-	local startWait, endWait, direction, alpha = 0.5 / speed, 0.01 / speed, 1, 30
-	local currentWait = startWait
+	--local startWait, endWait, direction, alpha = 0.5 / speed, 0.01 / speed, 1, 30
+	--local currentWait = startWait
 
-	repeat
-		local hatchTweens = {}
-		for _, data in ipairs(eggData) do
-			table.insert(hatchTweens, function()
-				ts
-					:Create(
-						data.rot,
-						TweenInfo.new(currentWait, Enum.EasingStyle.Linear, Enum.EasingDirection.Out),
-						{ Value = CFrame.Angles(0, 0, direction * math.rad(alpha)) }
-					)
-					:Play()
-			end)
-		end
+	--repeat
+	--	local hatchTweens = {}
+	--	for _, data in ipairs(eggData) do
+	--		table.insert(hatchTweens, function()
+	--			ts
+	--				:Create(
+	--					data.rot,
+	--					TweenInfo.new(currentWait, Enum.EasingStyle.Linear, Enum.EasingDirection.Out),
+	--					{ Value = CFrame.Angles(0, 0, direction * math.rad(alpha)) }
+	--				)
+	--				:Play()
+	--		end)
+	--	end
 
-		for _, func in ipairs(hatchTweens) do
-			func()
-		end
-		soundHandler.PlaySound(sounds.Turn)
-		task.wait(currentWait)
-		currentWait /= 1.25
-		direction *= -1
-	until currentWait <= endWait
+	--	for _, func in ipairs(hatchTweens) do
+	--		func()
+	--	end
+	--	soundHandler.PlaySound(sounds.Turn)
+	--	task.wait(currentWait)
+	--	currentWait /= 1.25
+	--	direction *= -1
+	--until currentWait <= endWait
+
+	if legendaries > 0 or secrets > 0 then
+		task.wait(0.4 / speed)
+		local time = 0.15 * 10
+		modelUtil.ShakeModel(legendaryEggData, time, camera, 70)
+		task.wait(time)
+		camera.FieldOfView = 70
+	else
+		local startWait, endWait, direction, alpha = 0.5 / speed, 0.01 / speed, 1, 30
+		local currentWait = startWait
+
+		repeat
+			local hatchTweens = {}
+			for _, data in ipairs(eggData) do
+				table.insert(hatchTweens, function()
+					ts
+						:Create(
+							data.rot,
+							TweenInfo.new(currentWait, Enum.EasingStyle.Linear, Enum.EasingDirection.Out),
+							{ Value = CFrame.Angles(0, 0, direction * math.rad(alpha)) }
+						)
+						:Play()
+				end)
+			end
+
+			for _, func in ipairs(hatchTweens) do
+				func()
+			end
+			soundHandler.PlaySound(sounds.Turn)
+			task.wait(currentWait)
+			currentWait /= 1.25
+			direction *= -1
+		until currentWait <= endWait
+	end
 
 	for _, data in ipairs(eggData) do
 		for _, descendant in ipairs(data.egg:GetDescendants()) do
@@ -539,6 +602,7 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
 		soundHandler.PlaySound(sounds.Normal)
 	end
 
+	camera.FieldOfView = 70
 	for _, data in ipairs(eggData) do
 		local activePetData = data.petData
 		local petName: string = activePetData.fullName
@@ -607,9 +671,7 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
 		})
 
 		local petConnection: RBXScriptConnection = runService.RenderStepped:Connect(function(_)
-			pet:PivotTo(
-				CFrame.new((camera.CFrame * cameraOffset * petPos.Value).Position, camera.CFrame.Position) * petRot.Value
-			)
+			pet:PivotTo(camera.CFrame * cameraOffset * petPos.Value * petRot.Value)
 		end)
 		table.insert(petAnimationConnections, petConnection)
 
@@ -649,7 +711,15 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
 		end
 	end
 
-	task.wait(1.85 / speed)
+	local endTime = 1.85 / speed
+	if legendaries > 0 then
+		endTime = 2.25
+	end
+	if secrets > 0 then
+		endTime = 3
+	end
+
+	task.wait(endTime)
 	for _, data in ipairs(petData) do
 		data.nameLabel:Destroy()
 		data.rarityLabel:Destroy()

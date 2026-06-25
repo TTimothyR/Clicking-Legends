@@ -21,7 +21,7 @@ Globals.BaseXP = 20
 Globals.XPMulti = 2.1
 Globals.MaxLevel = 50
 Globals.ShinyMulti = 1.5
-Globals.ShinyChance = 100
+Globals.ShinyChance = 40
 
 Globals.RarityColors = {
 	["Common"] = Color3.fromRGB(255, 214, 133),

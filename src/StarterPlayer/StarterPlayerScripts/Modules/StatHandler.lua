@@ -9,6 +9,16 @@ local uis = game:GetService("UserInputService")
 local guiService = game:GetService("GuiService")
 local debris = game:GetService("Debris")
 
+local Assets = rs:WaitForChild("Assets")
+
+local Sounds = Assets:WaitForChild("Sounds")
+
+local Framework = rs:WaitForChild("Framework")
+
+local InterfaceUtility = require(Framework:WaitForChild("InterfaceUtility"))
+
+local SoundHandler = require("./SoundHandler")
+
 -- Variables
 repeat
 	task.wait()
@@ -45,6 +55,8 @@ local shine = clickButton:WaitForChild("Shine")
 local template = clickButton:WaitForChild("Template")
 local animationFrames = clickButton:WaitForChild("AnimationFrames")
 
+local PopupSizeEnd = UDim2.fromScale(0.04, 0.04)
+
 -- Modules
 local network = require(framework.Network)
 local infMath = require(framework.InfiniteMath)
@@ -59,6 +71,7 @@ local debounceTime: number = 0.15
 local textEndSize: UDim2 = UDim2.fromScale(1, 0.5)
 local characterGroup = "CHAR"
 local debrisGroup = "DEBRIS"
+local buttonTween = TweenInfo.new(0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 
 -- Globals
 local animationData = {}
@@ -95,22 +108,6 @@ local function AnimateShine()
 	end
 end
 
-local function ClickAnimation()
-	local clone: Frame = template:Clone()
-	clone.Parent = animationFrames
-
-	clone:TweenSize(UDim2.fromScale(1.25, 1.25), Enum.EasingDirection.Out, Enum.EasingStyle.Sine, animationTime)
-	local tween: Tween = ts:Create(
-		clone,
-		TweenInfo.new(animationTime, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
-		{ BackgroundTransparency = 1 }
-	)
-	tween:Play()
-	tween.Completed:Wait()
-
-	clone:Destroy()
-end
-
 local function CriticalHitEffect()
 	local character = plr.Character
 	local root = character.HumanoidRootPart
@@ -123,6 +120,8 @@ local function CriticalHitEffect()
 			child:Emit(50)
 		end
 	end
+
+	SoundHandler.PlaySound(Sounds.Critical)
 
 	for _ = 1, 10 do
 		task.spawn(function()
@@ -159,7 +158,192 @@ local function CriticalHitEffect()
 	end
 end
 
-function ClickHandler.PopUp(increment, currencyStr: string, critical: boolean?, position: UDim2?)
+local function GenerateX()
+	return math.random() * (0.88 - 0.35) + 0.35
+end
+
+local function GenerateY()
+	return math.random() * (0.75 - 0.15) + 0.15
+end
+
+local function getRandomPopupPosition(customX, customY)
+	return UDim2.fromScale((customX or GenerateX()), (customY or GenerateY()))
+end
+
+function ClickHandler.PlayRebirthAnimation()
+	task.spawn(function()
+		local popup = script.CurrencyPopup:Clone()
+		popup.Size = UDim2.fromScale(0.15, 0.15)
+		popup.Icon.Image = imageService["More Rebirths"]
+		popup.Parent = playerGui.Frames
+		popup.UIGradient:Destroy()
+		popup.UIStroke:Destroy()
+		popup.BackgroundTransparency = 1
+
+		local yPos = GenerateY()
+		popup.Position = UDim2.fromScale(yPos, 0)
+
+		local tween = ts:Create(popup, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+			Position = getRandomPopupPosition(nil, yPos),
+		})
+		tween:Play()
+		tween.Completed:Wait()
+		task.delay(0.15, function()
+			tween = ts:Create(popup.Icon, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+				Rotation = 360,
+			})
+			tween:Play()
+			tween.Completed:Wait()
+			tween = ts:Create(popup, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+				Size = UDim2.fromScale(0, 0),
+			})
+			tween:Play()
+			tween.Completed:Wait()
+			popup:Destroy()
+		end)
+	end)
+end
+
+local function getStatIconPosition(currencyName)
+	local statFrame = statsFrame:FindFirstChild(currencyName)
+	if not statFrame then
+		return nil
+	end
+	local icon = statFrame:FindFirstChild("Icon")
+	if not icon then
+		return nil
+	end
+
+	local absPos = icon.AbsolutePosition
+	local absSize = icon.AbsoluteSize
+
+	return UDim2.fromOffset(absPos.X + absSize.X / 2, absPos.Y + absSize.Y / 2)
+end
+
+function ClickHandler.spawnCurrencyPopup(amount)
+	warn(amount)
+	local iconImage = "rbxassetid://111160873357689"
+	if not iconImage then
+		return
+	end
+
+	local popup = script.CurrencyPopup:Clone()
+	local amountLabel = popup:FindFirstChild("Amount")
+	local amountStroke = amountLabel and amountLabel:FindFirstChildOfClass("UIStroke")
+
+	popup.AnchorPoint = Vector2.new(0.5, 0.5)
+	popup.Position = getRandomPopupPosition()
+	--popup.Size = PopupSizeSmall -- start small
+	--popup.Image = iconImage
+	--popup.ImageTransparency = 1
+	--popup.Amount.Text = amount
+	popup.Visible = true
+
+	if amountLabel then
+		--amountLabel.Text = "+" .. amount.second
+		--amountLabel.TextTransparency = 1
+		if amountStroke then
+			amountStroke.Transparency = 1
+		end
+		amountLabel.Visible = false
+	end
+	popup.Parent = playerGui.HUD
+
+	-- Pop-in: grow + fade in
+	--ts:Create(popup.Icon, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+	--	ImageTransparency = 0,
+	--	Size = PopupSize
+	--}):Play()
+	--if amountLabel then
+	--	ts:Create(amountLabel, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+	--		TextTransparency = 0,
+	--	}):Play()
+	--	if amountStroke then
+	--		ts:Create(amountStroke, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+	--			Transparency = 0
+	--		}):Play()
+	--	end
+	--end
+
+	-- Fly toward stat icon + fade out
+	task.delay(0.2, function()
+		local targetPos = getStatIconPosition("Clicks")
+		if not targetPos then
+			popup:Destroy()
+			return
+		end
+
+		local twn = ts:Create(popup, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+			Position = targetPos,
+			Size = PopupSizeEnd,
+		})
+		twn:Play()
+
+		twn.Completed:Wait()
+		popup:Destroy()
+
+		--if amountLabel then
+		--	ts:Create(amountLabel, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+		--		TextTransparency = 1,
+		--	}):Play()
+		--	if amountStroke then
+		--		local strokeFade = ts:Create(amountStroke, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+		--			Transparency = 1
+		--		})
+		--		strokeFade:Play()
+		--		strokeFade.Completed:Connect(function()
+		--			popup:Destroy()
+		--		end)
+		--	else
+		--		task.delay(0.35, function()
+		--			popup:Destroy()
+		--		end)
+		--	end
+		--else
+		--	task.delay(0.35, function()
+		--		popup:Destroy()
+		--	end)
+		--end
+	end)
+end
+
+function ClickHandler.PlayGemAnimation()
+	local targetPos = getStatIconPosition("Gems")
+
+	for _ = 1, math.random(3, 6) do
+		task.spawn(function()
+			local popup = script.CurrencyPopup:Clone()
+			popup.Size = UDim2.fromScale(0, 0)
+			popup.Parent = playerGui.Frames
+			popup.UIGradient:Destroy()
+			popup.UIStroke:Destroy()
+			popup.BackgroundTransparency = 1
+			popup.Position = getRandomPopupPosition()
+			popup.Icon.Image = imageService.Gems
+			popup.Size = UDim2.fromScale(0.042, 0.065)
+			popup.Visible = true
+			popup.ZIndex = 1000
+			popup.Amount.Visible = false
+
+			local sizeTwn = ts:Create(popup, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+				Size = UDim2.fromScale(0.125, 0.125),
+			})
+			sizeTwn:Play()
+			sizeTwn.Completed:Wait()
+			task.delay(0.15, function()
+				local twn = ts:Create(popup, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+					Position = targetPos,
+				})
+				twn:Play()
+				twn.Completed:Wait()
+				popup:Destroy()
+			end)
+		end)
+	end
+end
+
+function ClickHandler.PopUp(increment, currencyStr: string, critical: boolean?, position: UDim2?, isScreen: boolean)
+	--warn(increment.. " - from PopUp Function")
 	if not increment or increment == infMath.new(0) then
 		return
 	end
@@ -172,13 +356,13 @@ function ClickHandler.PopUp(increment, currencyStr: string, critical: boolean?, 
 	end
 
 	local clone = popUpTemplate:Clone()
-	local extraImgFrames: Folder = clone.ExtraImgFrames
 	clone.Parent = popUps
 	clone.Icon.Image = imageService[currencyStr]
 
 	if critical then
 		clone.Icon.ImageColor3 = Color3.fromRGB(237, 98, 255)
 		task.spawn(CriticalHitEffect)
+		InterfaceUtility.PlayScreenGlow(playerGui.Glow, Color3.fromRGB(237, 98, 255), 0.25, 0.25)
 	end
 
 	clone.Position = position
@@ -198,6 +382,16 @@ function ClickHandler.PopUp(increment, currencyStr: string, critical: boolean?, 
 	tween:Play()
 	tween.Completed:Wait()
 
+	task.spawn(function()
+		if typeof(isScreen) == "boolean" and isScreen == true then
+			local UIScale = clone.UIScale
+			local UIStroke = clone.UIStroke
+
+			ts:Create(UIScale, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Scale = 1.3 }):Play()
+			ts:Create(UIStroke, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Transparency = 1 }):Play()
+		end
+	end)
+
 	local incrementText = clone.Increment
 	incrementText.Text = "+" .. infMath.new(increment):GetSuffix(true)
 	local textTween: Tween =
@@ -207,37 +401,14 @@ function ClickHandler.PopUp(increment, currencyStr: string, critical: boolean?, 
 	incrementText:TweenSize(textEndSize, direction2, style, animTime)
 	textTween.Completed:Wait()
 
-	local amount: number = critical and 20 or 10
+	task.delay(0.5, function()
+		clone:TweenSize(UDim2.new(0, 0, 0, 0), direction2, style, animTime)
+		local returnTween: Tween = ts:Create(clone, TweenInfo.new(animTime, style, direction2), { Rotation = 180 })
+		returnTween:Play()
+		returnTween.Completed:Wait()
 
-	for _ = 0, amount do
-		task.spawn(function()
-			local imgClone: ImageLabel = clone.Icon:Clone()
-			imgClone.Parent = extraImgFrames
-
-			imgClone:TweenSize(UDim2.fromScale(1.75, 1.75), Enum.EasingDirection.Out, Enum.EasingStyle.Linear, animTime)
-			local transparencyTween: Tween = ts:Create(
-				imgClone,
-				TweenInfo.new(animTime, Enum.EasingStyle.Linear, Enum.EasingDirection.Out),
-				{ ImageTransparency = 1 }
-			)
-			transparencyTween:Play()
-			transparencyTween.Completed:Wait()
-
-			imgClone:Destroy()
-		end)
-		task.wait(0.1)
-	end
-
-	repeat
-		task.wait()
-	until #extraImgFrames:GetChildren() == 0
-
-	clone:TweenSize(UDim2.new(0, 0, 0, 0), direction2, style, animTime)
-	local returnTween: Tween = ts:Create(clone, TweenInfo.new(animTime, style, direction2), { Rotation = 180 })
-	returnTween:Play()
-	returnTween.Completed:Wait()
-
-	clone:Destroy()
+		clone:Destroy()
+	end)
 end
 
 local function UpdateStatDisplay(currencyStr: string, newValue)
@@ -265,6 +436,18 @@ local function UpdateStatDisplay(currencyStr: string, newValue)
 		task.spawn(ClickHandler.PopUp, delta, currencyStr)
 	end
 
+	task.spawn(function()
+		local tween = ts:Create(
+			currencyFrame,
+			TweenInfo.new(0.05, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+			{ Size = UDim2.fromScale(0.95, 0.55) }
+		)
+		tween:Play()
+		tween.Completed:Wait()
+
+		ts:Create(currencyFrame, buttonTween, { Size = UDim2.fromScale(0.914, 0.38) }):Play()
+	end)
+
 	data.tweenNumber.Value = 0
 	data.activeTween = ts:Create(data.tweenNumber, TweenInfo.new(0.3), { Value = goalValue })
 	data.activeConnection = data.tweenNumber.Changed:Connect(function(value)
@@ -281,8 +464,130 @@ local function ClickByButton()
 		return
 	end
 
-	task.spawn(ClickAnimation)
+	InterfaceUtility.PlayWhiteOutAnim(template, animationFrames, animationTime)
 	task.spawn(ClickHandler.PopUp, increment, "Clicks", critical)
+	ClickHandler.spawnCurrencyPopup(increment)
+	SoundHandler.PlaySound(Sounds.Tap)
+end
+
+-- local function animateButton(button: ImageButton)
+-- 	task.spawn(function()
+-- 		local mouseEnter: RBXScriptConnection
+-- 		local mouseLeave: RBXScriptConnection
+-- 		local mouseDown: RBXScriptConnection
+-- 		local mouseUp: RBXScriptConnection
+-- 		local attributeChange: RBXScriptConnection
+
+-- 		local originalSize: UDim2 = button.Size
+
+-- 		local hoverScale = button:GetAttribute("Scale") or 1
+-- 		local clickScale: number = 1 - (hoverScale - 1) or 1
+
+-- 		local hoverSize: UDim2 = UDim2.new(
+-- 			originalSize.X.Scale * hoverScale,
+-- 			originalSize.X.Offset,
+-- 			originalSize.Y.Scale * hoverScale,
+-- 			originalSize.Y.Offset
+-- 		)
+-- 		local clickSize = UDim2.new(
+-- 			originalSize.X.Scale * clickScale,
+-- 			originalSize.X.Offset,
+-- 			originalSize.Y.Scale * clickScale,
+-- 			originalSize.Y.Offset
+-- 		)
+
+-- 		local isHovering: boolean = false
+-- 		--local rotateTween: Tween = ts:Create(button, buttonTween, { Rotation = rotation })
+-- 		--local rotateTween2: Tween = ts:Create(button, buttonTween, { Rotation = originalRotation })
+
+-- 		mouseEnter = button.MouseEnter:Connect(function()
+-- 			isHovering = true
+-- 			button:TweenSize(hoverSize, Enum.EasingDirection.Out, Enum.EasingStyle.Quint, 0.2, true)
+-- 			--rotateTween:Play()
+-- 		end)
+-- 		mouseLeave = button.MouseLeave:Connect(function()
+-- 			isHovering = false
+-- 			button:TweenSize(originalSize, Enum.EasingDirection.Out, Enum.EasingStyle.Quint, 0.2, true)
+-- 			--rotateTween2:Play()
+-- 		end)
+-- 		mouseDown = button.MouseButton1Down:Connect(function()
+-- 			button:TweenSize(clickSize, Enum.EasingDirection.Out, Enum.EasingStyle.Quint, 0.2, true)
+-- 		end)
+-- 		mouseUp = button.MouseButton1Up:Connect(function()
+-- 			if isHovering == true then
+-- 				button:TweenSize(hoverSize, Enum.EasingDirection.Out, Enum.EasingStyle.Quint, 0.2, true)
+-- 			elseif isHovering == false then
+-- 				button:TweenSize(originalSize, Enum.EasingDirection.Out, Enum.EasingStyle.Quint, 0.2, true)
+-- 			end
+-- 		end)
+-- 		button:GetPropertyChangedSignal("Parent"):Once(function()
+-- 			if button.Parent == nil then
+-- 				mouseEnter:Disconnect()
+-- 				mouseLeave:Disconnect()
+-- 				mouseDown:Disconnect()
+-- 				mouseUp:Disconnect()
+-- 			end
+-- 		end)
+-- 		attributeChange = button:GetAttributeChangedSignal("Scale"):Connect(function()
+-- 			if button:GetAttribute("Scale") == nil then
+-- 				mouseEnter:Disconnect()
+-- 				mouseLeave:Disconnect()
+-- 				mouseDown:Disconnect()
+-- 				mouseUp:Disconnect()
+-- 				attributeChange:Disconnect()
+-- 			end
+-- 		end)
+-- 	end)
+-- end
+
+local function PlayClickEFX()
+	local character = plr.Character
+	if not character then
+		return
+	end
+
+	local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+	if not humanoidRootPart then
+		return
+	end
+
+	local effect = script.ClickEfx:Clone()
+	local cuts = script.Cuts:Clone()
+	effect.Enabled = false
+	cuts.Enabled = false
+	effect.Parent = humanoidRootPart
+	cuts.Parent = humanoidRootPart
+	debris:AddItem(effect, 0.5)
+	effect:Emit(math.random(2, 5))
+	cuts:Emit(5)
+	task.wait(0.1)
+end
+
+local originalButtonSize: UDim2 = clickButton.Size
+local isAnimating = false
+
+local function ForceButtonAnimation()
+	if isAnimating then
+		return
+	end
+	isAnimating = true
+
+	local button = clickButton
+	local clickScale: number = 0.9
+	local clickSize = UDim2.new(
+		originalButtonSize.X.Scale * clickScale,
+		originalButtonSize.X.Offset,
+		originalButtonSize.Y.Scale * clickScale,
+		originalButtonSize.Y.Offset
+	)
+
+	button:TweenSize(clickSize, Enum.EasingDirection.Out, Enum.EasingStyle.Quint, 0.06, true)
+	task.delay(0.06, function()
+		button:TweenSize(originalButtonSize, Enum.EasingDirection.Out, Enum.EasingStyle.Quint, 0.1, true)
+		task.delay(0.1, function()
+			isAnimating = false
+		end)
+	end)
 end
 
 local function ClickByScreen(inputPosition)
@@ -292,13 +597,19 @@ local function ClickByScreen(inputPosition)
 	end
 	local guiInset = guiService:GetGuiInset()
 
+	InterfaceUtility.PlayWhiteOutAnim(template, animationFrames, animationTime)
 	task.spawn(
 		ClickHandler.PopUp,
 		increment,
 		"Clicks",
 		critical,
-		UDim2.fromOffset(inputPosition.X, inputPosition.Y + guiInset.Y)
+		UDim2.fromOffset(inputPosition.X, inputPosition.Y + guiInset.Y),
+		true
 	)
+	PlayClickEFX()
+	ForceButtonAnimation()
+	ClickHandler.spawnCurrencyPopup(increment)
+	SoundHandler.PlaySound(Sounds.Tap)
 end
 
 local function StartCPSTrack()

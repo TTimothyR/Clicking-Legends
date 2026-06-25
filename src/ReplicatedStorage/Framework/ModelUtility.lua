@@ -38,6 +38,78 @@ function ModelUtil.Rainbowify(i: Part | ParticleEmitter, v: number)
 	end
 end
 
+function ModelUtil.ShakeModel(modelsTbl: {}, shakeDuration: number, camera, cameraFOV: number)
+	local Connections = {}
+	local IsActive = true
+	local StartTime = os.clock()
+
+	task.delay(shakeDuration, function()
+		if not IsActive then
+			return
+		end
+		IsActive = false
+
+		for _, connection in Connections do
+			connection:Disconnect()
+		end
+	end)
+
+	for _, v in ipairs(modelsTbl) do
+		local BasePos = v.endPos
+
+		table.insert(
+			Connections,
+			rs.RenderStepped:Connect(function()
+				if not IsActive then
+					return
+				end
+				local Elapsed = os.clock() - StartTime
+				local t = math.min(Elapsed / shakeDuration, 1)
+				local trauma = math.min(t, 0.35)
+				local Shake = trauma * trauma
+				local Displacement = 0.8 * Shake
+				local RotationDisplacement = 0.03 * Shake
+				local time = Elapsed * 25
+
+				v.pos.Value = BasePos
+					* CFrame.new(
+						math.noise(time, 0, 0) * 2 * Displacement,
+						math.noise(0, time, 0) * 2 * Displacement,
+						math.noise(0, 0, time) * 0.3 * Displacement
+					)
+				v.rot.Value = CFrame.Angles(
+					math.noise(time + 99, 0, 0) * 2 * RotationDisplacement,
+					0,
+					math.noise(0, time + 99, 0) * 2 * RotationDisplacement
+				)
+			end)
+		)
+	end
+
+	local twn = ts:Create(
+		camera,
+		TweenInfo.new(shakeDuration, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
+		{ FieldOfView = cameraFOV + 35 }
+	)
+	twn:Play()
+
+	local conn: RBXScriptSignal
+	conn = twn.Completed:Connect(function()
+		conn:Disconnect()
+		conn = nil
+		twn:Destroy()
+		IsActive = false
+
+		for _, con in ipairs(Connections) do
+			con:Disconnect()
+		end
+		for _, data in ipairs(modelsTbl) do
+			data.rot.Value = CFrame.Angles(0, 0, 0)
+		end
+	end)
+	camera.FieldOfView = 70
+end
+
 function ModelUtil.Mythicify(i: Part | ParticleEmitter, v: number)
 	local colorConnection: RBXScriptConnection
 

@@ -2,6 +2,7 @@ local Popup = {}
 Popup.__index = Popup
 
 function Popup.new(title, message, confirmCallback, cancelCallback, frame)
+	warn("hi")
 	local self = setmetatable({}, Popup)
 
 	self.title = title or "Hey!"
