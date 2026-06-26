@@ -210,10 +210,10 @@ function RebirthHandler.LoadRebirthButtons()
 					-- autoRebirthSelect = false
 					UpdateButtons(false)
 				else
-					local invoked = network:InvokeServer("AttemptRebirth", index)
+					local invoked, amount = network:InvokeServer("AttemptRebirth", index)
 					if invoked then
 						StatHandler.PlayGemAnimation()
-						StatHandler.PlayRebirthAnimation(index)
+						StatHandler.PlayRebirthAnimation(amount)
 						SoundHandler.PlaySound(Sounds.Rebirth)
 					end
 				end

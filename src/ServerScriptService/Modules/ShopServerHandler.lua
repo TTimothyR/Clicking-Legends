@@ -1,6 +1,7 @@
 local ShopHandler = {}
 
 -- Services
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local players = game:GetService("Players")
 local mps = game:GetService("MarketplaceService")
 local rs = game:GetService("ReplicatedStorage")
@@ -10,6 +11,7 @@ local framework = rs:WaitForChild("Framework")
 local library = framework:WaitForChild("Library")
 
 -- Modules
+local GenerateID = require(ReplicatedStorage.Framework.GenerateID)
 local shopStats = require(library.ShopStats)
 local network = require(framework.Network)
 local infMath = require(framework.InfiniteMath)
@@ -52,11 +54,7 @@ local callbacks = {
 			warn("Profile not found. Gift likely not granted, please contact the developers.")
 		end
 
-		if not profile.Gifts[gamepassName] then
-			profile.Gifts[gamepassName] = 0
-		end
-
-		profile.Gifts[gamepassName] += 1
+		profile.Gifts[GenerateID.NewID()] = gamepassName
 
 		dataSync.SyncPlayer(player, profile)
 	end,

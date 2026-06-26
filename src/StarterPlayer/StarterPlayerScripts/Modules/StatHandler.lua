@@ -170,12 +170,13 @@ local function getRandomPopupPosition(customX, customY)
 	return UDim2.fromScale((customX or GenerateX()), (customY or GenerateY()))
 end
 
-function ClickHandler.PlayRebirthAnimation()
+function ClickHandler.PlayRebirthAnimation(amount)
 	task.spawn(function()
 		local popup = script.CurrencyPopup:Clone()
 		popup.Size = UDim2.fromScale(0.15, 0.15)
 		popup.Icon.Image = imageService["More Rebirths"]
 		popup.Parent = playerGui.Frames
+		popup.Amount.Text = amount
 		popup.UIGradient:Destroy()
 		popup.UIStroke:Destroy()
 		popup.BackgroundTransparency = 1
