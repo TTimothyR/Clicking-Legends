@@ -29,10 +29,10 @@ function module:CreateLeaderstats(player: Player, profile)
 	gems.Name = "Gems"
 	gems.Value = infMath.new(profile.Data.Gems):GetSuffix(true)
 
-	local eggs = Instance.new("StringValue")
+	local eggs = Instance.new("IntValue")
 	eggs.Parent = leaderstats
 	eggs.Name = "Eggs"
-	eggs.Value = infMath.new(profile.Data.Eggs):GetSuffix(true)
+	eggs.Value = profile.Data.Eggs
 
 	local uiLock = Instance.new("BoolValue")
 	uiLock.Parent = player

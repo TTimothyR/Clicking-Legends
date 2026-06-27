@@ -16,7 +16,7 @@ Shared.DEFAULT_PLAYER_DATA = {
 	Gems = infMath.new(0),
 	TotalGems = infMath.new(0),
 	Rebirths = infMath.new(1),
-	Eggs = infMath.new(0),
+	Eggs = 0,
 
 	LuckPercentage = 0,
 	EggHatches = 3,
@@ -60,6 +60,10 @@ Shared.DEFAULT_PLAYER_DATA = {
 
 	IsAutoHatching = false,
 	TargetAutoHatchEgg = "",
+
+	AFKStartTime = 0,
+	SavedPlayerPosition = nil,
+	PreAFKInfo = {},
 
 	HatchDebounce = false,
 }

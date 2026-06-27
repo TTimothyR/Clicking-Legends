@@ -228,14 +228,34 @@ function Globals.GetPetChance(gpOwned: boolean, luckPercentage, petName: string,
 	return chance
 end
 
-function Globals.FormatTime(seconds)
-	if seconds <= 0 then
-		return "00:00:00"
-	end
+function Globals.FormatTime(seconds, letterRepresentation: boolean)
 	local hours = math.floor(seconds / 3600)
 	local minutes = math.floor((seconds % 3600) / 60)
 	local secondsLeft = math.floor(seconds % 60)
-	return string.format("%02d:%02d:%02d", hours, minutes, secondsLeft)
+
+	if not letterRepresentation then
+		if seconds <= 0 then
+			return "00:00:00"
+		end
+		return string.format("%02d:%02d:%02d", hours, minutes, secondsLeft)
+	else
+		if seconds <= 0 then
+			return "0s"
+		end
+
+		local formatted = ""
+		if hours > 0 then
+			formatted ..= tostring(hours) .. "h "
+		end
+		if minutes > 0 then
+			formatted ..= tostring(minutes) .. "m "
+		end
+		if secondsLeft > 0 then
+			formatted ..= tostring(secondsLeft) .. "s"
+		end
+
+		return formatted
+	end
 end
 
 function Globals.FormatNumber(number)

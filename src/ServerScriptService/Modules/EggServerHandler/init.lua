@@ -64,8 +64,8 @@ end
 function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
 	if not ValidateDistance(player, eggName) then
 		EggHandler.ToggleAutoHatch(player, "", false)
-		print("Too far away from egg.")
-		network:FireClient(player, "UnableToOpen", "You are too far away from the egg.")
+		-- print("Too far away from egg.")
+		-- network:FireClient(player, "UnableToOpen", "You are too far away from the egg.")
 		return
 	end
 	if not eggStats[eggName] then
@@ -113,8 +113,8 @@ function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
 
 	leaderstats.Clicks.Value = profile.Clicks:GetSuffix(true)
 
-	profile.Eggs = infMath.new(profile.Eggs + amount)
-	leaderstats.Eggs.Value = profile.Eggs:GetSuffix(true)
+	profile.Eggs += amount
+	leaderstats.Eggs.Value = profile.Eggs
 
 	-- player:SetAttribute('Clicks', http:JSONEncode(profile.Clicks));
 	-- player:SetAttribute('Eggs', http:JSONEncode(profile.Eggs));
@@ -170,6 +170,17 @@ function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
 				locked = false,
 				equipped = false,
 			})
+
+			print(profile.AFKStartTime)
+
+			if profile.AFKStartTime > 0 then
+				if profile.PreAFKInfo["Pets"][fullName] == nil then
+					profile.PreAFKInfo["Pets"][fullName] = 0
+				end
+				profile.PreAFKInfo["Pets"][fullName] += 1
+
+				print(profile.PreAFKInfo["Pets"])
+			end
 		end
 	end
 
@@ -204,10 +215,11 @@ function EggHandler.ResetVariables(player: Player, startUp: boolean)
 		warn("Could not fetch profile.")
 		return
 	end
+
 	local uiLock = player:FindFirstChild("UILock") :: BoolValue
 	uiLock.Value = false
 	profile.HatchDebounce = false
-	if startUp then
+	if startUp and profile.SavedPlayerPosition == nil then
 		profile.IsAutoHatching = false
 		profile.TargetAutoHatchEgg = ""
 	end

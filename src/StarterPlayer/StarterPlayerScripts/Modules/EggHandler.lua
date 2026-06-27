@@ -182,7 +182,6 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
 			speed += globals.GetPotionBuffAmount(tier, "Speed") / 100
 		end
 	end
-	print(speed)
 
 	if ownedGamepsses["Fast Hatch"] then
 		speed += 0.35

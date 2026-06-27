@@ -42,9 +42,9 @@ local function InitializeStats()
 	ChangeStat(globals.FormatNumber(profile.RarestHatch), "Rarest Hatch: 1/", scrollingHolder.RarestHatch.Title)
 	ChangeStat(profile.SecretsHatched, "Secrets Hatched: ", scrollingHolder.SecretsHatched.Title)
 	ChangeStat(profile.ShinySecretsHatched, "Shiny Secrets Hatched: ", scrollingHolder.ShinySecretsHatched.Title)
-	ChangeStat(infMath.new(profile.Eggs):GetSuffix(true), "Eggs: ", scrollingHolder.EggsHatched.Title)
+	ChangeStat(profile.Eggs, "Eggs: ", scrollingHolder.EggsHatched.Title)
 
-	ChangeStat(globals.FormatTime(profile.TimePlayed), "Time Played: ", scrollingHolder.TimePlayed.Title)
+	ChangeStat(globals.FormatTime(profile.TimePlayed, false), "Time Played: ", scrollingHolder.TimePlayed.Title)
 	ChangeStat(globals.FormatNumber(profile.TotalRobuxSpent), "Robux Spent: ", scrollingHolder.RobuxSpent.Title)
 
 	-- scrollingHolder.TotalClicks.Title.Text = "Total Clicks: "..profile.TotalClicks:GetSuffix(true);
@@ -94,11 +94,11 @@ function StatsUIHandler.Initialize()
 	end)
 
 	dataSync.OnChanged("Eggs", function(newValue, _)
-		ChangeStat(infMath.new(newValue):GetSuffix(true), "Eggs: ", scrollingHolder.EggsHatched.Title)
+		ChangeStat(globals.FormatNumber(newValue), "Eggs: ", scrollingHolder.EggsHatched.Title)
 	end)
 
 	dataSync.OnChanged("TimePlayed", function(newValue, _)
-		ChangeStat(globals.FormatTime(newValue), "Time Played: ", scrollingHolder.TimePlayed.Title)
+		ChangeStat(globals.FormatTime(newValue, false), "Time Played: ", scrollingHolder.TimePlayed.Title)
 	end)
 
 	dataSync.OnChanged("TotalRobuxSpent", function(newValue, _)

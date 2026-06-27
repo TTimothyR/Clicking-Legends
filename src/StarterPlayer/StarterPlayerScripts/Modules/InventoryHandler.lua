@@ -938,9 +938,9 @@ function InventoryHandler.LoadInventory()
 		end
 		SetImageColor(clone, petData)
 		clone.Position = UDim2.new(
-			clone.Size.X.Scale * col + clone.Size.X.Scale / 2,
+			equippedSecretTemplate.Size.X.Scale * col + equippedSecretTemplate.Size.X.Scale / 2,
 			0,
-			clone.Size.Y.Scale * row + clone.Size.Y.Scale / 2 + equippedTag.Size.Y.Scale,
+			equippedSecretTemplate.Size.Y.Scale * row + equippedSecretTemplate.Size.Y.Scale / 2 + equippedTag.Size.Y.Scale,
 			0
 		)
 
@@ -957,9 +957,9 @@ function InventoryHandler.LoadInventory()
 		end
 		SetImageColor(clone, petData)
 		clone.Position = UDim2.new(
-			clone.Size.X.Scale * col + clone.Size.X.Scale / 2,
+			normalTemplate.Size.X.Scale * col + normalTemplate.Size.X.Scale / 2,
 			0,
-			clone.Size.Y.Scale * row + clone.Size.Y.Scale / 2 + equippedTag.Size.Y.Scale,
+			normalTemplate.Size.Y.Scale * row + normalTemplate.Size.Y.Scale / 2 + equippedTag.Size.Y.Scale,
 			0
 		)
 
@@ -994,9 +994,12 @@ function InventoryHandler.LoadInventory()
 		SetImageColor(clone, petData)
 
 		clone.Position = UDim2.new(
-			clone.Size.X.Scale * column + clone.Size.X.Scale / 2,
+			secretTemplate.Size.X.Scale * column + secretTemplate.Size.X.Scale / 2,
 			0,
-			clone.Size.Y.Scale * row + clone.Size.Y.Scale / 2 + normalTemplate.Size.Y.Scale * lastEquippedRow + tagCorrection,
+			secretTemplate.Size.Y.Scale * row
+				+ secretTemplate.Size.Y.Scale / 2
+				+ normalTemplate.Size.Y.Scale * lastEquippedRow
+				+ tagCorrection,
 			0
 		)
 
