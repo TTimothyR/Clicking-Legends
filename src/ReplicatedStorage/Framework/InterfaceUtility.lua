@@ -32,22 +32,49 @@ function interfaceUtility.ShakeUI(object, duration, strength, speed)
 end
 
 function interfaceUtility.ShakeCamera(camera, duration, strength, speed)
-	local start = camera.CFrame
+	strength = math.rad(strength) -- add this line
+	local StartCFrame = camera.CFrame
+	local StartTime = tick()
+	local SeedX, SeedY, SeedZ = 0, 100, 200
 
-	local startTime = tick()
-	local timeOffset = 0
+	local conn: RBXScriptConnection
 
-	while tick() - startTime < duration do
-		local dt = runService.RenderStepped:Wait()
+	conn = runService.RenderStepped:Connect(function()
+		local elapsed = tick() - StartTime
+		if elapsed >= duration then
+			conn:Disconnect()
+			camera.CFrame = StartCFrame
+			return
+		end
 
-		timeOffset += dt * speed
-		local noiseX = math.noise(timeOffset, 0, 0)
-		local noiseY = math.noise(0, timeOffset, 0)
-		local noiseZ = math.noise(0, 0, timeOffset)
-		camera.CFrame = camera.CFrame * CFrame.Angles(noiseX * strength, noiseY * strength, noiseZ * strength)
-	end
+		local t = elapsed * speed
+		local fallOff = 1 - (elapsed / duration)
+		local noiseX = math.noise(t + SeedX) * strength * fallOff
+		local noiseY = math.noise(t + SeedY) * strength * fallOff
+		local noiseZ = math.noise(t + SeedZ) * strength * fallOff
 
-	camera.CFrame = start
+		camera.CFrame = StartCFrame * CFrame.Angles(noiseX, noiseY, noiseZ)
+	end)
+
+	--while tick() - startTime < duration do
+	--	local elapsed = tick() - startTime
+	--	if elapsed >= duration then
+	--		conn:Disconnect()
+	--		camera.CFrame = startCFrame
+	--		return
+	--	end
+	--	local dt = runService.RenderStepped:Wait()
+
+	--	timeOffset += dt * speed
+	--	local t
+	--	local fallOff = 1 - (elapsed / duration)
+	--	local noiseX = math.noise(timeOffset, 0, 0)
+	--	local noiseY = math.noise(0, timeOffset, 0)
+	--	local noiseZ = math.noise(0, 0, timeOffset)
+	--	camera.CFrame = camera.CFrame * CFrame.Angles(noiseX, noiseY, noiseZ)
+	--end
+
+	--camera.CFrame = start
 end
 
 function interfaceUtility.RotateGradient(gradient: UIGradient)

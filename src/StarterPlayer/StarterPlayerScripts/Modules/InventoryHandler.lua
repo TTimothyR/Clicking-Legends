@@ -303,7 +303,7 @@ local function LoadGiftInfo(giftID: string)
 			task.delay(0.15, function()
 				db = false
 			end)
-			-- ...
+			network:FireServer("UseGamepass", giftID, gamepassName)
 		end
 	end) :: RBXScriptConnection
 

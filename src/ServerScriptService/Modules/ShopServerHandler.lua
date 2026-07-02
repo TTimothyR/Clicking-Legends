@@ -178,6 +178,27 @@ local function EnsureGamepassOwnership(player: Player)
 	dataSync.SyncPlayer(player, profile)
 end
 
+function ShopHandler.UseGamepass(player: Player, id: string, gamepassName: string)
+	local profile = playerData.GetData(player)
+	local ownedGamepasses = profile.OwnedGamepasses
+	local gifts = profile.Gifts
+
+	if ownedGamepasses[gamepassName] then
+		return
+	end
+	if not gifts[id] then
+		return
+	end
+	if gifts[id] ~= gamepassName then
+		return
+	end
+
+	ownedGamepasses[gamepassName] = true
+	gifts[id] = nil
+
+	dataSync.SyncPlayer(player, profile)
+end
+
 function ShopHandler.Initialize()
 	GamepassPurchaseHandler()
 	ProductPurchaseHandler()

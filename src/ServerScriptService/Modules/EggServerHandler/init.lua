@@ -6,6 +6,8 @@ local players = game:GetService("Players")
 local rs = game:GetService("ReplicatedStorage")
 local sss = game:GetService("ServerScriptService")
 
+local Framework = ReplicatedStorage:WaitForChild("Framework")
+
 -- Variables
 local framework = rs:WaitForChild("Framework")
 local library = framework:WaitForChild("Library")
@@ -21,6 +23,7 @@ local network = require(framework.Network)
 local luckHandler = require(script.Parent.LuckHandler)
 local dataSync = require(dataModules.DataSyncServer)
 local Globals = require(ReplicatedStorage.Framework.Globals)
+local Network = require(Framework:WaitForChild("Network"))
 local Discord = require("./DiscordHandlers/Discord")
 
 local function ValidateDistance(player: Player, eggName: string)
@@ -79,10 +82,11 @@ function EggHandler.UnlockEgg(plr: Player, eggName: string)
 	local price = infMath.new(priceForOne * 1)
 
 	if clicks >= price then
-		profile.UnlockedEggs[eggName] = true
-		dataSync.SyncPlayer(plr, profile)
-		task.delay(0.8, function()
+		Network:FireClient(plr, "UnlockEggCutscene", eggName)
+		task.delay(2.7, function()
+			profile.UnlockedEggs[eggName] = true
 			EggHandler.OpenEgg(plr, eggName, 1)
+			dataSync.SyncPlayer(plr, profile)
 		end)
 	end
 end

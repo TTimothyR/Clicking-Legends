@@ -414,6 +414,18 @@ function TradeHandler.Unready(me: Player)
 	end
 end
 
+function TradeHandler.ToggleTrading(player: Player): boolean
+	local profile = playerData.GetData(player)
+	profile.HasTradingDisabled = not profile.HasTradingDisabled
+	dataSync.SyncPlayer(player, profile)
+
+	for _, plr: Player in ipairs(players:GetPlayers()) do
+		network:FireClient(plr, "UpdateTradeButtons")
+	end
+
+	return profile.HasTradingDisabled
+end
+
 local function ResetVariables(player: Player)
 	local profile = playerData.GetData(player)
 	profile.IsInTrade = false

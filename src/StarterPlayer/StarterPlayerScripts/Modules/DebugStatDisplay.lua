@@ -6,7 +6,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local player = Players.LocalPlayer
 
 local playerGui = player.PlayerGui
-local Debug = playerGui.Debug
+local Debug = playerGui:WaitForChild("Debug")
 local holder = Debug.Holder
 
 local Globals = require(ReplicatedStorage.Framework.Globals)
@@ -82,6 +82,9 @@ local function UpdateStats()
 end
 
 function DebugDisplay.Initialize()
+	if not game.Loaded then
+		game.Loaded:Wait()
+	end
 	DataSyncClient.OnReady(UpdateStats)
 
 	DataSyncClient.OnChanged("EggHatches", UpdateStats)

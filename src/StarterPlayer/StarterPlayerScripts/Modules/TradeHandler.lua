@@ -16,6 +16,7 @@ local framework = rs:WaitForChild("Framework")
 local library = framework:WaitForChild("Library")
 local classes = rs:WaitForChild("Classes")
 
+local toggleButtonConnection = nil
 local playerConnections = {}
 local tradeConnections = {}
 local timerConnection: RBXScriptConnection = nil
@@ -39,6 +40,7 @@ local playerListFrame = frames:WaitForChild("PlayerList")
 local templates = playerListFrame:WaitForChild("Templates")
 local playerTemplate = templates:WaitForChild("PlayerTemplate")
 local main = playerListFrame:WaitForChild("Main")
+local toggleButton = main:WaitForChild("Toggle") :: ImageButton
 local listFrame = main:WaitForChild("List")
 local warningLabel = main:WaitForChild("WarningLabel")
 local playerHolder = listFrame:WaitForChild("ScrollingFrame")
@@ -438,6 +440,25 @@ function TradeHandler.LoadPlayerList()
 			end
 		end
 	end
+
+	if not toggleButtonConnection or not toggleButtonConnection.Connected then
+		toggleButtonConnection = toggleButton.MouseButton1Click:Connect(function()
+			if not db then
+				db = true
+				task.delay(0.15, function()
+					db = false
+				end)
+
+				local newStatus = not network:InvokeServer("ToggleTrading")
+
+				if newStatus then
+					UpdateTradeButton("Green", "On", toggleButton)
+				else
+					UpdateTradeButton("Red", "Off", toggleButton)
+				end
+			end
+		end) :: RBXScriptConnection
+	end
 end
 
 function TradeHandler.Initialize()
@@ -452,6 +473,13 @@ function TradeHandler.Initialize()
 
 		if tradeBanned then
 			canTrade = false
+		end
+
+		local tradingEnabled = not dataSync.Get("HasTradingDisabled")
+		if tradingEnabled then
+			UpdateTradeButton("Green", "On", toggleButton)
+		else
+			UpdateTradeButton("Red", "Off", toggleButton)
 		end
 
 		if tradeBanned or isPrivateServer then

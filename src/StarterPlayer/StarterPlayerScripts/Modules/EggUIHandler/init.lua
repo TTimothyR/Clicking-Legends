@@ -10,6 +10,8 @@ local uis = game:GetService("UserInputService")
 local GroupService = game:GetService("GroupService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local EggUnlockCutscene = require("@self/EggUnlockCutscene")
+
 -- Variables
 repeat
 	task.wait()
@@ -197,10 +199,16 @@ local function GetClosestEgg()
 						if not next(connections[baseName]) then
 							SetupTemplate(ui)
 						end
-						ui.Enabled = true
+						if not EggUnlockCutscene.IsPlaying then
+							ui.Enabled = true
+						end
 					end
 				else
-					ui.Enabled = isLockedUI
+					if not EggUnlockCutscene.IsPlaying then
+						ui.Enabled = isLockedUI
+					else
+						ui.Enabled = false
+					end
 				end
 			else
 				ui.Enabled = false
