@@ -48,6 +48,7 @@ Shared.DEFAULT_PLAYER_DATA = {
 	UpgradeLevels = {},
 	OwnedGamepasses = {},
 	RedeemedCodes = {},
+	UnlockedEggs = {},
 
 	IsInTrade = false,
 	HasTradingDisabled = false,

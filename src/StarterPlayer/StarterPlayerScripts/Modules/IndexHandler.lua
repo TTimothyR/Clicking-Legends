@@ -2,6 +2,7 @@ local IndexHandler = {}
 local db = false
 
 -- Services
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local players = game:GetService("Players")
 local rs = game:GetService("ReplicatedStorage")
 
@@ -40,6 +41,7 @@ local discoveryFrame = miscFrame:WaitForChild("Discovery")
 local lockedFrame = discoveryFrame:WaitForChild("Locked")
 
 -- Modules
+local ImageService = require(ReplicatedStorage.Framework.Library.ImageService)
 local globals = require(framework.Globals)
 local eggStats = require(library.EggStats)
 local petStats = require(library.PetStats)
@@ -92,6 +94,9 @@ local function LoadPets(index, eggName: string, shiny: boolean)
 		clone.Name = pet
 		clone.Parent = petHolder
 		clone.LayoutOrder = data[2]
+
+		local fullName = shiny and "Shiny " .. pet or pet
+		clone.Frame.Icon.Image = ImageService[fullName] or ImageService["Placeholder"]
 
 		local rarity = petStats[pet].Rarity
 		clone.Frame.BackgroundColor3 = globals.RarityColors[rarity]

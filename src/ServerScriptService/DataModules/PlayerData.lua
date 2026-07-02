@@ -8,7 +8,7 @@ local ProfileStore = require(sss.DataModules.ProfileStore)
 local leaderstats = require(sss.DataModules.leaderstats)
 local dataSync = require(script.Parent.DataSyncServer)
 
-local v = "44"
+local v = "45"
 local dataKey = "OfficialV" .. v
 if runService:IsStudio() then
 	dataKey = "TestV" .. v
@@ -59,6 +59,7 @@ function Local.LoadProfile(player: Player)
 	end
 	leaderstats:CreateLeaderstats(player, profile)
 	profile.Data.ClickDebounce = false
+	profile.Data.UnlockedEggs = {}
 
 	dataSync.InitializePlayer(player, profile.Data)
 end

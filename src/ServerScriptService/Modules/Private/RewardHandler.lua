@@ -15,10 +15,10 @@ local playerData = require(dataModules.PlayerData)
 local generateID = require(framework.GenerateID)
 local infMath = require(framework.InfiniteMath)
 
-function RewardHandler.ClaimPet(player: Player, petName: string, shiny: boolean)
+function RewardHandler.ClaimPet(player: Player, fullName: string, shiny: boolean)
 	local profile = playerData.GetData(player)
 
-	local fullName: string = shiny and "Shiny " .. petName or petName
+	local petName: string = shiny and string.gsub(fullName, "Shiny ", "") or fullName
 
 	if not petModels:FindFirstChild(fullName) then
 		return false, "SERVER - Invalid pet name, unable to claim prize."
@@ -26,6 +26,10 @@ function RewardHandler.ClaimPet(player: Player, petName: string, shiny: boolean)
 
 	local pets = profile.Pets
 	local id = generateID.NewID()
+
+	if not profile.PetIndex[fullName] then
+		profile.PetIndex[fullName] = true
+	end
 
 	table.insert(pets, {
 		petName = petName,

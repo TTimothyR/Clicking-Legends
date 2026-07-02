@@ -60,11 +60,11 @@ return {
 	DeveloperProducts = {
 		["Pet1"] = {
 			ProductID = 3548669529,
-			PetName = "Grand Patriotic Overlord",
+			PetName = "King Star",
 		},
 		["Pet2"] = {
 			ProductID = 3548669613,
-			PetName = "Fox",
+			PetName = "Shiny Fox",
 		},
 		["PetCombi"] = {
 			ProductID = 3548669728,

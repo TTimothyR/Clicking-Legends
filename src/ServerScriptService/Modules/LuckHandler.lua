@@ -43,12 +43,8 @@ function LuckHandler.RollPet(player: Player, eggName: string)
 	end
 
 	local gamepass = ownedGamepasses["Double Luck"] and true or false
-	local upgrade = false
 	if gamepass then
 		luckPercentage *= 2
-	end
-	if upgrade then
-		luckPercentage *= 1.25
 	end
 
 	local tbl = eggStats[eggName].Pets

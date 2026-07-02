@@ -23,7 +23,8 @@ Globals.MaxLevel = 50
 Globals.ShinyMulti = 1.5
 Globals.ShinyChance = 40
 Globals.GroupID = 891290039
-
+Globals.BaseHatchTime = 6
+Globals.BestPotionTier = "V"
 Globals.RarityColors = {
 	["Common"] = Color3.fromRGB(255, 214, 133),
 	["Uncommon"] = Color3.fromRGB(173, 255, 135),
@@ -139,6 +140,9 @@ end
 
 function Globals.GetPetClicks(petData)
 	local stats = petStats[petData.petName]
+	if not stats.Clicks then
+		return 1
+	end
 
 	local clicks = stats.Clicks
 	local total = clicks * (1 + (2 * (petData.level - 1)) / (Globals.MaxLevel - 1))
@@ -150,6 +154,9 @@ end
 
 function Globals.GetMaxLevelClicks(petData)
 	local stats = petStats[petData.petName]
+	if not stats.Clicks then
+		return 1
+	end
 
 	local clicks = stats.Clicks
 	local total = clicks * (1 + (2 * (Globals.MaxLevel - 1)) / (Globals.MaxLevel - 1))

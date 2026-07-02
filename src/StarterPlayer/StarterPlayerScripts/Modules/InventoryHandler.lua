@@ -2,9 +2,21 @@ local InventoryHandler = {}
 local db = false
 
 -- Services
+local TweenService = game:GetService("TweenService")
 local players = game:GetService("Players")
 local rs = game:GetService("ReplicatedStorage")
 local mps = game:GetService("MarketplaceService")
+
+local Assets = rs:WaitForChild("Assets")
+
+local Sounds = Assets:WaitForChild("Sounds")
+
+local Framework = rs:WaitForChild("Framework")
+
+local InterfaceUtility = require(Framework:WaitForChild("InterfaceUtility"))
+
+local SoundHandler = require("./SoundHandler")
+local Tooltip = require("./Tooltip")
 
 -- Variables
 repeat
@@ -21,12 +33,18 @@ local shopHandlerLoaded = false
 
 local selectedPetID = nil
 local selectedItemName = nil
+local selectedGiftID = nil
+
 local loadedPetInfoIcon = nil
--- local clickConnections = {};
+
 local petInfoConnections = {}
 local itemInfoConnections = {}
+local giftInfoConnections = {}
+
 local itemConnections = {}
 local petConnections = {}
+local giftConnections = {}
+
 local bulkButtonsConnected = false
 local multiDeleteActive = false
 local selectedPets = {}
@@ -37,6 +55,7 @@ local increaseStorageButtonCon: RBXScriptConnection
 
 local CreatePetClickConnection
 local CreateItemClickConnection
+local CreateGiftClickConnection
 
 -- UI
 local playerGui = player:WaitForChild("PlayerGui")
@@ -74,6 +93,7 @@ local sideButtons = main:WaitForChild("SideButtons")
 local sideButtonsHolder = sideButtons:WaitForChild("Holder")
 local petsButton = sideButtonsHolder:WaitForChild("Pets")
 local itemsButton = sideButtonsHolder:WaitForChild("Items")
+local giftsButton = sideButtonsHolder:WaitForChild("Gifts")
 local itemInventoryFrame = main:WaitForChild("ItemInventory")
 local itemHolder = itemInventoryFrame:WaitForChild("ScrollingFrame")
 
@@ -94,6 +114,14 @@ local confirmMultiDelete = multiDeleteButtons:WaitForChild("Confirm")
 local cancelMultiDelete = multiDeleteButtons:WaitForChild("Cancel")
 local petInfoHolder = petInfo:WaitForChild("Holder")
 local petInfoButtons = petInfoHolder:WaitForChild("Buttons")
+
+-- Gamepass Inventory
+local giftInfo = main:WaitForChild("GiftInfo")
+local giftInfoHolder = giftInfo:WaitForChild("Holder")
+local useGiftButton = giftInfoHolder:WaitForChild("Use") :: ImageButton
+local giftInventory = main:WaitForChild("GiftInventory")
+local giftList = giftInventory:WaitForChild("ScrollingFrame")
+local giftTemplate = templates:WaitForChild("GiftTemplate")
 
 -- Modules
 local network = require(framework.Network)
@@ -173,6 +201,13 @@ local function RemoveItemConnection(itemName: string)
 	end
 end
 
+local function RemoveGiftConnection(giftID: string)
+	if giftConnections[giftID] then
+		giftConnections[giftID]:Disconnect()
+		giftConnections[giftID] = nil
+	end
+end
+
 local function SeparatePets(petsTbl, equipped)
 	local normalTbl = {}
 	local secretTbl = {}
@@ -247,6 +282,33 @@ local function SetEquipButtonColor(newStatus: boolean)
 	equipButton.Frame.UIStroke.Color = globals.ButtonPresets[color].StrokeColor
 	equipButton.Title.UIStroke.Color = globals.ButtonPresets[color].StrokeColor
 	equipButton.Title.Text = text
+end
+
+local function LoadGiftInfo(giftID: string)
+	local playerGifts = dataSync.Get("Gifts")
+	local gamepassName = playerGifts[giftID]
+
+	for _, con: RBXScriptConnection in ipairs(giftInfoConnections) do
+		if con.Connected then
+			con:Disconnect()
+		end
+	end
+
+	giftInfoHolder.GiftName.Text = gamepassName
+	giftInfoHolder.Description.Text = string.format("Applies %s gamepass when used", gamepassName)
+
+	local useConnection = useGiftButton.MouseButton1Click:Connect(function()
+		if not db then
+			db = true
+			task.delay(0.15, function()
+				db = false
+			end)
+			-- ...
+		end
+	end) :: RBXScriptConnection
+
+	table.insert(giftInfoConnections, useConnection)
+	giftInfoHolder.Visible = true
 end
 
 local function LoadItemInfo(itemName: string)
@@ -460,8 +522,31 @@ local function LoadPetInfo(id: string)
 	petInfoHolder.Visible = true
 end
 
+CreateGiftClickConnection = function(clone: ImageButton, giftID)
+	RemoveGiftConnection(giftID)
+
+	local clickCon = clone.MouseButton1Click:Connect(function()
+		if not db then
+			db = true
+			task.delay(0.15, function()
+				db = false
+			end)
+			if selectedGiftID == giftID then
+				selectedGiftID = nil
+				giftInfoHolder.Visible = false
+			else
+				selectedGiftID = giftID
+				LoadGiftInfo(giftID)
+			end
+		end
+	end) :: RBXScriptConnection
+
+	giftConnections[giftID] = clickCon
+end
+
 CreateItemClickConnection = function(clone: ImageButton, itemName)
 	RemoveItemConnection(itemName)
+	Tooltip.SetupTooltip(clone, "Items", { itemName = itemName, Potion = true })
 	local clickCon: RBXScriptConnection = clone.MouseButton1Click:Connect(function()
 		if not db then
 			db = true
@@ -483,6 +568,11 @@ end
 
 CreatePetClickConnection = function(clone, petData)
 	RemovePetConnection(petData.id)
+
+	local tooltipTbl = petData
+	tooltipTbl.clicks = true
+	tooltipTbl.gems = true
+	Tooltip.SetupTooltip(clone, "PetTooltip", petData)
 	local clickCon: RBXScriptConnection = clone.MouseButton1Click:Connect(function()
 		if not db then
 			db = true
@@ -574,6 +664,7 @@ local function CreateNormalPet(petData)
 		clone.Glow.Visible = true
 		clone.Frame.Legendary.Enabled = true
 	end
+
 	-- clone:GetPropertyChangedSignal('Parent'):Once(function()
 	--     if petConnections[petData.id] then
 	--         if petConnections[petData.id].Connected then
@@ -1059,6 +1150,31 @@ function InventoryHandler.LoadInventory()
 	end
 end
 
+function InventoryHandler.LoadGifts()
+	local playerGifts = dataSync.Get("Gifts")
+
+	for _, child in ipairs(giftList:GetChildren()) do
+		if not playerGifts[child.Name] and child:IsA("Frame") then
+			child:Destroy()
+			RemoveGiftConnection(child.Name)
+		end
+	end
+
+	for id, _ in pairs(playerGifts) do
+		if giftList:FindFirstChild(id) then
+			continue
+		end
+
+		local clone = giftTemplate:Clone() :: ImageButton
+		clone.Name = id
+		clone.Parent = giftList
+
+		CreateGiftClickConnection(clone, id)
+
+		clone.Visible = true
+	end
+end
+
 function InventoryHandler.LoadItems()
 	local playerItems = dataSync.Get("Items")
 	local potions = playerItems.Potions
@@ -1117,15 +1233,23 @@ function InventoryHandler.LoadItems()
 		else
 			currentOrder += 1
 			local clone = potionTemplate:Clone()
-			local potionImage = potionTemplates:WaitForChild(data.tier):Clone()
-			local color = globals.BuffColors[data.buff]
-			potionImage.Liquid.ImageColor3 = color
+			local potionTier = data.tier
+			--local potionImage = potionTemplates:WaitForChild(data.tier):Clone()
+			local potionImage = (imageService[data.potionName] or "")
+			--potionImage.Liquid.ImageColor3 = color
 
-			potionImage.Parent = clone.Frame
-			potionImage.Visible = true
+			--potionImage.Parent = clone.Frame
+			--potionImage.Visible = true
 
 			local rarity = data.rarity
 			clone.Frame.BackgroundColor3 = globals.RarityColors[rarity]
+			clone.Frame.Frame.Icon.Image = potionImage
+
+			if potionTier == "V" then
+				clone.Frame.Frame.Icon.Size = UDim2.fromScale(0.95, 0.95)
+				clone.Frame.Frame.Icon.Position = UDim2.fromScale(0.5, 0.5)
+			end
+
 			if rarity == "Legendary" then
 				clone.Glow.Visible = true
 				clone.Frame.Legendary.Enabled = true
@@ -1161,6 +1285,75 @@ function InventoryHandler.ParseShopHandler(handler)
 	shopHandler = handler
 end
 
+function InventoryHandler.NewItem(data)
+	local clone = potionTemplate:Clone()
+	local potionTier = data.tier
+	--local potionImage = potionTemplates:WaitForChild(data.tier):Clone()
+	local potionImage = (imageService[data.potionName] or "")
+	--potionImage.Liquid.ImageColor3 = color
+
+	--potionImage.Parent = clone.Frame
+	--potionImage.Visible = true
+
+	local rarity = data.rarity
+	clone.Frame.BackgroundColor3 = globals.RarityColors[rarity]
+	clone.Frame.Frame.Icon.Image = potionImage
+
+	if potionTier == "V" then
+		clone.Frame.Frame.Icon.Size = UDim2.fromScale(0.95, 0.95)
+		clone.Frame.Frame.Icon.Position = UDim2.fromScale(0.5, 0.5)
+	end
+
+	if rarity == "Legendary" then
+		clone.Glow.Visible = true
+		clone.Frame.Legendary.Enabled = true
+	end
+
+	clone.Name = data.potionName
+	clone.Frame.PotionName.Text = data.buff .. " " .. data.tier
+	--clone.Frame.Amount.Text = "x" .. data.amount
+
+	clone.Parent = frames.NewItems
+
+	clone.Visible = true
+
+	local scale = Instance.new("UIScale")
+	scale.Scale = 0
+	scale.Parent = clone
+
+	SoundHandler.PlaySound(Sounds.NewItem)
+
+	task.wait(0.1)
+
+	local Tween =
+		TweenService:Create(scale, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 })
+	Tween:Play()
+
+	local Conn
+	Conn = Tween.Completed:Connect(function()
+		Conn:Disconnect()
+		Conn = nil
+
+		for _ = 1, 3 do
+			InterfaceUtility.PlayWhiteOutAnim(clone.Template, clone.Anims, 0.5, 1.3)
+			task.wait(0.55)
+		end
+
+		task.delay(0.5, function()
+			Tween =
+				TweenService:Create(scale, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 0 })
+			Tween:Play()
+
+			Conn = Tween.Completed:Connect(function()
+				Tween:Destroy()
+				Conn:Disconnect()
+				Conn = nil
+				clone:Destroy()
+			end)
+		end)
+	end) :: RBXScriptConnection
+end
+
 function InventoryHandler.Initialize()
 	if not game.Loaded then
 		game.Loaded:Wait()
@@ -1194,6 +1387,13 @@ function InventoryHandler.Initialize()
 		InventoryHandler.LoadInventory()
 	end)
 
+	dataSync.OnChanged("Gifts", function()
+		if not inventoryFrame.Visible then
+			return
+		end
+		InventoryHandler.LoadGifts()
+	end)
+
 	dataSync.OnChanged("Items", function()
 		if not inventoryFrame.Visible then
 			return
@@ -1210,6 +1410,10 @@ function InventoryHandler.Initialize()
 			end)
 			itemInventoryFrame.Visible = false
 			itemInfo.Visible = false
+
+			giftInventory.Visible = false
+			giftInfo.Visible = false
+
 			inventory.Visible = true
 			petInfo.Visible = true
 			bulkButtons.Visible = true
@@ -1225,6 +1429,30 @@ function InventoryHandler.Initialize()
 			end)
 			itemInventoryFrame.Visible = true
 			itemInfo.Visible = true
+
+			giftInventory.Visible = false
+			giftInfo.Visible = false
+
+			inventory.Visible = false
+			petInfo.Visible = false
+			bulkButtons.Visible = false
+			utilityButtons.Visible = false
+			searchFrame.Visible = false
+		end
+	end)
+
+	giftsButton.MouseButton1Click:Connect(function()
+		if not db then
+			db = true
+			task.delay(0.15, function()
+				db = false
+			end)
+			itemInventoryFrame.Visible = false
+			itemInfo.Visible = false
+
+			giftInventory.Visible = true
+			giftInfo.Visible = true
+
 			inventory.Visible = false
 			petInfo.Visible = false
 			bulkButtons.Visible = false

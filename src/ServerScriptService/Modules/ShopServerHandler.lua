@@ -61,7 +61,7 @@ local callbacks = {
 
 	["Pet"] = function(player: Player, petNames)
 		for _, petName in pairs(petNames) do
-			local _ = rewardHandler.ClaimPet(player, petName, false)
+			local _ = rewardHandler.ClaimPet(player, petName, (petName:find("Shiny ") ~= nil))
 		end
 
 		local profile = playerData.GetData(player)
@@ -153,7 +153,7 @@ local function ProductPurchaseHandler()
 		elseif string.match(productName, "GemPack") then
 			callbacks["Gem"](player, shopStats.DeveloperProducts[productName].BaseGems)
 		else
-			callbacks["Gif"](player, productName)
+			callbacks["Gift"](player, productName)
 		end
 
 		network:FireClient(player, "PurchaseConfirmed")

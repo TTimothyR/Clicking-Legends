@@ -329,6 +329,10 @@ function PetHandler.MakeShiny(player: Player, petName: string)
 		table.remove(pets, index)
 	end
 
+	if not profile.PetIndex["Shiny " .. petName] then
+		profile.PetIndex["Shiny " .. petName] = true
+	end
+
 	table.insert(pets, {
 		petName = petName,
 		fullName = "Shiny " .. petName,

@@ -61,6 +61,32 @@ function EggHandler.ToggleAutoHatch(player: Player, eggName: string, new: boolea
 	return true
 end
 
+function EggHandler.UnlockEgg(plr: Player, eggName: string)
+	if type(eggName) ~= "string" then
+		return
+	end
+	local profile = playerData.GetData(plr)
+	if not profile then
+		return
+	end
+
+	if profile.UnlockedEggs[eggName] then
+		return
+	end
+
+	local clicks = infMath.new(profile.Clicks)
+	local priceForOne = infMath.new(eggStats[eggName].Price[2])
+	local price = infMath.new(priceForOne * 1)
+
+	if clicks >= price then
+		profile.UnlockedEggs[eggName] = true
+		dataSync.SyncPlayer(plr, profile)
+		task.delay(0.8, function()
+			EggHandler.OpenEgg(plr, eggName, 1)
+		end)
+	end
+end
+
 function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
 	if not ValidateDistance(player, eggName) then
 		EggHandler.ToggleAutoHatch(player, "", false)
@@ -76,6 +102,13 @@ function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
 	end
 
 	local profile = playerData.GetData(player)
+	local UnlockedEggs = profile.UnlockedEggs
+	if not UnlockedEggs[eggName] then
+		EggHandler.ToggleAutoHatch(player, "", false)
+		warn("Player does not own egg", eggName)
+		return
+	end
+
 	if not profile then
 		EggHandler.ToggleAutoHatch(player, "", false)
 		warn("Could not fetch profile for player", player.Name)
@@ -170,8 +203,6 @@ function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
 				locked = false,
 				equipped = false,
 			})
-
-			print(profile.AFKStartTime)
 
 			if profile.AFKStartTime > 0 then
 				if profile.PreAFKInfo["Pets"][fullName] == nil then

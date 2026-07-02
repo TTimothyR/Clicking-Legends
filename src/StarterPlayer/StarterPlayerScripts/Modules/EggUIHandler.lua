@@ -8,6 +8,7 @@ local workspace = game:GetService("Workspace")
 local runService = game:GetService("RunService")
 local uis = game:GetService("UserInputService")
 local GroupService = game:GetService("GroupService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 -- Variables
 repeat
@@ -21,21 +22,25 @@ local framework = rs:WaitForChild("Framework")
 local library = framework:WaitForChild("Library")
 local classes = rs:WaitForChild("Classes")
 local assets = rs:WaitForChild("Assets")
+local EggModels = assets.EggModels
 
 local closestEgg2
 local adornees = {}
 local connections = {}
 local maxDistance = 15
 local autoHatching = false
+local UnlockedEggs = {}
 
 -- UI
 local playerGui = player:WaitForChild("PlayerGui")
 local eggUI = assets:WaitForChild("EggUI")
+local LockedEggUI = assets:WaitForChild("LockedEggUI")
 local eggHolder = playerGui:WaitForChild("EggUI")
 local frames = playerGui:WaitForChild("Frames")
 local infoFrame = frames:WaitForChild("Info")
 
 -- Modules
+local ImageService = require(ReplicatedStorage.Framework.Library.ImageService)
 local eggStats = require(library.EggStats)
 local petStats = require(library.PetStats)
 local network = require(framework.Network)
@@ -72,13 +77,13 @@ local function SetupTemplate(ui)
 			local autoDeleted = dataSync.Get("AutoDeletedPets")
 
 			if autoDeleted[item.Name] then
-				item.ImageLabel.ImageTransparency = 0.5
+				item.Icon.ImageTransparency = 0.5
 			else
-				item.ImageLabel.ImageTransparency = 0
+				item.Icon.ImageTransparency = 0
 			end
 
 			if discovered then
-				item.ImageLabel.ImageColor3 = Color3.fromRGB(255, 255, 255)
+				item.Icon.ImageColor3 = Color3.fromRGB(255, 255, 255)
 			end
 
 			local chance = globals.GetPetChance(luckPassOwned, luckPercentage, item.Name, ui.Name, false)
@@ -93,9 +98,9 @@ local function SetupTemplate(ui)
 					end)
 					local newStatus = network:InvokeServer("ToggleAutoDelete", item.Name)
 					if newStatus then
-						item.ImageLabel.ImageTransparency = 0.5
+						item.Icon.ImageTransparency = 0.5
 					else
-						item.ImageLabel.ImageTransparency = 0
+						item.Icon.ImageTransparency = 0
 					end
 				end
 			end)
@@ -181,11 +186,22 @@ local function GetClosestEgg()
 		end
 		local uiLock = player:FindFirstChild("UILock") :: BoolValue
 		for _, ui in ipairs(eggHolder:GetChildren()) do
-			if ui.Name == closestEgg2 and not uiLock.Value then
-				if not next(connections[ui.Name]) then
-					SetupTemplate(ui)
+			local isLockedUI = ui.Name:sub(-6) == "Locked"
+			local baseName = isLockedUI and ui.Name:sub(1, -7) or ui.Name
+
+			if baseName == closestEgg2 and not uiLock.Value then
+				if UnlockedEggs[baseName] then
+					if isLockedUI then
+						ui.Enabled = false
+					else
+						if not next(connections[baseName]) then
+							SetupTemplate(ui)
+						end
+						ui.Enabled = true
+					end
+				else
+					ui.Enabled = isLockedUI
 				end
-				ui.Enabled = true
 			else
 				ui.Enabled = false
 			end
@@ -205,7 +221,9 @@ end
 local function ConfigureEggUI(egg: Model)
 	local index = dataSync.Get("PetIndex")
 	local clone = eggUI:Clone()
+	local lockedClone = LockedEggUI:Clone()
 	clone.Parent = eggHolder
+	lockedClone.Parent = eggHolder
 
 	local luckPercentage = dataSync.Get("LuckPercentage")
 	local gpsOwned = dataSync.Get("OwnedGamepasses")
@@ -221,11 +239,13 @@ local function ConfigureEggUI(egg: Model)
 	end
 
 	clone.Adornee = egg:FindFirstChild("View")
+	lockedClone.Adornee = egg:FindFirstChild("View")
 	table.insert(adornees, {
 		part = egg:FindFirstChild("View"),
 		distance = math.huge,
 	})
 
+	lockedClone.Name = egg.Name .. "Locked"
 	clone.Name = egg.Name
 
 	local main = clone.Main
@@ -240,6 +260,14 @@ local function ConfigureEggUI(egg: Model)
 	eggName.EggName.Text = tostring(egg.Name)
 	price.Amount.Text = currentStats.Price[2]
 
+	local lockedMain = lockedClone.Main
+	local Price = lockedMain.Price
+	local Amount = Price.Amount
+	local EggNameLabel = lockedMain.EggName
+
+	Amount.Text = currentStats.Price[2]
+	EggNameLabel.Text = tostring(egg.Name)
+
 	for petName, data in pairs(currentStats.Pets) do
 		local petClone = petTemplate:Clone()
 		local chance = globals.GetPetChance(luckPassOwned, luckPercentage, petName, egg.Name, false)
@@ -247,6 +275,8 @@ local function ConfigureEggUI(egg: Model)
 
 		petClone.Parent = holder
 		petClone.Name = petName
+
+		petClone.Icon.Image = ImageService[petName] or ImageService["Placeholder"]
 
 		petClone.Chance.Text = globals.FormatChance(chance) .. "%"
 		petClone.Chance.TextColor3 = globals.RarityColors[rarity]
@@ -267,13 +297,13 @@ local function ConfigureEggUI(egg: Model)
 		local autoDeleted = dataSync.Get("AutoDeletedPets")
 
 		if autoDeleted[petName] then
-			petClone.ImageLabel.ImageTransparency = 0.5
+			petClone.Icon.ImageTransparency = 0.5
 		else
-			petClone.ImageLabel.ImageTransparency = 0
+			petClone.Icon.ImageTransparency = 0
 		end
 
 		if not discovered then
-			petClone.ImageLabel.ImageColor3 = Color3.fromRGB(0, 0, 0)
+			petClone.Icon.ImageColor3 = Color3.fromRGB(0, 0, 0)
 		end
 		petClone.Visible = true
 	end
@@ -329,6 +359,60 @@ local function HatchComplete()
 	network:FireServer("RequestNextHatch")
 end
 
+local function LoadEggModels()
+	local UnlockedEggsData = dataSync.Get("UnlockedEggs")
+	UnlockedEggs = UnlockedEggsData or {}
+
+	for _, Egg in pairs(EggModels:GetChildren()) do
+		local EggName = Egg.Name
+		local EggInFolder = eggs:FindFirstChild(EggName)
+		if not EggInFolder then
+			continue
+		end
+
+		local Decor = EggInFolder.Decor :: Model
+		local DarkGrey, LightGrey = Decor.DarkGrey :: Model, Decor.LightGrey :: Model
+		local EggHolder: Part = LightGrey.EggHolder
+
+		local EggModel: Model
+		if not EggInFolder:FindFirstChild(EggName) then
+			EggModel = EggModels:FindFirstChild(EggName):Clone()
+			EggModel.Parent = EggInFolder
+			EggModel:PivotTo(EggHolder.CFrame * CFrame.new(0, 3.8, 0))
+			EggModel:ScaleTo(2.25)
+		else
+			EggModel = EggInFolder:FindFirstChild(EggName)
+		end
+
+		if not UnlockedEggsData[EggName] then
+			for _, v in pairs(DarkGrey:GetChildren()) do
+				v.Color = Color3.fromRGB(0, 0, 0)
+			end
+			for _, v in pairs(LightGrey:GetChildren()) do
+				v.Color = Color3.fromRGB(0, 0, 0)
+			end
+			for _, v in pairs(EggModel:GetDescendants()) do
+				if v:IsA("BasePart") then
+					v.Color = Color3.fromRGB(0, 0, 0)
+				end
+			end
+		else
+			EggModel:Destroy()
+			EggModel = EggModels:FindFirstChild(EggName):Clone()
+			EggModel.Parent = EggInFolder
+			EggModel:PivotTo(EggHolder.CFrame * CFrame.new(0, 3.8, 0))
+			EggModel:ScaleTo(2.25)
+
+			for _, v in pairs(DarkGrey:GetChildren()) do
+				v.Color = Color3.fromRGB(85, 89, 99)
+			end
+			for _, v in pairs(LightGrey:GetChildren()) do
+				v.Color = Color3.fromRGB(132, 139, 154)
+			end
+		end
+	end
+end
+
 function EggUIHandler.Initialize()
 	if not game.Loaded then
 		game.Loaded:Wait()
@@ -350,6 +434,10 @@ function EggUIHandler.Initialize()
 		end
 	end)
 
+	dataSync.OnChanged("UnlockedEggs", function(_, _)
+		LoadEggModels()
+	end)
+
 	task.spawn(GetClosestEgg)
 
 	uis.InputBegan:Connect(function(input, gameProcessedEvent)
@@ -361,12 +449,20 @@ function EggUIHandler.Initialize()
 			if input.KeyCode == Enum.KeyCode.E then
 				local egg = closestEgg2
 				if egg ~= "" then
-					network:FireServer("OpenEgg", egg, 1)
+					if UnlockedEggs[egg] then
+						network:FireServer("OpenEgg", egg, 1)
+					else
+						network:FireServer("UnlockEgg", egg)
+					end
 				end
 			elseif input.KeyCode == Enum.KeyCode.R then
 				local egg = closestEgg2
 				if egg ~= "" then
-					network:FireServer("OpenEgg", egg, dataSync.Get("EggHatches"))
+					if UnlockedEggs[egg] then
+						network:FireServer("OpenEgg", egg, dataSync.Get("EggHatches"))
+					else
+						network:FireServer("UnlockEgg", egg)
+					end
 				end
 			elseif input.KeyCode == Enum.KeyCode.T then
 				local egg = closestEgg2

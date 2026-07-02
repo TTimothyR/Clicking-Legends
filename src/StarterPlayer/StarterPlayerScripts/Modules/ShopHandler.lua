@@ -2,6 +2,7 @@ local ShopHandler = {}
 local db = false
 
 -- Services
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local players = game:GetService("Players")
 local rs = game:GetService("ReplicatedStorage")
 local mps = game:GetService("MarketplaceService")
@@ -38,6 +39,7 @@ local scrollingHolder = holder:WaitForChild("ScrollingHolder")
 local exclusivePetFrame = scrollingHolder:WaitForChild("ExclusivePets")
 
 -- Modules
+local ImageService = require(ReplicatedStorage.Framework.Library.ImageService)
 local dataSync = require(script.Parent.DataSyncClient)
 local menuHandler = require(script.Parent.MenuHandler)
 local inventoryHandler = require(script.Parent.InventoryHandler)
@@ -142,12 +144,13 @@ local function LoadShop()
 		if string.match(productName, "Pet") then
 			if string.match(productName, "Combi") then
 				clone = exclusivePetFrame.Inner.Bundle
-				-- Pet images to be done
+				clone.Pets.Pet1.Image = ImageService[shopStats.DeveloperProducts.Pet1.PetName] or ImageService["Placeholder"]
+				clone.Pets.Pet2.Image = ImageService[shopStats.DeveloperProducts.Pet2.PetName] or ImageService["Placeholder"]
 				clone.Buy.Discounted.Text = "" .. info.PriceInRobux
 			else
 				clone = exclusivePetFrame.Inner.Pets[productName]
 				clone.PetName.Text = data.PetName
-				-- clone.Icon.Image = to be done;
+				clone.Icon.Image = ImageService[data.PetName] or ImageService["Placeholder"]
 				clone.Buy.Price.Text = "" .. info.PriceInRobux
 			end
 		elseif string.match(productName, "Gem") then
