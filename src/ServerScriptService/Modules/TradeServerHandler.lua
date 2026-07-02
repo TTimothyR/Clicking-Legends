@@ -29,14 +29,26 @@ local dataSync = require(dataModules.DataSyncServer)
 local startTime = 7
 local lockInTrigger = 3
 
-local function CheckTradeBan(profile)
-	local dupes = Globals.GetPetDuplicates(profile.Pets)
-	if next(dupes) == nil then
+local function CheckTradeBan(player: Player, profile)
+	local petDupes = Globals.GetPetDuplicates(profile.Pets)
+	if next(petDupes) == nil then
 		print("Player does not have duplicate pets")
 		profile.TradeBanned = false
 	else
 		print("Player has duplicate pets")
 		profile.TradeBanned = true
+	end
+
+	local giftDupes = Globals.GetGiftDuplicates(profile.Gifts)
+	if next(giftDupes) ~= nil then
+		players:BanAsync({
+			UserIds = { player.UserId },
+			Duration = -1,
+			DisplayReason = "You have been permanently banned from this experience for having duplicate gamepasses in your inventory. In case you believe this is a mistake, appeal in the community server.",
+			PrivateReason = "Had a duplicate gamepass in their inventory.",
+			ExcludeAltAccounts = false,
+			ApplyToUniverse = true,
+		})
 	end
 end
 
@@ -100,6 +112,21 @@ local function CompleteTrade(tradeID: string)
 	local profile1 = playerData.GetData(player1)
 	local profile2 = playerData.GetData(player2)
 
+	local gifts1 = profile1.Gifts
+	local gifts2 = profile2.Gifts
+
+	local giftsTo2 = trade.Players[playerNames[1]].Gifts
+	local giftsTo1 = trade.Players[playerNames[2]].Gifts
+
+	for id, gamepassName in pairs(giftsTo2) do
+		gifts2[id] = gamepassName
+		gifts1[id] = nil
+	end
+	for id, gamepassName in pairs(giftsTo1) do
+		gifts1[id] = gamepassName
+		gifts2[id] = nil
+	end
+
 	local pets1 = profile1.Pets
 	local pets2 = profile2.Pets
 
@@ -126,8 +153,8 @@ local function CompleteTrade(tradeID: string)
 	profile1.IsInTrade = false
 	profile2.IsInTrade = false
 
-	CheckTradeBan(profile1)
-	CheckTradeBan(profile2)
+	CheckTradeBan(player1, profile1)
+	CheckTradeBan(player2, profile2)
 
 	dataSync.SyncPlayer(player1, profile1)
 	dataSync.SyncPlayer(player2, profile2)
@@ -225,10 +252,12 @@ function TradeHandler.RequestAnswer(you: Player, me: Player, choice: boolean)
 				Players = {
 					[me.Name] = {
 						Pets = {},
+						Gifts = {},
 						Ready = false,
 					},
 					[you.Name] = {
 						Pets = {},
+						Gifts = {},
 						Ready = false,
 					},
 				},
@@ -283,6 +312,44 @@ function TradeHandler.SendTradeRequest(me: Player, you: Player)
 	network:FireClient(me, "UpdateTradeButtons")
 
 	network:FireClient(you, "TradeRequest", me)
+end
+
+function TradeHandler.ToggleGift(me: Player, id: string, gamepassName: string)
+	local tradeID = FindTradeID(me)
+	if not tradeID then
+		return
+	end
+
+	local trade = trades[tradeID]
+	if trade.Settings.TradeLocked then
+		return
+	end
+
+	local profile = playerData.GetData(me)
+	local gifts = profile.Gifts
+
+	if not gifts[id] then
+		return
+	end
+	if gifts[id] ~= gamepassName then
+		return
+	end
+
+	local state = nil
+
+	if not trade.Players[me.Name].Gifts[id] then
+		trade.Players[me.Name].Gifts[id] = gamepassName
+		state = "Added"
+	else
+		trade.Players[me.Name].Gifts[id] = nil
+		state = "Removed"
+	end
+
+	for playerName, _ in pairs(trade.Players) do
+		local plr = players:FindFirstChild(playerName) :: Player?
+		network:FireClient(plr, "ToggleGift", id, gamepassName, state)
+		TradeHandler.Unready(plr)
+	end
 end
 
 function TradeHandler.TogglePet(me: Player, id: string)
@@ -430,7 +497,7 @@ local function ResetVariables(player: Player)
 	local profile = playerData.GetData(player)
 	profile.IsInTrade = false
 	profile.TradeRequestFrom = ""
-	CheckTradeBan(profile)
+	CheckTradeBan(player, profile)
 
 	dataSync.SyncPlayer(player, profile)
 end

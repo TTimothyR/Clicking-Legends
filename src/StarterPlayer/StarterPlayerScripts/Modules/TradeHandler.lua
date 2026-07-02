@@ -59,6 +59,13 @@ local youPets = tradeMain:WaitForChild("YouPets")
 local meOffer = tradeMain:WaitForChild("MeOffer")
 local mePets = tradeMain:WaitForChild("MePets")
 
+local youButtons = tradeMain:WaitForChild("YouButtons")
+local youButtonHolder = youButtons:WaitForChild("Holder")
+local youGifts = tradeMain:WaitForChild("YouGifts")
+local meButtons = tradeMain:WaitForChild("MeButtons")
+local meButtonHolder = meButtons:WaitForChild("Holder")
+local meGifts = tradeMain:WaitForChild("MeGifts")
+
 -- Modules
 local network = require(framework.Network)
 local globals = require(framework.Globals)
@@ -145,6 +152,16 @@ local function CleanUp()
 			child:Destroy()
 		end
 	end
+	for _, child: Instance in ipairs(meGifts.ScrollingFrame:GetChildren()) do
+		if child:IsA("ImageButton") then
+			child:Destroy()
+		end
+	end
+	for _, child: Instance in ipairs(youGifts.ScrollingFrame:GetChildren()) do
+		if child:IsA("ImageButton") then
+			child:Destroy()
+		end
+	end
 
 	for _, con: RBXScriptConnection in ipairs(tradeConnections) do
 		if con.Connected then
@@ -226,6 +243,40 @@ function TradeHandler.StopTimer()
 	end
 end
 
+function TradeHandler.ToggleGift(me: Player, id: string, gamepassName: string, state: string)
+	if state == "Removed" then
+		if player == me then
+			meOffer.Pets:FindFirstChild(id):Destroy()
+		else
+			youOffer.Pets:FindFirstChild(id):Destroy()
+		end
+	elseif state == "Added" then
+		local clone = offerTemplate:Clone() :: ImageButton
+		clone.Name = id
+		-- add the icon here
+		clone.Frame.Legendary.Enabled = true
+
+		if player == me then
+			local clickConnection = clone.MouseButton1Click:Connect(function()
+				if not db then
+					db = true
+					task.delay(0.15, function()
+						db = false
+					end)
+					network:FireServer("ToggleGift", id, gamepassName)
+				end
+			end) :: RBXScriptConnection
+			clone:GetPropertyChangedSignal("Parent"):Once(function()
+				clickConnection:Disconnect()
+			end)
+
+			clone.Parent = meOffer.Pets
+		else
+			clone.Parent = youOffer.Pets
+		end
+	end
+end
+
 function TradeHandler.TogglePet(me: Player, data, state)
 	if state == "Removed" then
 		if player == me then
@@ -263,6 +314,8 @@ function TradeHandler.EnterTrade(_: Player, you: Player)
 	local yourProfile = dataSync.GetOtherData(you.UserId)
 	local myPets = dataSync.Get("Pets")
 	local yourPets = yourProfile.Pets
+	local myGifts = dataSync.Get("Gifts")
+	local yourGifts = yourProfile.Gifts
 
 	meOffer.Ready.Visible = false
 	youOffer.Ready.Visible = false
@@ -270,10 +323,41 @@ function TradeHandler.EnterTrade(_: Player, you: Player)
 	tradeButtons.Decline.Visible = true
 	tradeButtons.Unready.Visible = false
 
+	meGifts.Visible = false
+	mePets.Visible = true
+	youGifts.Visible = false
+	youPets.Visible = true
+
 	CleanUp()
 
 	youPets.PlayerName.Text = you.Name .. "'s Inventory"
+	youGifts.PlayerName.Text = you.Name .. "'s Inventory"
 	youOffer.PlayerName.Text = you.Name .. "'s Offer"
+
+	local function CreateGamepassButtons(inventory, holder)
+		for id, gamepassName in pairs(inventory) do
+			local clone = petTemplate:Clone() :: ImageButton
+			clone.Name = id
+			-- Add the gamepass icon here
+			clone.Frame.Legendary.Enabled = true
+			clone.Parent = holder
+			clone.Visible = true
+
+			local clickConnection = clone.MouseButton1Click:Connect(function()
+				if not db then
+					db = true
+					task.delay(0.15, function()
+						db = false
+					end)
+
+					if clone.Parent == meGifts.ScrollingFrame then
+						network:FireServer("ToggleGift", id, gamepassName)
+					end
+				end
+			end)
+			table.insert(tradeConnections, clickConnection)
+		end
+	end
 
 	local function CreatePetButtons(inventory, holder)
 		for _, petData in ipairs(inventory) do
@@ -296,6 +380,51 @@ function TradeHandler.EnterTrade(_: Player, you: Player)
 			table.insert(tradeConnections, clickCon)
 		end
 	end
+
+	local mePetsConnection = meButtonHolder.Pets.MouseButton1Click:Connect(function()
+		if not db then
+			db = true
+			task.delay(0.15, function()
+				db = false
+			end)
+			meGifts.Visible = false
+			mePets.Visible = true
+		end
+	end) :: RBXScriptConnection
+	local youPetsConnection = youButtonHolder.Pets.MouseButton1Click:Connect(function()
+		if not db then
+			db = true
+			task.delay(0.15, function()
+				db = false
+			end)
+			youGifts.Visible = false
+			youPets.Visible = true
+		end
+	end) :: RBXScriptConnection
+	local meGiftsConnection = meButtonHolder.Gifts.MouseButton1Click:Connect(function()
+		if not db then
+			db = true
+			task.delay(0.15, function()
+				db = false
+			end)
+			meGifts.Visible = true
+			mePets.Visible = false
+		end
+	end) :: RBXScriptConnection
+	local youGiftsConnection = youButtonHolder.Gifts.MouseButton1Click:Connect(function()
+		if not db then
+			db = true
+			task.delay(0.15, function()
+				db = false
+			end)
+			youGifts.Visible = true
+			youPets.Visible = false
+		end
+	end) :: RBXScriptConnection
+	table.insert(tradeConnections, mePetsConnection)
+	table.insert(tradeConnections, youPetsConnection)
+	table.insert(tradeConnections, meGiftsConnection)
+	table.insert(tradeConnections, youGiftsConnection)
 
 	local readyCon: RBXScriptConnection
 	local unreadyCon: RBXScriptConnection
@@ -334,6 +463,8 @@ function TradeHandler.EnterTrade(_: Player, you: Player)
 
 	CreatePetButtons(myPets, mePets.ScrollingFrame)
 	CreatePetButtons(yourPets, youPets.ScrollingFrame)
+	CreateGamepassButtons(myGifts, meGifts.ScrollingFrame)
+	CreateGamepassButtons(yourGifts, youGifts.ScrollingFrame)
 
 	menuHandler.handleOpenClose(tradeFrame)
 end

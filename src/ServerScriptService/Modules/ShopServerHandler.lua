@@ -183,6 +183,14 @@ function ShopHandler.UseGamepass(player: Player, id: string, gamepassName: strin
 	local ownedGamepasses = profile.OwnedGamepasses
 	local gifts = profile.Gifts
 
+	if profile.TradeBanned then
+		return
+	end
+
+	if profile.IsInTrade then
+		return
+	end
+
 	if ownedGamepasses[gamepassName] then
 		return
 	end

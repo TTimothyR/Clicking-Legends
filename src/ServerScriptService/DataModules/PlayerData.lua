@@ -61,6 +61,12 @@ function Local.LoadProfile(player: Player)
 	profile.Data.ClickDebounce = false
 	profile.Data.UnlockedEggs = {}
 
+	profile.Data.ItemShops["TestShop"] = {
+		["Lucky_I"] = 5,
+		["Speed_II"] = 1,
+		["Lucky_V"] = 1,
+	}
+
 	dataSync.InitializePlayer(player, profile.Data)
 end
 

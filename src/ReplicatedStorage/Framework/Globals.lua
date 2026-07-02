@@ -112,6 +112,23 @@ function Globals.GetPetDuplicates(pets)
 	return dupes
 end
 
+function Globals.GetGiftDuplicates(gifts)
+	local scannedIds = {}
+	local dupes = {}
+
+	for id, _ in ipairs(gifts) do
+		if scannedIds[id] then
+			if not dupes[id] then
+				dupes[id] = true
+			end
+		else
+			scannedIds[id] = true
+		end
+	end
+
+	return dupes
+end
+
 function Globals.GetPotionBuffAmount(tier, buff)
 	for _, data in pairs(items["Potions"][tier].Buffs) do
 		if data[1] == buff then

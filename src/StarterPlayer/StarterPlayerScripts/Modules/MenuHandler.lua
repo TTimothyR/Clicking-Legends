@@ -63,6 +63,7 @@ local sizePos = {
 	["Warning"] = { UDim2.fromScale(0.45, 0.45), UDim2.fromScale(0.5, 0.5) },
 	["Upgrades"] = { UDim2.fromScale(0.6, 0.6), UDim2.fromScale(0.5, 0.5) },
 	["Stats"] = { UDim2.fromScale(0.6, 0.6), UDim2.fromScale(0.5, 0.5) },
+	["ItemShop"] = { UDim2.fromScale(0.497, 0.6), UDim2.fromScale(0.5, 0.5) },
 }
 local animationTime = 0.15
 local fov = camera.FieldOfView
