@@ -19,6 +19,8 @@ local playerData = require(script.Parent.Parent.DataModules.PlayerData)
 local dataSync = require(script.Parent.Parent.DataModules.DataSyncServer)
 local rewardHandler = require(script.Parent.Private.RewardHandler)
 
+local ItemShopHandlerPrivate = require("./Private/ItemShopHandlerPrivate")
+
 -- Constants
 local gpIDToName = {}
 local productIDToName = {}
@@ -73,6 +75,16 @@ local callbacks = {
 		profile.Gems = infMath.new(profile.Gems + toAdd)
 		local leaderstats = player:FindFirstChild("leaderstats") :: Folder
 		leaderstats.Gems.Value = profile.Gems:GetSuffix(true)
+
+		dataSync.SyncPlayer(player, profile)
+	end,
+	["RestockShop"] = function(player: Player)
+		local profile = playerData.GetData(player)
+		local CurrentShop = profile.CurrentItemShop
+
+		if CurrentShop then
+			ItemShopHandlerPrivate.RestockShop(player, CurrentShop, true)
+		end
 
 		dataSync.SyncPlayer(player, profile)
 	end,
@@ -152,11 +164,15 @@ local function ProductPurchaseHandler()
 			callbacks["Pet"](player, petNames)
 		elseif string.match(productName, "GemPack") then
 			callbacks["Gem"](player, shopStats.DeveloperProducts[productName].BaseGems)
+		elseif receiptInfo.ProductId == 3608435738 then
+			callbacks["RestockShop"](player)
 		else
 			callbacks["Gift"](player, productName)
 		end
 
-		network:FireClient(player, "PurchaseConfirmed")
+		if receiptInfo.ProductId ~= 3608435738 then
+			network:FireClient(player, "PurchaseConfirmed")
+		end
 
 		return Enum.ProductPurchaseDecision.PurchaseGranted
 	end

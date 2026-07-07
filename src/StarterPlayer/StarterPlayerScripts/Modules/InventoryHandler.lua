@@ -572,6 +572,7 @@ CreatePetClickConnection = function(clone, petData)
 	local tooltipTbl = petData
 	tooltipTbl.clicks = true
 	tooltipTbl.gems = true
+	tooltipTbl.ShowLevel = true
 	Tooltip.SetupTooltip(clone, "PetTooltip", petData)
 	local clickCon: RBXScriptConnection = clone.MouseButton1Click:Connect(function()
 		if not db then

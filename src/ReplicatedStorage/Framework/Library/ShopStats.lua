@@ -64,10 +64,13 @@ return {
 		},
 		["Pet2"] = {
 			ProductID = 3548669613,
-			PetName = "Shiny Fox",
+			PetName = "Doggy",
 		},
 		["PetCombi"] = {
 			ProductID = 3548669728,
+		},
+		["RestockItemShop"] = {
+			ProductID = 3608435738,
 		},
 
 		["GemPack1"] = {

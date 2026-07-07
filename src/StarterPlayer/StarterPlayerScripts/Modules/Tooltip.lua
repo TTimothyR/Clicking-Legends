@@ -13,6 +13,7 @@ local Player = Players.LocalPlayer
 local PlayerGui = Player.PlayerGui
 local Frames = PlayerGui:WaitForChild("Frames")
 local TooltipFrame = Frames:WaitForChild("Tooltip")
+local Background = TooltipFrame.Background
 local Labels = TooltipFrame.Labels
 local Camera = workspace.CurrentCamera
 
@@ -29,21 +30,21 @@ local function GetMouseUIPos()
 	return UDim2.fromScale(MousePos.X / ViewportSize.X, VisibleMouseY / VisibleScreenHeight)
 end
 
--- local function SetBackgroundSize()
--- 	local NewSize = UDim2.fromScale(1, 0.15)
+local function SetBackgroundSize()
+	local NewSize = UDim2.fromScale(1, 0.15)
 
--- 	for _, v in pairs(Labels:GetChildren()) do
--- 		if v:IsA("Frame") or v:IsA("TextLabel") or v:IsA("ImageLabel") then
--- 			if v.Visible == true then
--- 				NewSize += UDim2.fromScale(0, v.Size.Y.Scale * 1.275)
--- 			end
--- 		end
--- 	end
+	for _, v in pairs(Labels:GetChildren()) do
+		if v:IsA("Frame") or v:IsA("TextLabel") or v:IsA("ImageLabel") then
+			if v.Visible == true then
+				NewSize += UDim2.fromScale(0, v.Size.Y.Scale * 1.275)
+			end
+		end
+	end
 
--- 	Background.Size = NewSize
--- end
+	Background.Size = NewSize
+end
 
-local function SetDefaultVisiblity()
+local function SetDefaultVisibility()
 	for _, v in pairs(Labels:GetChildren()) do
 		if v:IsA("Frame") or v:IsA("TextLabel") or v:IsA("ImageLabel") then
 			v.Visible = false
@@ -57,17 +58,18 @@ function Tooltip.SetupTooltip(Button: GuiButton, TooltipType: string, Data: {})
 	end
 
 	Button.MouseMoved:Connect(function()
-		SetDefaultVisiblity()
+		SetDefaultVisibility()
 		local Pos = (GetMouseUIPos() + UDim2.fromScale(0.02, 0.02) + UDim2.new())
 		TooltipFrame.Position = Pos
 		TooltipFrame.Visible = true
 
 		Tooltips[TooltipType](TooltipFrame, Data)
+		SetBackgroundSize()
 	end)
 
 	Button.MouseLeave:Connect(function()
 		TooltipFrame.Visible = false
-		SetDefaultVisiblity()
+		SetDefaultVisibility()
 	end)
 end
 

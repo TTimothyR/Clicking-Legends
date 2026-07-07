@@ -59,13 +59,10 @@ function Local.LoadProfile(player: Player)
 	end
 	leaderstats:CreateLeaderstats(player, profile)
 	profile.Data.ClickDebounce = false
+	profile.Data.Gifts = {}
 	profile.Data.UnlockedEggs = {}
 
-	profile.Data.ItemShops["TestShop"] = {
-		["Lucky_I"] = 5,
-		["Speed_II"] = 1,
-		["Lucky_V"] = 1,
-	}
+	--profile.Data.ItemShops = {}
 
 	dataSync.InitializePlayer(player, profile.Data)
 end

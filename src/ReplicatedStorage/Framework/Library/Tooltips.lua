@@ -1,6 +1,7 @@
 local InfiniteMath = require("../InfiniteMath")
 local ImageService = require("./ImageService")
 local ItemUtility = require("../ItemUtility")
+local PetUtility = require("../PetUtility")
 local PetStats = require("./PetStats")
 local Globals = require("../Globals")
 local ToHex = require("../Shared/ToHex")
@@ -14,6 +15,11 @@ local Tooltips = {
 		local TopFrame = Frame:FindFirstChild("Top")
 		local Image = ((Data.shiny and `Shiny {Data.petName}` or Data.petName) or ImageService.Doggy)
 		local Rarity = (PetStats[Data.petName].Rarity or "Common")
+		local PetData = PetUtility.GetPetData(Data.id)
+
+		if PetStats[Data.petName].Secret then
+			Data.Exist = 21
+		end
 
 		TopFrame.Info.Title.Text = Data.petName
 		TopFrame.Icon.Image = ImageService[Image] or ImageService["Placeholder"]
@@ -38,6 +44,16 @@ local Tooltips = {
 			LabelsFrame.Gems.Amount.Text = InfiniteMath.new(PetGems):GetSuffix(true)
 		end
 
+		if Data.ShowLevel then
+			local xpNeeded = Globals.XPForNextLevel(PetData.level, PetData.shiny)
+
+			LabelsFrame.Level.Visible = true
+			LabelsFrame.Level.Progress.Level.Text = `Level {PetData.level}`
+			LabelsFrame.Level.Progress.XP.Text = PetData.xp .. " / " .. InfiniteMath.new(xpNeeded):GetSuffix(true) .. " XP"
+		else
+			LabelsFrame.Level.Visible = false
+		end
+
 		if Data.AutoDelete then
 			LabelsFrame.AutoDelete.Visible = true
 		end
@@ -59,6 +75,13 @@ local Tooltips = {
 		if Data.Tag then
 			LabelsFrame.Tag.Visible = true
 			LabelsFrame.Tag.Amount.Text = Data.Tag
+		end
+
+		if Data.Exist and Data.Exist > 0 then
+			LabelsFrame.ExistHolder.Visible = true
+			LabelsFrame.ExistHolder.Amount.Text = `{Data.Exist} Exist`
+		else
+			LabelsFrame.ExistHolder.Visible = false
 		end
 	end,
 	Items = function(Frame, Data)

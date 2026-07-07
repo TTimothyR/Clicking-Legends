@@ -8,7 +8,13 @@ local rs = game:GetService("ReplicatedStorage")
 local mps = game:GetService("MarketplaceService")
 local ts = game:GetService("TweenService")
 
+local Framework = ReplicatedStorage:WaitForChild("Framework")
+
 local Classes = rs:WaitForChild("Classes")
+
+local Globals = require(Framework:WaitForChild("Globals"))
+
+local Tooltip = require("./Tooltip")
 
 -- Variables
 repeat
@@ -136,6 +142,9 @@ local function LoadShop()
 		if data.ProductID == nil then
 			continue
 		end
+		if data.ProductID == 3608435738 then
+			continue
+		end
 
 		local _, info = pcall(function()
 			return mps:GetProductInfoAsync(data.ProductID, Enum.InfoType.Product)
@@ -146,12 +155,23 @@ local function LoadShop()
 				clone = exclusivePetFrame.Inner.Bundle
 				clone.Pets.Pet1.Image = ImageService[shopStats.DeveloperProducts.Pet1.PetName] or ImageService["Placeholder"]
 				clone.Pets.Pet2.Image = ImageService[shopStats.DeveloperProducts.Pet2.PetName] or ImageService["Placeholder"]
+
 				clone.Buy.Discounted.Text = "" .. info.PriceInRobux
 			else
 				clone = exclusivePetFrame.Inner.Pets[productName]
 				clone.PetName.Text = data.PetName
 				clone.Icon.Image = ImageService[data.PetName] or ImageService["Placeholder"]
 				clone.Buy.Price.Text = "" .. info.PriceInRobux
+
+				warn(data)
+
+				Tooltip.SetupTooltip(clone.TooltipArea, "PetTooltip", {
+					petName = data.PetName,
+					shiny = data.Shiny,
+					clicks = Globals.GetPetClicks({ petName = data.PetName, shiny = data.shiny, level = 1 }),
+					gems = Globals.GetPetGems({ petName = data.PetName, shiny = data.shiny, level = 1 }),
+					level = 1,
+				})
 			end
 		elseif string.match(productName, "Gem") then
 			clone = gemsTemplate:Clone()
@@ -211,6 +231,9 @@ function ShopHandler.HideGreyFrame()
 end
 
 function ShopHandler.PurchaseConfirmed()
+	if menuHandler.activeFrame == "ItemShop" then
+		return
+	end
 	ShopHandler.HideGreyFrame()
 
 	local targetFrame = shopFrame

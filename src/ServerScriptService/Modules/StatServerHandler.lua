@@ -12,6 +12,8 @@ local dataModules = sss:WaitForChild("DataModules")
 local framework = rs:WaitForChild("Framework")
 local library = framework:WaitForChild("Library")
 
+local GlobalEventsModule = require(library:WaitForChild("GlobalEventsModule"))
+
 local characterGroup = "CHAR"
 local debrisGroup = "DEBRIS"
 
@@ -120,13 +122,17 @@ function StatHandler.Click(player: Player, fromAutoClick: boolean)
 	end)
 
 	local petIncrement = GetPetClicks(profile.Pets)
-	local increment = infMath.new((100 + petIncrement) * profile.Rebirths)
+	local increment = infMath.new((1 + petIncrement) * profile.Rebirths)
 
 	local criticalRoll = rng:NextInteger(1, 25)
 	local critical = false
 	if criticalRoll == 1 then
 		increment *= 1.5
 		critical = true
+	end
+
+	if GlobalEventsModule.IsActive("ClicksEvent") == true then
+		increment *= GlobalEventsModule.GetMulti("ClicksEvent")
 	end
 
 	local upgradeLevels = profile.UpgradeLevels

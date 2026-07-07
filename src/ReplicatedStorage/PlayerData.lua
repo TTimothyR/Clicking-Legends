@@ -50,6 +50,9 @@ Shared.DEFAULT_PLAYER_DATA = {
 	RedeemedCodes = {},
 	UnlockedEggs = {},
 	ItemShops = {},
+	DailyShopRerolls = 3,
+	NextDailyReroll = os.time(),
+	CurrentItemShop = nil,
 
 	IsInTrade = false,
 	HasTradingDisabled = false,

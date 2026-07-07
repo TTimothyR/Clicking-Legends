@@ -5,11 +5,17 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local rs = game:GetService("ReplicatedStorage")
 local sss = game:GetService("ServerScriptService")
 
+local Framework = ReplicatedStorage:WaitForChild("Framework")
+
+local Library = Framework:WaitForChild("Library")
+
 -- Variables
 local rng = Random.new()
 local dataModules = sss:WaitForChild("DataModules")
 local framework = rs:WaitForChild("Framework")
 local library = framework:WaitForChild("Library")
+
+local GlobalEventsModule = require(Library:WaitForChild("GlobalEventsModule"))
 
 -- Modules
 local Globals = require(ReplicatedStorage.Framework.Globals)
@@ -45,6 +51,10 @@ function LuckHandler.RollPet(player: Player, eggName: string)
 	local gamepass = ownedGamepasses["Double Luck"] and true or false
 	if gamepass then
 		luckPercentage *= 2
+	end
+
+	if GlobalEventsModule.IsActive("LuckEvent") == true then
+		luckPercentage *= GlobalEventsModule.GetMulti("LuckEvent")
 	end
 
 	local tbl = eggStats[eggName].Pets

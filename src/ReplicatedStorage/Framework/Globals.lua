@@ -10,6 +10,7 @@ local library = framework:WaitForChild("Library")
 
 -- Modules
 local items = require(ReplicatedStorage.Framework.Library.Items)
+local GlobalEventsModule = require(ReplicatedStorage.Framework.Library.GlobalEventsModule)
 local eggStats = require(library.EggStats)
 local petStats = require(library.PetStats)
 
@@ -219,6 +220,10 @@ function Globals.GetPetChance(gpOwned: boolean, luckPercentage, petName: string,
 		luckPercentage *= 2
 	end
 
+	if GlobalEventsModule.IsActive("LuckEvent") == true then
+		luckPercentage *= GlobalEventsModule.GetMulti("LuckEvent")
+	end
+
 	local luckBoost = 1 + (luckPercentage / 100)
 
 	for item, chance in pairs(tbl) do
@@ -253,21 +258,23 @@ function Globals.GetPetChance(gpOwned: boolean, luckPercentage, petName: string,
 end
 
 function Globals.FormatTime(seconds, letterRepresentation: boolean)
-	local hours = math.floor(seconds / 3600)
+	local days = math.floor(seconds / 86400)
+	local hours = math.floor((seconds % 86400) / 3600)
 	local minutes = math.floor((seconds % 3600) / 60)
 	local secondsLeft = math.floor(seconds % 60)
-
 	if not letterRepresentation then
 		if seconds <= 0 then
-			return "00:00:00"
+			return "00:00:00:00"
 		end
-		return string.format("%02d:%02d:%02d", hours, minutes, secondsLeft)
+		return string.format("%02d:%02d:%02d:%02d", days, hours, minutes, secondsLeft)
 	else
 		if seconds <= 0 then
 			return "0s"
 		end
-
 		local formatted = ""
+		if days > 0 then
+			formatted ..= tostring(days) .. "d "
+		end
 		if hours > 0 then
 			formatted ..= tostring(hours) .. "h "
 		end
@@ -277,7 +284,6 @@ function Globals.FormatTime(seconds, letterRepresentation: boolean)
 		if secondsLeft > 0 then
 			formatted ..= tostring(secondsLeft) .. "s"
 		end
-
 		return formatted
 	end
 end
