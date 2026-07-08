@@ -1264,6 +1264,12 @@ function InventoryHandler.ParseShopHandler(handler)
 end
 
 function InventoryHandler.NewItem(data)
+	local hideItemPopups = dataSync.Get("Settings").HideItemPopups
+
+	if hideItemPopups then
+		return
+	end
+
 	local clone = potionTemplate:Clone()
 	local potionTier = data.tier
 	--local potionImage = potionTemplates:WaitForChild(data.tier):Clone()
@@ -1289,7 +1295,7 @@ function InventoryHandler.NewItem(data)
 
 	clone.Name = data.potionName
 	clone.Frame.PotionName.Text = data.buff .. " " .. data.tier
-	--clone.Frame.Amount.Text = "x" .. data.amount
+	clone.Frame.Amount.Text = "x" .. data.amount
 
 	clone.Parent = frames.NewItems
 

@@ -1,6 +1,8 @@
 local RewardHandler = {}
 
 -- Services
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerScriptService = game:GetService("ServerScriptService")
 local sss = game:GetService("ServerScriptService")
 local rs = game:GetService("ReplicatedStorage")
 
@@ -11,6 +13,9 @@ local petModels = assets:WaitForChild("PetModels")
 local framework = rs:WaitForChild("Framework")
 
 -- Modules
+local Items = require(ReplicatedStorage.Framework.Library.Items)
+local Network = require(ReplicatedStorage.Framework.Network)
+local DataSyncServer = require(ServerScriptService.DataModules.DataSyncServer)
 local playerData = require(dataModules.PlayerData)
 local generateID = require(framework.GenerateID)
 local infMath = require(framework.InfiniteMath)
@@ -46,6 +51,31 @@ function RewardHandler.ClaimPet(player: Player, fullName: string, shiny: boolean
 	return true
 end
 
+function RewardHandler.ClaimPotion(player: Player, potionName: string, amount: number)
+	local profile = playerData.GetData(player)
+	local playerItems = profile.Items
+	local potions = playerItems.Potions
+
+	local nameSplit = string.split(potionName, "_")
+	local buff, tier = nameSplit[1], nameSplit[2]
+
+	if not potions[potionName] then
+		potions[potionName] = amount
+	else
+		potions[potionName] += amount
+	end
+
+	Network:FireClient(player, "NewItem", {
+		potionName = potionName,
+		tier = tier,
+		buff = buff,
+		amount = amount,
+		rarity = (Items.Potions[tier].Rarity or "Common"),
+	})
+
+	DataSyncServer.SyncPlayer(player, profile)
+end
+
 function RewardHandler.ClaimCurrency(player: Player, currencyStr: string, amount: number)
 	local profile = playerData.GetData(player)
 
@@ -57,15 +87,22 @@ function RewardHandler.ClaimCurrency(player: Player, currencyStr: string, amount
 	local increment = infMath.new(amount)
 	profile[currencyStr] = infMath.new(currentValue + increment)
 
-	-- if player:GetAttribute(currencyStr) then
-	--     player:SetAttribute(currencyStr, http:JSONEncode(profile[currencyStr]));
-	-- end
 	local leaderstats = player:FindFirstChild("leaderstats") :: Folder
 	for _, instance in ipairs(leaderstats:GetDescendants()) do
 		if instance.Name == currencyStr then
 			instance.Value = profile[currencyStr]:GetSuffix(true)
 		end
 	end
+
+	-- Network:FireClient(player, "NewItem", {
+	-- 	potionName = currencyStr,
+	-- 	tier = nil,
+	-- 	buff = nil,
+	-- 	amount = amount,
+	-- 	rarity = "Common",
+	-- })
+
+	DataSyncServer.SyncPlayer(player, profile)
 
 	return true
 end
@@ -78,6 +115,8 @@ function RewardHandler.ClaimPerk(player: Player, perkStr: string, amount: number
 	end
 
 	profile[perkStr] += amount
+
+	DataSyncServer.SyncPlayer(player, profile)
 
 	return true
 end

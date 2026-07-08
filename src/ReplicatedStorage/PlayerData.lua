@@ -47,6 +47,7 @@ Shared.DEFAULT_PLAYER_DATA = {
 		["Eggs"] = {},
 		["ActualClicks"] = {},
 	},
+	ClaimedEggs = {},
 	UpgradeLevels = {},
 	OwnedGamepasses = {},
 	RedeemedCodes = {},

@@ -28,6 +28,7 @@ local indexFrame = frames:WaitForChild("Index")
 local templates = indexFrame:WaitForChild("Templates")
 local eggTemplate = templates:WaitForChild("EggTemplate")
 local petTemplate = templates:WaitForChild("PetTemplate")
+local rewardTemplate = templates:WaitForChild("RewardTemplate")
 local main = indexFrame:WaitForChild("Main")
 local eggsFrame = main:WaitForChild("Eggs")
 local eggHolder = eggsFrame:WaitForChild("EggHolder")
@@ -39,21 +40,17 @@ local normalButton = buttons:WaitForChild("Normal")
 local shinyButton = buttons:WaitForChild("Shiny")
 local discoveryFrame = miscFrame:WaitForChild("Discovery")
 local lockedFrame = discoveryFrame:WaitForChild("Locked")
+local rewardFrame = discoveryFrame:WaitForChild("RewardFrame")
+local claimButton = rewardFrame:WaitForChild("Claim") :: ImageButton
 
 -- Modules
+local InfiniteMath = require(ReplicatedStorage.Framework.InfiniteMath)
 local ImageService = require(ReplicatedStorage.Framework.Library.ImageService)
 local globals = require(framework.Globals)
+local network = require(framework.Network)
 local eggStats = require(library.EggStats)
 local petStats = require(library.PetStats)
 local dataSync = require(script.Parent.DataSyncClient)
-
--- local function GetTotalPetCount(eggName: string)
---     local count = 0
---     for _, _ in pairs(eggStats[eggName].Pets) do
---         count += 1
---     end
---     return count;
--- end
 
 local function LoadTotalPetCount()
 	for eggName, data in pairs(eggStats) do
@@ -80,6 +77,31 @@ local function GetPlayerPetCount(eggName: string)
 	end
 
 	return normalCount, shinyCount
+end
+
+local function LoadRewards()
+	for _, child in ipairs(rewardFrame:GetChildren()) do
+		if child:IsA("ImageButton") and child.Name ~= "Claim" then
+			child:Destroy()
+		end
+	end
+
+	local rewardTable = shinySelected and eggStats[selectedEgg].ShinyRewards or eggStats[selectedEgg].Rewards
+
+	if not rewardTable then
+		return
+	end
+	for _, rewardData in ipairs(rewardTable) do
+		local rewardName = rewardData[2]
+		local amount = rewardData[3]
+
+		local clone = rewardTemplate:Clone() :: ImageButton
+		clone.Icon.Image = ImageService[rewardName] or ImageService["Placeholder"]
+		clone.Amount.Text = "x" .. InfiniteMath.new(amount):GetSuffix(true)
+
+		clone.Parent = rewardFrame
+		clone.Visible = true
+	end
 end
 
 local function LoadPets(index, eggName: string, shiny: boolean)
@@ -132,9 +154,19 @@ end
 
 local function SelectEgg(eggName: string)
 	local index = dataSync.Get("PetIndex")
+	local claimedEggs = dataSync.Get("ClaimedEggs")
 	selectedEgg = eggName
 
+	local fullEggName = shinySelected and "Shiny " .. eggName or eggName
+
+	if claimedEggs[fullEggName] then
+		rewardFrame.Visible = false
+	else
+		rewardFrame.Visible = true
+	end
+
 	LoadPets(index, eggName, shinySelected)
+	LoadRewards()
 
 	miscFrame.Visible = true
 end
@@ -211,6 +243,21 @@ function IndexHandler.Initialize()
 			shinySelected = true
 			if selectedEgg then
 				SelectEgg(selectedEgg)
+			end
+		end
+	end)
+
+	claimButton.MouseButton1Click:Connect(function()
+		if not db then
+			db = true
+			task.delay(0.15, function()
+				db = false
+			end)
+
+			local success = network:InvokeServer("ClaimIndexReward", selectedEgg, shinySelected)
+
+			if success then
+				rewardFrame.Visible = false
 			end
 		end
 	end)

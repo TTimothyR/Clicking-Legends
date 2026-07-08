@@ -40,7 +40,9 @@ local statFrames = {
 			if ownedGamepsses["Fast Hatch"] then
 				baseSpeed += 0.35
 			end
-			baseSpeed += upgradeLevels["Faster Egg Open"] * (Upgrades["Faster Egg Open"].Increment / 100)
+			if next(upgradeLevels) ~= nil then
+				baseSpeed += upgradeLevels["Faster Egg Open"] * (Upgrades["Faster Egg Open"].Increment / 100)
+			end
 
 			local totalHatchTime = baseHatchTime / baseSpeed
 			return Globals.FormatChance(totalHatchTime)
