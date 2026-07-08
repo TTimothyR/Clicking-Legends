@@ -206,6 +206,16 @@ function Globals.GetPetGems(petData)
 	return total
 end
 
+function Globals.GetRawPetChance(petName: string, eggName: string)
+	for name, data in pairs(eggStats[eggName].Pets) do
+		if name == petName then
+			return data[1]
+		end
+	end
+
+	return nil
+end
+
 function Globals.GetPetChance(gpOwned: boolean, luckPercentage, petName: string, eggName: string, shiny: boolean)
 	local tbl = eggStats[eggName].Pets
 	local boosted = { ["Epic"] = true, ["Legendary"] = true }

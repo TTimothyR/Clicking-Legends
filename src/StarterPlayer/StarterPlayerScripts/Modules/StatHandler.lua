@@ -222,8 +222,9 @@ local function getStatIconPosition(currencyName)
 end
 
 function ClickHandler.spawnCurrencyPopup()
+	local popupsEnabled = dataSync.Get("Settings").ClickPopups
 	local iconImage = "rbxassetid://111160873357689"
-	if not iconImage then
+	if not iconImage or not popupsEnabled then
 		return
 	end
 
@@ -344,7 +345,8 @@ end
 
 function ClickHandler.PopUp(increment, currencyStr: string, critical: boolean?, position: UDim2?, isScreen: boolean)
 	--warn(increment.. " - from PopUp Function")
-	if not increment or increment == infMath.new(0) then
+	local popupsEnabled = dataSync.Get("Settings").ClickPopups
+	if not increment or increment == infMath.new(0) or not popupsEnabled then
 		return
 	end
 

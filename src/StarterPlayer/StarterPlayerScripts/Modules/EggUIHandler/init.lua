@@ -59,6 +59,7 @@ local function SetupTemplate(ui)
 	local luckPercentage = dataSync.Get("LuckPercentage")
 	local gpsOwned = dataSync.Get("OwnedGamepasses")
 	local luckPassOwned = gpsOwned["Double Luck"] and true or false
+	local easyChance = dataSync.Get("Settings").EasyChances
 
 	local activePotions = dataSync.Get("ActivePotions")
 	if activePotions["Lucky"] then
@@ -90,7 +91,12 @@ local function SetupTemplate(ui)
 
 			local chance = globals.GetPetChance(luckPassOwned, luckPercentage, item.Name, ui.Name, false)
 
-			item.Chance.Text = globals.FormatChance(chance) .. "%"
+			if not easyChance then
+				item.Chance.Text = globals.FormatChance(chance) .. "%"
+			else
+				local calculatedChance = 100 / chance
+				item.Chance.Text = "1 in " .. globals.FormatNumber(calculatedChance)
+			end
 
 			clickConnection = item.MouseButton1Click:Connect(function()
 				if not db then
@@ -235,6 +241,7 @@ local function ConfigureEggUI(egg: Model)
 
 	local luckPercentage = dataSync.Get("LuckPercentage")
 	local gpsOwned = dataSync.Get("OwnedGamepasses")
+	local easyChance = dataSync.Get("Settings").EasyChances
 	local luckPassOwned = gpsOwned["Double Luck"] and true or false
 
 	local activePotions = dataSync.Get("ActivePotions")
@@ -286,7 +293,12 @@ local function ConfigureEggUI(egg: Model)
 
 		petClone.Icon.Image = ImageService[petName] or ImageService["Placeholder"]
 
-		petClone.Chance.Text = globals.FormatChance(chance) .. "%"
+		if not easyChance then
+			petClone.Chance.Text = globals.FormatChance(chance) .. "%"
+		else
+			local calculatedChance = 100 / chance
+			petClone.Chance.Text = "1 in " .. globals.FormatNumber(calculatedChance)
+		end
 		petClone.Chance.TextColor3 = globals.RarityColors[rarity]
 		if rarity == "Legendary" then
 			local colorConnection = runService.Heartbeat:Connect(function()

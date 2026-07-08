@@ -30,6 +30,7 @@ local tradeFrame = frames:WaitForChild("Trade")
 local infoFrame = frames:WaitForChild("Info")
 local upgradesFrame = frames:WaitForChild("Upgrades")
 local statsFrame = frames:WaitForChild("Stats")
+local settingsFrame = frames:WaitForChild("Settings")
 
 local hud = playerGui:WaitForChild("HUD")
 local left = hud:WaitForChild("Left")
@@ -42,12 +43,14 @@ local shopButton = buttons:WaitForChild("Shop")
 local tradeButton = buttons:WaitForChild("Trading")
 local upgradeButton = buttons:WaitForChild("Upgrades")
 local statsButton = buttons:WaitForChild("Stats")
+local settingsButton = buttons:WaitForChild("Settings") :: ImageButton
 
 -- Modules
 local inventoryHandler = require(script.Parent.InventoryHandler)
 local rebirthHandler = require(script.Parent.RebirthHandler)
 local indexHandler = require(script.Parent.IndexHandler)
 local prizeHandler = require(script.Parent.PrizeHandler)
+local settingsHandler = require(script.Parent.SettingsHandler)
 
 -- Constants
 -- Size, position;
@@ -64,6 +67,7 @@ local sizePos = {
 	["Upgrades"] = { UDim2.fromScale(0.6, 0.6), UDim2.fromScale(0.5, 0.5) },
 	["Stats"] = { UDim2.fromScale(0.6, 0.6), UDim2.fromScale(0.5, 0.5) },
 	["ItemShop"] = { UDim2.fromScale(0.497, 0.6), UDim2.fromScale(0.5, 0.5) },
+	["Settings"] = { UDim2.fromScale(0.6, 0.6), UDim2.fromScale(0.5, 0.5) },
 }
 local animationTime = 0.15
 local fov = camera.FieldOfView
@@ -174,6 +178,9 @@ function ButtonHandler.Initialize()
 	end)
 	statsButton.MouseButton1Click:Connect(function()
 		ButtonHandler.handleOpenClose(statsFrame)
+	end)
+	settingsButton.MouseButton1Click:Connect(function()
+		ButtonHandler.handleOpenClose(settingsFrame, settingsHandler.LoadSettings)
 	end)
 
 	for _, frame in ipairs(frames:GetChildren()) do

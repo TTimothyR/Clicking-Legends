@@ -33,6 +33,8 @@ Shared.DEFAULT_PLAYER_DATA = {
 	TotalRobuxSpent = 0,
 	TimePlayed = 0,
 
+	Settings = {},
+
 	Gifts = {},
 	Pets = {},
 	PetIndex = {},

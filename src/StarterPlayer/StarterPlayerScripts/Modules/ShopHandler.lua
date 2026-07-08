@@ -163,8 +163,6 @@ local function LoadShop()
 				clone.Icon.Image = ImageService[data.PetName] or ImageService["Placeholder"]
 				clone.Buy.Price.Text = "" .. info.PriceInRobux
 
-				warn(data)
-
 				Tooltip.SetupTooltip(clone.TooltipArea, "PetTooltip", {
 					petName = data.PetName,
 					shiny = data.Shiny,

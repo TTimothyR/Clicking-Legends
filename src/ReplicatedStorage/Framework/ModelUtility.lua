@@ -93,10 +93,7 @@ function ModelUtil.ShakeModel(modelsTbl: {}, shakeDuration: number, camera, came
 	)
 	twn:Play()
 
-	local conn: RBXScriptSignal
-	conn = twn.Completed:Connect(function()
-		conn:Disconnect()
-		conn = nil
+	twn.Completed:Once(function(_: Enum.PlaybackState)
 		twn:Destroy()
 		IsActive = false
 
@@ -106,8 +103,23 @@ function ModelUtil.ShakeModel(modelsTbl: {}, shakeDuration: number, camera, came
 		for _, data in ipairs(modelsTbl) do
 			data.rot.Value = CFrame.Angles(0, 0, 0)
 		end
+		camera.FieldOfView = 70
 	end)
-	camera.FieldOfView = 70
+
+	-- local conn: RBXScriptSignal
+	-- conn = twn.Completed:Connect(function()
+	-- 	conn:Disconnect()
+	-- 	conn = nil
+	-- 	twn:Destroy()
+	-- 	IsActive = false
+
+	-- 	for _, con in ipairs(Connections) do
+	-- 		con:Disconnect()
+	-- 	end
+	-- 	for _, data in ipairs(modelsTbl) do
+	-- 		data.rot.Value = CFrame.Angles(0, 0, 0)
+	-- 	end
+	-- end)
 end
 
 function ModelUtil.Mythicify(i: Part | ParticleEmitter, v: number)

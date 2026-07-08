@@ -92,6 +92,10 @@ function DebugDisplay.Initialize()
 	DataSyncClient.OnChanged("ActivePotions", UpdateStats)
 	DataSyncClient.OnChanged("OwnedGamepasses", UpdateStats)
 	DataSyncClient.OnChanged("UpgradeLevels", UpdateStats)
+
+	DataSyncClient.OnChanged("Settings", function(new, _)
+		holder.Visible = new.Debug
+	end)
 end
 
 return DebugDisplay

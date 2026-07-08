@@ -20,6 +20,10 @@ local petModels = assets:WaitForChild("PetModels")
 
 local tValues = {}
 
+local hideAllPets = false
+local hideOtherPets = false
+local equippedPetsData = {}
+
 -- Modules
 local petStats = require(library.PetStats)
 local dataSync = require(script.Parent.DataSyncClient)
@@ -63,6 +67,70 @@ local function CalculateYOffset(model, rayDistance)
 	end
 
 	return -lowestOffset
+end
+
+local function ShouldShowPets(ownerName: string): boolean
+	if hideAllPets then
+		return false
+	end
+	if hideOtherPets and ownerName ~= plr.name then
+		return false
+	end
+
+	return true
+end
+
+local function SpawnPetModel(player: Player, petData)
+	local folder = petsFolder:FindFirstChild(player.Name)
+	if not folder or folder:FindFirstChild(petData.id) then
+		return
+	end
+
+	local model
+	if petModels:FindFirstChild(petData.fullName) then
+		model = petModels[petData.fullName]:Clone() :: Model
+	else
+		model = petModels[petData.petName]:Clone() :: Model
+	end
+	model.Parent = folder
+	model.Name = petData.id
+
+	local petName = Instance.new("StringValue") :: StringValue
+	petName.Parent = model
+	petName.Name = "PetName"
+	petName.Value = petData.petName
+
+	if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+		local char = player.Character
+		local root = char.HumanoidRootPart
+
+		model:PivotTo(root.CFrame)
+	end
+end
+
+local function DestroyPetModel(player: Player, petId: string)
+	local folder = petsFolder:FindFirstChild(player.Name) :: Folder
+	local model = folder and folder:FindFirstChild(petId) :: Model
+	if model then
+		model:Destroy()
+	end
+end
+
+local function SyncPetVisibility()
+	for playerName, pets in pairs(equippedPetsData) do
+		local player = players:FindFirstChild(playerName) :: Player
+		if not player then
+			continue
+		end
+		local visible = ShouldShowPets(playerName)
+		for id, petData in pairs(pets) do
+			if visible then
+				SpawnPetModel(player, petData)
+			else
+				DestroyPetModel(player, id)
+			end
+		end
+	end
 end
 
 local function handlePets(folder: Folder)
@@ -210,24 +278,17 @@ function PetHandler.UpdatePet(player, petData, equip: boolean)
 	if not character then
 		return
 	end
+
+	equippedPetsData[player.Name] = equippedPetsData[player.Name] or {}
+
 	if equip then
-		local model
-		if petModels:FindFirstChild(petData.fullName) then
-			model = petModels[petData.fullName]:Clone()
-		else
-			model = petModels[petData.petName]:Clone()
+		equippedPetsData[player.Name][petData.id] = petData
+		if ShouldShowPets(player.Name) then
+			SpawnPetModel(player, petData)
 		end
-		model.Parent = petsFolder:FindFirstChild(player.Name)
-		model.Name = petData.id
-
-		local petName: StringValue = Instance.new("StringValue")
-		petName.Parent = model
-		petName.Name = "PetName"
-		petName.Value = petData.petName
-
-		model:PivotTo(player.Character:WaitForChild("HumanoidRootPart").CFrame)
 	else
-		petsFolder:FindFirstChild(player.Name):FindFirstChild(petData.id):Destroy()
+		equippedPetsData[player.Name][petData.id] = nil
+		DestroyPetModel(player, petData.id)
 	end
 end
 
@@ -236,7 +297,17 @@ function PetHandler.Initialize()
 		game.Loaded:Wait()
 	end
 
+	dataSync.OnChanged("Settings", function(new, _)
+		hideAllPets = new.HideAll
+		hideOtherPets = new.HideOthers
+		SyncPetVisibility()
+	end)
+
 	dataSync.OnReady(function()
+		local playerSettings = dataSync.Get("Settings")
+		hideAllPets = playerSettings.HideAll
+		hideOtherPets = playerSettings.HideOthers
+
 		for _, folder: Folder in ipairs(petsFolder:GetChildren()) do
 			LoadPets(players:FindFirstChild(folder.Name))
 			task.delay(0.2, handlePets, folder)

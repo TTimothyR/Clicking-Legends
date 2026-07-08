@@ -174,6 +174,8 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
 	local ownedGamepsses = dataSync.Get("OwnedGamepasses")
 	local upgradeLevels = dataSync.Get("UpgradeLevels")
 
+	local skipEasyLegendary = dataSync.Get("Settings").SkipEasyLegendaries
+
 	local activePotions = dataSync.Get("ActivePotions")
 	if activePotions["Speed"] then
 		local tier, data = next(activePotions["Speed"].Active)
@@ -239,13 +241,17 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
 		local positions = CalculatePositions(amount)
 		pos.Value = positions[i].pos1
 
+		local petChance = globals.GetRawPetChance(petsData[i].petName, eggName)
+		local canSkip = petChance >= 0.02
+		local shouldSkip = rarity == "Legendary" and canSkip and skipEasyLegendary
+
 		if stats.Secret then
 			secrets += 1
-		elseif rarity == "Legendary" then
+		elseif rarity == "Legendary" and not shouldSkip then
 			legendaries += 1
 		end
 
-		if stats.Secret or rarity == "Legendary" then
+		if stats.Secret or (rarity == "Legendary" and not shouldSkip) then
 			highlight.Enabled = true
 			local colorConnection = runService.Heartbeat:Connect(function()
 				local t = tick() * 0.4 % 1
@@ -265,7 +271,7 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
 			rot = rot,
 			endScale = originalScale,
 			endPos = positions[i].pos1,
-			special = (rarity == "Legendary"),
+			special = (rarity == "Legendary") and not shouldSkip,
 			secret = stats.Secret,
 		})
 
