@@ -1,6 +1,7 @@
 local ItemHandler = {}
 
 -- Services
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local players = game:GetService("Players")
 local rs = game:GetService("ReplicatedStorage")
 local runService = game:GetService("RunService")
@@ -18,16 +19,18 @@ local activeTimers = {}
 -- UI
 local playerGui = player:WaitForChild("PlayerGui")
 local hud = playerGui:WaitForChild("HUD")
-local potionTemplates = hud:WaitForChild("PotionTemplates")
+local templates = hud:WaitForChild("Templates")
+local potionTemplate = templates:WaitForChild("PotionTemplate")
 local itemHolder = hud:WaitForChild("Items")
 
 -- Modules
+local ImageService = require(ReplicatedStorage.Framework.Library.ImageService)
 local dataSync = require(script.Parent.DataSyncClient)
 local globals = require(framework.Globals)
 
 local function UpdateDisplay(clone, endTime)
 	local remainingTime = endTime - os.time()
-	clone.Duration.Text = globals.FormatTime(remainingTime)
+	clone.Duration.Text = globals.FormatTime(remainingTime, true)
 end
 
 local function StartTimer(clone, endTime, boostType)
@@ -44,15 +47,9 @@ local function StartTimer(clone, endTime, boostType)
 end
 
 local function CreateTemplate(boostType, tier, remainingDuration)
-	local clone = potionTemplates:FindFirstChild(tier):Clone()
-	local color = globals.BuffColors[boostType]
-	clone.Liquid.ImageColor3 = color
-
-	-- if rarity == 'Legendary' then
-	--     clone.Liquid.RainbowTemplate.Enabled = true;
-	-- end
-	clone.Tier.Text = tier
-	clone.Duration.Text = globals.FormatTime(remainingDuration)
+	local clone = potionTemplate:Clone()
+	clone.Icon.Image = ImageService[boostType .. "_" .. tier]
+	clone.Duration.Text = globals.FormatTime(remainingDuration, true)
 	clone.Name = boostType
 	clone.Parent = itemHolder
 	clone.Visible = true

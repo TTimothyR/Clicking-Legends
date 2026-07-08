@@ -3,6 +3,8 @@ return {
 		Price = { "Clicks", 100 },
 		World = "Spawn",
 		Limited = false,
+		Rewards = { "Potion", "Lucky_I", 69 },
+		ShinyRewards = { "Currency", "Gems", 67420 },
 		Pets = {
 			["Doggy"] = { 40, 1 },
 			["Kitty"] = { 30, 2 },

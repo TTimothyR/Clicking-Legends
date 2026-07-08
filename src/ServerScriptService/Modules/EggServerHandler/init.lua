@@ -213,8 +213,6 @@ function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
 					profile.PreAFKInfo["Pets"][fullName] = 0
 				end
 				profile.PreAFKInfo["Pets"][fullName] += 1
-
-				print(profile.PreAFKInfo["Pets"])
 			end
 		end
 	end

@@ -35,8 +35,6 @@ local selectedPetID = nil
 local selectedItemName = nil
 local selectedGiftID = nil
 
-local loadedPetInfoIcon = nil
-
 local petInfoConnections = {}
 local itemInfoConnections = {}
 local giftInfoConnections = {}
@@ -97,7 +95,6 @@ local giftsButton = sideButtonsHolder:WaitForChild("Gifts")
 local itemInventoryFrame = main:WaitForChild("ItemInventory")
 local itemHolder = itemInventoryFrame:WaitForChild("ScrollingFrame")
 
-local potionTemplates = inventoryFrame:WaitForChild("PotionTemplates")
 local potionTemplate = templates:WaitForChild("PotionTemplate")
 local categoryTag = templates:WaitForChild("CategoryTag")
 
@@ -329,27 +326,7 @@ local function LoadItemInfo(itemName: string)
 		itemInfoHolder.ItemName.Text = buff .. " " .. tier
 		itemInfoHolder.Amount.Text = "x" .. amount
 
-		if itemInfoHolder:FindFirstChild(tier) then
-			local potionImage = itemInfoHolder:FindFirstChild(tier)
-			local color = globals.BuffColors[buff]
-			potionImage.Liquid.ImageColor3 = color
-		else
-			if loadedPetInfoIcon then
-				loadedPetInfoIcon:Destroy()
-			end
-			local potionImage = potionTemplates:FindFirstChild(tier):Clone()
-			local UIAspectRatio = itemInfoHolder.Icon.UIAspectRatioConstraint:Clone()
-			UIAspectRatio.Parent = potionImage
-
-			local color = globals.BuffColors[buff]
-			potionImage.Liquid.ImageColor3 = color
-			potionImage.Parent = itemInfoHolder
-			potionImage.Position = itemInfoHolder.Icon.Position
-			potionImage.Size = itemInfoHolder.Icon.Size
-			potionImage.LayoutOrder = itemInfoHolder.Icon.LayoutOrder
-			potionImage.Visible = true
-			loadedPetInfoIcon = potionImage
-		end
+		itemInfoHolder.Icon.Image = imageService[itemName] or imageService["Placeholder"]
 
 		local buffPercentage = GetBuffPercentage(buff, tier)
 		local itemDescription = itemInfoHolder.Info

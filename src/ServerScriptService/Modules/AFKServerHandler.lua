@@ -31,8 +31,6 @@ function AFKHandler.ResetAFKReport(player: Player)
 	profile.AFKStartTime = 0
 	profile.PreAFKInfo = {}
 	profile.SavedPlayerPosition = nil
-
-	print("AFK report has been reset.")
 end
 
 function AFKHandler.StartAFK(player: Player)
@@ -84,8 +82,6 @@ end
 function AFKHandler.TPPlayer(player: Player)
 	local tpParameters = Instance.new("TeleportOptions")
 	tpParameters:SetTeleportData({ isAFK = true })
-
-	print(game.PlaceId)
 
 	local success, error = pcall(function()
 		TeleportService:TeleportAsync(game.PlaceId, { player }, tpParameters)
