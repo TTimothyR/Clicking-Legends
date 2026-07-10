@@ -15,7 +15,7 @@ local framework = rs:WaitForChild("Framework")
 -- Modules
 local Items = require(ReplicatedStorage.Framework.Library.Items)
 local Network = require(ReplicatedStorage.Framework.Network)
-local DataSyncServer = require(ServerScriptService.DataModules.DataSyncServer)
+local DataSyncServer = require(ServerScriptService.DataModules.DataSyncServer).Private
 local playerData = require(dataModules.PlayerData)
 local generateID = require(framework.GenerateID)
 local infMath = require(framework.InfiniteMath)

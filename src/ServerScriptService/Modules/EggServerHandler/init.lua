@@ -21,8 +21,9 @@ local infMath = require(framework.InfiniteMath)
 local generateID = require(framework.GenerateID)
 local network = require(framework.Network)
 local luckHandler = require(script.Parent.LuckHandler)
-local dataSync = require(dataModules.DataSyncServer)
+local dataSync = require(dataModules.DataSyncServer).Private
 local Globals = require(ReplicatedStorage.Framework.Globals)
+local Upgrades = require(ReplicatedStorage.Framework.Library.Upgrades)
 local Network = require(Framework:WaitForChild("Network"))
 local Discord = require("./DiscordHandlers/Discord")
 
@@ -42,6 +43,56 @@ local function GetRawChanceFromPetName(eggName: string, petName: string, shiny: 
 		return tbl[petName][1] / 40
 	end
 	return tbl[petName][1]
+end
+
+local function CalculateHatchTime(player: Player)
+	local profile = playerData.GetData(player)
+
+	local ownedGamepsses = profile.OwnedGamepasses
+	local upgradeLevels = profile.UpgradeLevels
+	local baseSpeed = 1
+	local baseHatchTime = Globals.BaseHatchTime
+
+	local activePotions = profile.ActivePotions
+	if activePotions["Speed"] then
+		local tier, data = next(activePotions["Speed"].Active)
+
+		if tier and data then
+			baseSpeed += Globals.GetPotionBuffAmount(tier, "Speed") / 100
+		end
+	end
+
+	if ownedGamepsses["Fast Hatch"] then
+		baseSpeed += 0.35
+	end
+	if next(upgradeLevels) ~= nil then
+		baseSpeed += upgradeLevels["Faster Egg Open"] * (Upgrades["Faster Egg Open"].Increment / 100)
+	end
+
+	local totalHatchTime = baseHatchTime / baseSpeed
+
+	return totalHatchTime
+end
+
+local function ResetVariables(player: Player, startUp: boolean)
+	if startUp == nil then
+		startUp = false
+	end
+
+	local profile = playerData.GetData(player)
+	if not profile then
+		warn("Could not fetch profile.")
+		return
+	end
+
+	local uiLock = player:FindFirstChild("UILock") :: BoolValue
+	uiLock.Value = false
+	profile.HatchDebounce = false
+	if startUp and profile.SavedPlayerPosition == nil then
+		profile.IsAutoHatching = false
+		profile.TargetAutoHatchEgg = ""
+	end
+	dataSync.SyncPlayer(player, profile)
 end
 
 function EggHandler.ToggleAutoHatch(player: Player, eggName: string, new: boolean)
@@ -221,6 +272,9 @@ function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
 	uiLock.Value = true
 	dataSync.SyncPlayer(player, profile)
 	network:FireClient(player, "EggAnimation", eggName, amount, petData)
+	task.delay(CalculateHatchTime(player), function()
+		ResetVariables(player, false)
+	end)
 end
 
 function EggHandler.RequestNextHatch(player: Player)
@@ -232,39 +286,21 @@ function EggHandler.RequestNextHatch(player: Player)
 	if uiLock.Value then
 		return
 	end
+	if profile.HatchDebounce then
+		return
+	end
 
 	task.delay(0.3, function()
 		EggHandler.OpenEgg(player, profile.TargetAutoHatchEgg, profile.EggHatches)
 	end)
 end
 
-function EggHandler.ResetVariables(player: Player, startUp: boolean)
-	if startUp == nil then
-		startUp = false
-	end
-
-	local profile = playerData.GetData(player)
-	if not profile then
-		warn("Could not fetch profile.")
-		return
-	end
-
-	local uiLock = player:FindFirstChild("UILock") :: BoolValue
-	uiLock.Value = false
-	profile.HatchDebounce = false
-	if startUp and profile.SavedPlayerPosition == nil then
-		profile.IsAutoHatching = false
-		profile.TargetAutoHatchEgg = ""
-	end
-	dataSync.SyncPlayer(player, profile)
-end
-
 function EggHandler.Initialize()
 	for _, player: Player in ipairs(players:GetPlayers()) do
-		task.spawn(EggHandler.ResetVariables, player, true)
+		task.spawn(ResetVariables, player, true)
 	end
 	players.PlayerAdded:Connect(function(player)
-		task.spawn(EggHandler.ResetVariables, player, true)
+		task.spawn(ResetVariables, player, true)
 	end)
 end
 

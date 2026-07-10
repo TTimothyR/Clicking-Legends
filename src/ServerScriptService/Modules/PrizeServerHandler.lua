@@ -14,7 +14,7 @@ local infMath = require(framework.InfiniteMath)
 local prizes = require(library.Prizes)
 local playerData = require(dataModules.PlayerData)
 local rewardHandler = require(script.Parent.Private.RewardHandler)
-local dataSync = require(dataModules.DataSyncServer)
+local dataSync = require(dataModules.DataSyncServer).Private
 
 local function CheckAlreadyClaimed(prizeData, prizeType, prizeIndex)
 	for _, idx in ipairs(prizeData[prizeType]) do

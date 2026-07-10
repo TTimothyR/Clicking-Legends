@@ -11,7 +11,7 @@ local playerTimers = {}
 
 -- Modules
 local playerData = require(dataModules.PlayerData)
-local dataSync = require(dataModules.DataSyncServer)
+local dataSync = require(dataModules.DataSyncServer).Private
 
 local function InstantiatePlayerTimer(player: Player)
 	playerTimers[player.Name] = {

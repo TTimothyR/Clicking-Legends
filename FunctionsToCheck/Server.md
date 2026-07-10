@@ -2,37 +2,36 @@
 
 **ServerScriptService.DataModules.DataSyncServer**
 
-- [ ] `GetOtherDataSync` — server-authoritative validation? player-arg checked? rate limited?
-- [ ] `InitializePlayer` — server-authoritative validation? player-arg checked? rate limited?
-- [ ] `SyncPlayer` — server-authoritative validation? player-arg checked? rate limited?
+- [x] `GetOtherDataSync` — server-authoritative validation? player-arg checked? rate limited?
+<!-- - [ ] `SyncPlayer` — server-authoritative validation? player-arg checked? rate limited? -->
 
 **ServerScriptService.DataModules.PlayerData**
 
-- [ ] `GetData` — server-authoritative validation? player-arg checked? rate limited?
-- [ ] `GetOtherData` — server-authoritative validation? player-arg checked? rate limited?
+- [x] `GetData` — server-authoritative validation? player-arg checked? rate limited?
+- [x] `GetOtherData` — server-authoritative validation? player-arg checked? rate limited?
 
 **ServerScriptService.Modules.AFKServerHandler**
 
-- [ ] `ResetAFKReport` — server-authoritative validation? player-arg checked? rate limited?
-- [ ] `StartAFK` — server-authoritative validation? player-arg checked? rate limited?
-- [ ] `StopAFK` — server-authoritative validation? player-arg checked? rate limited?
-- [ ] `TPPlayer` — server-authoritative validation? player-arg checked? rate limited?
+- [x] `ResetAFKReport` — server-authoritative validation? player-arg checked? rate limited?
+- [x] `StartAFK` — server-authoritative validation? player-arg checked? rate limited?
+- [x] `StopAFK` — server-authoritative validation? player-arg checked? rate limited?
+- [x] `TPPlayer` — server-authoritative validation? player-arg checked? rate limited?
 
 **ServerScriptService.Modules.AutoDeleteHandler**
 
-- [ ] `ToggleAutoDelete` — server-authoritative validation? player-arg checked? rate limited?
+- [x] `ToggleAutoDelete` — server-authoritative validation? player-arg checked? rate limited?
 
 **ServerScriptService.Modules.CodesServerHandler**
 
-- [ ] `RedeemCode` — server-authoritative validation? player-arg checked? rate limited?
+- [x] `RedeemCode` — server-authoritative validation? player-arg checked? rate limited?
 
 **ServerScriptService.Modules.EggServerHandler**
 
-- [ ] `OpenEgg` — server-authoritative validation? player-arg checked? rate limited?
-- [ ] `RequestNextHatch` — server-authoritative validation? player-arg checked? rate limited?
-- [ ] `ResetVariables` — server-authoritative validation? player-arg checked? rate limited?
-- [ ] `ToggleAutoHatch` — server-authoritative validation? player-arg checked? rate limited?
-- [ ] `UnlockEgg` — server-authoritative validation? player-arg checked? rate limited?
+- [x] `OpenEgg` — server-authoritative validation? player-arg checked? rate limited?
+- [x] `RequestNextHatch` — server-authoritative validation? player-arg checked? rate limited?
+- [Extreme danger. (solved)] `ResetVariables` — server-authoritative validation? player-arg checked? rate limited?
+- [x] `ToggleAutoHatch` — server-authoritative validation? player-arg checked? rate limited?
+- [x] `UnlockEgg` — server-authoritative validation? player-arg checked? rate limited?
 
 **ServerScriptService.Modules.EventHandler**
 
@@ -40,7 +39,7 @@ _(no exported functions found — check the module's return table)_
 
 **ServerScriptService.Modules.ItemServerHandler**
 
-- [ ] `UsePotion` — server-authoritative validation? player-arg checked? rate limited?
+- [x] `UsePotion` — server-authoritative validation? player-arg checked? rate limited?
 
 **ServerScriptService.Modules.ItemShopHandler**
 
@@ -50,16 +49,16 @@ _(no exported functions found — check the module's return table)_
 
 **ServerScriptService.Modules.PetServerHandler**
 
-- [ ] `DeleteAllUnlocked` — server-authoritative validation? player-arg checked? rate limited?
-- [ ] `DeletePet` — server-authoritative validation? player-arg checked? rate limited?
-- [ ] `DeleteSelection` — server-authoritative validation? player-arg checked? rate limited?
-- [ ] `EquipBest` — server-authoritative validation? player-arg checked? rate limited?
-- [ ] `EquipPet` — server-authoritative validation? player-arg checked? rate limited?
-- [ ] `LevelUp` — server-authoritative validation? player-arg checked? rate limited?
-- [ ] `MakeShiny` — server-authoritative validation? player-arg checked? rate limited?
-- [ ] `ToggleLock` — server-authoritative validation? player-arg checked? rate limited?
-- [ ] `UnequipAll` — server-authoritative validation? player-arg checked? rate limited?
-- [ ] `UnequipPet` — server-authoritative validation? player-arg checked? rate limited?
+- [x] `DeleteAllUnlocked` — server-authoritative validation? player-arg checked? rate limited?
+- [x] `DeletePet` — server-authoritative validation? player-arg checked? rate limited?
+- [x] `DeleteSelection` — server-authoritative validation? player-arg checked? rate limited?
+- [x] `EquipBest` — server-authoritative validation? player-arg checked? rate limited?
+- [x] `EquipPet` — server-authoritative validation? player-arg checked? rate limited?
+- [x] `LevelUp` — server-authoritative validation? player-arg checked? rate limited?
+- [x] `MakeShiny` — server-authoritative validation? player-arg checked? rate limited?
+- [x] `ToggleLock` — server-authoritative validation? player-arg checked? rate limited?
+- [x] `UnequipAll` — server-authoritative validation? player-arg checked? rate limited?
+- [x] `UnequipPet` — server-authoritative validation? player-arg checked? rate limited?
 
 **ServerScriptService.Modules.PlaytimeHandler**
 
@@ -71,43 +70,41 @@ _(no exported functions found — check the module's return table)_
 
 **ServerScriptService.Modules.PrizeServerHandler**
 
-- [ ] `ClaimPrize` — server-authoritative validation? player-arg checked? rate limited?
+- [x] `ClaimPrize` — server-authoritative validation? player-arg checked? rate limited?
 
 **ServerScriptService.Modules.RebirthServerHandler**
 
-- [ ] `AttemptRebirth` — server-authoritative validation? player-arg checked? rate limited?
-- [ ] `SetAutoRebirthIndex` — server-authoritative validation? player-arg checked? rate limited?
-- [ ] `ToggleAutoRebirth` — server-authoritative validation? player-arg checked? rate limited?
+- [x] `AttemptRebirth` — server-authoritative validation? player-arg checked? rate limited?
+- [x] `SetAutoRebirthIndex` — server-authoritative validation? player-arg checked? rate limited?
+- [x] `ToggleAutoRebirth` — server-authoritative validation? player-arg checked? rate limited?
 
 **ServerScriptService.Modules.SettingsServerHandler**
 
-- [ ] `ApplySetting` — server-authoritative validation? player-arg checked? rate limited?
+- [x] `ApplySetting` — server-authoritative validation? player-arg checked? rate limited?
 
 **ServerScriptService.Modules.ShopServerHandler**
 
-- [ ] `UseGamepass` — server-authoritative validation? player-arg checked? rate limited?
+- [x] `UseGamepass` — server-authoritative validation? player-arg checked? rate limited?
 
 **ServerScriptService.Modules.StatServerHandler**
 
-- [ ] `Click` — server-authoritative validation? player-arg checked? rate limited?
-- [ ] `IncreaseAutoClickSpeed` — server-authoritative validation? player-arg checked? rate limited?
-- [ ] `ToggleAutoClicker` — server-authoritative validation? player-arg checked? rate limited?
+- [x] `IncreaseAutoClickSpeed` — server-authoritative validation? player-arg checked? rate limited?
+- [Could be dangerous, check with remotespy.] `ToggleAutoClicker` — server-authoritative validation? player-arg checked? rate limited?
 
 **ServerScriptService.Modules.TradeServerHandler**
 
-- [ ] `DeclineTrade` — server-authoritative validation? player-arg checked? rate limited?
-- [ ] `GetPrivateServerStatus` — server-authoritative validation? player-arg checked? rate limited?
-- [ ] `Ready` — server-authoritative validation? player-arg checked? rate limited?
-- [ ] `RequestAnswer` — server-authoritative validation? player-arg checked? rate limited?
-- [ ] `SendTradeRequest` — server-authoritative validation? player-arg checked? rate limited?
-- [ ] `ToggleGift` — server-authoritative validation? player-arg checked? rate limited?
-- [ ] `TogglePet` — server-authoritative validation? player-arg checked? rate limited?
-- [ ] `ToggleTrading` — server-authoritative validation? player-arg checked? rate limited?
-- [ ] `Unready` — server-authoritative validation? player-arg checked? rate limited?
+- [x] `DeclineTrade` — server-authoritative validation? player-arg checked? rate limited?
+- [x] `GetPrivateServerStatus` — server-authoritative validation? player-arg checked? rate limited?
+- [x] `Ready` — server-authoritative validation? player-arg checked? rate limited?
+- [x] `RequestAnswer` — server-authoritative validation? player-arg checked? rate limited?
+- [x] `SendTradeRequest` — server-authoritative validation? player-arg checked? rate limited?
+- [x] `ToggleGift` — server-authoritative validation? player-arg checked? rate limited?
+- [x] `TogglePet` — server-authoritative validation? player-arg checked? rate limited?
+- [x] `ToggleTrading` — server-authoritative validation? player-arg checked? rate limited?
+- [x] `Unready` — server-authoritative validation? player-arg checked? rate limited?
 
 **ServerScriptService.Modules.UpgradeServerHandler**
 
-- [ ] `AddUpgradesToData` — server-authoritative validation? player-arg checked? rate limited?
-- [ ] `BuyUpgrade` — server-authoritative validation? player-arg checked? rate limited?
+- [x] `BuyUpgrade` — server-authoritative validation? player-arg checked? rate limited?
 
 Total server-exposed functions: 51

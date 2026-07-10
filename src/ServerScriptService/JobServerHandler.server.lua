@@ -28,6 +28,9 @@ local function loadJobModules()
 			local jobModule = require(descendant)
 
 			for functionName, func in pairs(jobModule) do
+				if type(func) ~= "function" then
+					continue
+				end
 				if functionName ~= "Profiles" then
 					if functionName == "Initialize" then
 						func()

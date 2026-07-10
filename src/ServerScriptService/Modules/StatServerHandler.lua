@@ -27,7 +27,7 @@ local infMath = require(framework.InfiniteMath)
 local network = require(framework.Network)
 local globals = require(framework.Globals)
 local petHandler = require(script.Parent.PetServerHandler)
-local dataSync = require(dataModules.DataSyncServer)
+local dataSync = require(dataModules.DataSyncServer).Private
 local upgrades = require(library.Upgrades)
 
 local function SetupCollision()
@@ -66,29 +66,6 @@ local function IntializeDebounces(player: Player)
 		AutoClickDB = 0.25 / multiplier,
 		AutoClickElapsedInterval = 0,
 	}
-end
-
-local function HandleAutoClickers()
-	runService.Heartbeat:Connect(function(deltaTime)
-		for playerName, data in pairs(playerDBs) do
-			task.spawn(function()
-				if not data.AutoClickerEnabled then
-					return
-				end
-
-				data.AutoClickElapsedInterval += deltaTime
-
-				if data.AutoClickElapsedInterval < data.AutoClickDB then
-					return
-				end
-
-				data.AutoClickElapsedInterval -= data.AutoClickDB
-
-				task.spawn(StatHandler.Click, players:FindFirstChild(playerName), true)
-			end)
-		end
-		task.wait()
-	end)
 end
 
 function StatHandler.Click(player: Player, fromAutoClick: boolean)
@@ -168,6 +145,29 @@ function StatHandler.Click(player: Player, fromAutoClick: boolean)
 	dataSync.SyncPlayer(player, profile)
 
 	return true, increment, critical
+end
+
+local function HandleAutoClickers()
+	runService.Heartbeat:Connect(function(deltaTime)
+		for playerName, data in pairs(playerDBs) do
+			task.spawn(function()
+				if not data.AutoClickerEnabled then
+					return
+				end
+
+				data.AutoClickElapsedInterval += deltaTime
+
+				if data.AutoClickElapsedInterval < data.AutoClickDB then
+					return
+				end
+
+				data.AutoClickElapsedInterval -= data.AutoClickDB
+
+				task.spawn(StatHandler.Click, players:FindFirstChild(playerName), true)
+			end)
+		end
+		task.wait()
+	end)
 end
 
 function StatHandler.IncreaseAutoClickSpeed(player: Player)

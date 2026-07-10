@@ -8,7 +8,7 @@ local dataModules = sss:WaitForChild("DataModules")
 
 -- Modules
 local playerData = require(dataModules.PlayerData)
-local dataSync = require(dataModules.DataSyncServer)
+local dataSync = require(dataModules.DataSyncServer).Private
 
 function AutoDeleteHandler.ToggleAutoDelete(player: Player, petName: string)
 	local profile = playerData.GetData(player)

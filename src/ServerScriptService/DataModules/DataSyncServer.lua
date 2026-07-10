@@ -1,4 +1,5 @@
 local DataSync = {}
+DataSync.Private = {}
 
 -- Services
 local players = game:GetService("Players")
@@ -152,16 +153,16 @@ local function CalculateDifference(old, new)
 	return hasChanges and difference or nil
 end
 
-function DataSync.InitializePlayer(player, data)
+function DataSync.Private.InitializePlayer(player, data)
 	local snapshot = PackData(data, true)
 	lastSentData[player] = snapshot
 	network:FireClient(player, "FullDataSync", snapshot)
 end
 
-function DataSync.SyncPlayer(player, data)
+function DataSync.Private.SyncPlayer(player, data)
 	local old = lastSentData[player]
 	if not old then
-		DataSync.InitializePlayer(player, data)
+		DataSync.Private.InitializePlayer(player, data)(player, data)
 		return
 	end
 

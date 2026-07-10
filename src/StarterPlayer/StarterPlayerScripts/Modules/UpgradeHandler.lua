@@ -141,7 +141,6 @@ function UpgradeHandler.Initialize()
 	end
 
 	dataSync.OnReady(function()
-		network:FireServer("AddUpgradesToData")
 		task.delay(1, LoadUpgrades)
 	end)
 

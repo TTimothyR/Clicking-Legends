@@ -17,7 +17,7 @@ local network = require(framework.Network)
 local globals = require(framework.Globals)
 local generateID = require(framework.GenerateID)
 local petStats = require(library.PetStats)
-local dataSync = require(dataModules.DataSyncServer)
+local dataSync = require(dataModules.DataSyncServer).Private
 
 local function GetPetAmount(profile, petName: string)
 	local count = 0
@@ -289,10 +289,10 @@ end
 
 function PetHandler.MakeShiny(player: Player, petName: string)
 	local profile = playerData.GetData(player)
-	if profile.TradeBanned then
+	if not profile then
 		return false, nil
 	end
-	if not profile then
+	if profile.TradeBanned then
 		return false, nil
 	end
 

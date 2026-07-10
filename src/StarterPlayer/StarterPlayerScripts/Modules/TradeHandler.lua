@@ -550,7 +550,7 @@ function TradeHandler.TradeRequest(tradeSender: Player)
 	end)
 end
 
-function TradeHandler.LoadPlayerList()
+local function LoadPlayerList()
 	for _, plr: Player in ipairs(players:GetPlayers()) do
 		if playerHolder:FindFirstChild(plr.Name) then
 			local tradeBanned = dataSync.GetOtherData(plr.UserId).TradeBanned
@@ -625,7 +625,7 @@ function TradeHandler.Initialize()
 		end
 	end)
 
-	task.spawn(TradeHandler.LoadPlayerList)
+	task.spawn(LoadPlayerList)
 
 	dataSync.OnChanged("TradeBanned", function(new, _)
 		if isPrivateServer then
@@ -641,10 +641,10 @@ function TradeHandler.Initialize()
 	end)
 
 	players.PlayerAdded:Connect(function(_)
-		task.spawn(TradeHandler.LoadPlayerList)
+		task.spawn(LoadPlayerList)
 	end)
 	players.PlayerRemoving:Connect(function(_, _)
-		task.spawn(TradeHandler.LoadPlayerList)
+		task.spawn(LoadPlayerList)
 	end)
 end
 

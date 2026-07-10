@@ -12,7 +12,7 @@ local GetRandomItem = require(Shared:WaitForChild("GetRandomItem"))
 local DataModules = ServerScriptService.DataModules
 local PlayerData = require(DataModules.PlayerData)
 
-local DataSyncServer = require(DataModules.DataSyncServer)
+local DataSyncServer = require(DataModules.DataSyncServer).Private
 
 local ItemShopHandlerPrivate = {}
 

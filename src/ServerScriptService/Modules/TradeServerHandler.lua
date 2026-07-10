@@ -23,7 +23,7 @@ local generateID = require(framework.GenerateID)
 local playerData = require(dataModules.PlayerData)
 local tblUtil = require(framework.TableUtility)
 local petHandler = require(script.Parent.PetServerHandler)
-local dataSync = require(dataModules.DataSyncServer)
+local dataSync = require(dataModules.DataSyncServer).Private
 
 -- Constants
 local startTime = 7

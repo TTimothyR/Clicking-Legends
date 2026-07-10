@@ -12,7 +12,7 @@ local activePlayerBoost = {}
 
 -- Modules
 local playerData = require(script.Parent.Parent.DataModules.PlayerData)
-local dataSync = require(script.Parent.Parent.DataModules.DataSyncServer)
+local dataSync = require(script.Parent.Parent.DataModules.DataSyncServer).Private
 local items = require(library.Items)
 local network = require(framework.Network)
 

@@ -64,7 +64,7 @@ function Local.LoadProfile(player: Player)
 
 	--profile.Data.ItemShops = {}
 
-	dataSync.InitializePlayer(player, profile.Data)
+	dataSync.Private.InitializePlayer(player, profile.Data)
 end
 
 function Local.SaveRemainingPotionTime(profile)

@@ -1,6 +1,7 @@
 local UpgradeHandler = {}
 
 -- Services
+local Players = game:GetService("Players")
 local rs = game:GetService("ReplicatedStorage")
 
 -- Variables
@@ -9,7 +10,7 @@ local library = framework:WaitForChild("Library")
 
 -- Modules
 local playerData = require(script.Parent.Parent.DataModules.PlayerData)
-local dataSync = require(script.Parent.Parent.DataModules.DataSyncServer)
+local dataSync = require(script.Parent.Parent.DataModules.DataSyncServer).Private
 local upgrades = require(library.Upgrades)
 local globals = require(framework.Globals)
 local infMath = require(framework.InfiniteMath)
@@ -29,7 +30,7 @@ local upgradeCallbacks = {
 	end,
 }
 
-function UpgradeHandler.AddUpgradesToData(player: Player)
+local function AddUpgradesToData(player: Player)
 	local profile = playerData.GetData(player)
 	for upgradeName, _ in pairs(upgrades) do
 		if not profile.UpgradeLevels[upgradeName] then
@@ -72,6 +73,16 @@ function UpgradeHandler.BuyUpgrade(player: Player, upgradeName: string)
 
 	dataSync.SyncPlayer(player, profile)
 	return true
+end
+
+function UpgradeHandler.Initialize()
+	for _, player in ipairs(Players:GetPlayers()) do
+		AddUpgradesToData(player)
+	end
+
+	Players.PlayerAdded:Connect(function(player: Player)
+		AddUpgradesToData(player)
+	end)
 end
 
 return UpgradeHandler

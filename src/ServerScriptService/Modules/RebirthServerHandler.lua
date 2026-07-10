@@ -14,7 +14,7 @@ local playerData = require(dataModules.PlayerData)
 local rebirthStats = require(library.RebirthStats)
 local infMath = require(framework.InfiniteMath)
 local globals = require(framework.Globals)
-local dataSync = require(dataModules.DataSyncServer)
+local dataSync = require(dataModules.DataSyncServer).Private
 local upgrades = require(library.Upgrades)
 
 local function GetPetGems(pets)
@@ -32,6 +32,10 @@ end
 function RebirthHandler.AttemptRebirth(player: Player, rebirthIndex: number)
 	local profile = playerData.GetData(player)
 
+	if not rebirthStats[rebirthIndex] then
+		return
+	end
+
 	local rebirthAmount = rebirthStats[rebirthIndex]
 	local clicks = infMath.new(profile.Clicks)
 	local rebirths = infMath.new(profile.Rebirths)
@@ -43,6 +47,9 @@ function RebirthHandler.AttemptRebirth(player: Player, rebirthIndex: number)
 
 		rebirthAmount = infMath.new(clicks / (globals.RebirthBasePrice * rebirths))
 		rebirthAmount = infMath.floor(rebirthAmount)
+	end
+	if rebirthAmount == infMath.new(0) then
+		return
 	end
 
 	local price = infMath.new(globals.RebirthBasePrice * rebirthAmount * rebirths)

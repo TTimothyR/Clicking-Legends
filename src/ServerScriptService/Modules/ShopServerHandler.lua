@@ -16,7 +16,7 @@ local shopStats = require(library.ShopStats)
 local network = require(framework.Network)
 local infMath = require(framework.InfiniteMath)
 local playerData = require(script.Parent.Parent.DataModules.PlayerData)
-local dataSync = require(script.Parent.Parent.DataModules.DataSyncServer)
+local dataSync = require(script.Parent.Parent.DataModules.DataSyncServer).Private
 local rewardHandler = require(script.Parent.Private.RewardHandler)
 
 local ItemShopHandlerPrivate = require("./Private/ItemShopHandlerPrivate")

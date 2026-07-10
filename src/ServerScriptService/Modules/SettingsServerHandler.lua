@@ -1,3 +1,5 @@
+--!strict
+
 local SettingsHandler = {}
 
 local ServerScriptService = game:GetService("ServerScriptService")
@@ -8,7 +10,7 @@ local dataModules = ServerScriptService:WaitForChild("DataModules")
 local framework = ReplicatedStorage:WaitForChild("Framework")
 local library = framework:WaitForChild("Library")
 
-local dataSync = require(dataModules.DataSyncServer)
+local dataSync = require(dataModules.DataSyncServer).Private
 local playerData = require(dataModules.PlayerData)
 local settingsConfig = require(library.SettingsConfig)
 
@@ -35,7 +37,7 @@ local function SetupPlayerSettings(player: Player)
 	dataSync.SyncPlayer(player, profile)
 end
 
-function SettingsHandler.ApplySetting(player: Player, settingName, value)
+function SettingsHandler.ApplySetting(player: Player, settingName, value: boolean | number)
 	if not settingsConfig[settingName] then
 		return
 	end
@@ -49,6 +51,10 @@ function SettingsHandler.ApplySetting(player: Player, settingName, value)
 
 	if value == nil then
 		value = not playerSettings[settingName]
+	end
+
+	if type(value) == "number" then
+		value = math.clamp(value, settingsConfig[settingName].MinimumValue, settingsConfig[settingName].MaximumValue)
 	end
 
 	profile.Settings[settingName] = value
