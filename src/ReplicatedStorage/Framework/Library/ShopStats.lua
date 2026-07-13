@@ -1,28 +1,29 @@
+local Enchants = require(script.Parent.Enchants)
 return {
 	Gamepasses = {
-		["Unlimited Rebirths"] = {
-			Description = "Rebirth any amount of clicks!",
+		["Max Rebirths"] = {
+			Description = "Unlocks the option to Rebirth depending on your amount of Clicks!",
 			GamepassID = 1741190838,
 			GiftingID = 3606316395,
 			LayoutOrder = 21,
 		},
-		["Double Luck"] = { --
-			Description = "Doubles your luck on Epic and Legendary pets!",
+		["x2 Luck"] = { --
+			Description = "Increases your luck on Legendary & Secret Pets!",
 			GamepassID = 1740941898,
 			LayoutOrder = 22,
 		},
 		["+500 Pet Storage"] = { --
-			Description = "Increase Pet Storage by 500!",
+			Description = "Store 500 more pets inside your inventory!",
 			GamepassID = 1740895905,
 			LayoutOrder = 23,
 		},
-		["+2 Eggs"] = { --
-			Description = "Get 2 extra Egg Hatches!",
+		["Extra Egg"] = { --
+			Description = "Hatch an extra egg while hatching eggs!",
 			GamepassID = 1741430255,
 			LayoutOrder = 24,
 		},
-		["+3 Pet Equips"] = { --
-			Description = "Get 3 extra Pet Equips!",
+		["Extra Equips"] = { --
+			Description = "Equip 3 extra pets on your team!",
 			GamepassID = 1740732188,
 			LayoutOrder = 25,
 		},
@@ -31,40 +32,37 @@ return {
 			GamepassID = 1741144850,
 			LayoutOrder = 26,
 		},
-		["Double Rebirths"] = { --
-			Description = "Doubles the amount of Rebirths you get!",
+		["x2 Rebirths"] = { --
+			Description = "Doubles the amount of Rebirths you obtain when grinding!",
 			GamepassID = 1741009950,
 			LayoutOrder = 27,
 		},
 		["Fast Hatch"] = { --
-			Description = "Increase your hatchspeed with 35%!",
+			Description = "Eggs hatch 50% faster!",
 			GamepassID = 1740933958,
 			LayoutOrder = 28,
 		},
-		["Double Clicks"] = { --
-			Description = "Doubles the amount of Clicks you get!",
+		["x2 Clicks"] = { --
+			Description = "Doubles your Clicks gain while tapping!",
 			GamepassID = 1740766089,
 			LayoutOrder = 29,
 		},
-		["Double Gems"] = { --
-			Description = "Doubles the amount of Gems you get!",
+		["x2 Gems"] = { --
+			Description = "Double the gems you earn when rebirthing!",
 			GamepassID = 1740983821,
 			LayoutOrder = 30,
-		},
-		["+100 Pet Storage"] = { --
-			Description = "Increase Pet Storage by 100!",
-			GamepassID = 1740768138,
-			LayoutOrder = 31,
 		},
 	},
 	DeveloperProducts = {
 		["Pet1"] = {
 			ProductID = 3548669529,
 			PetName = "King Star",
+			Enchant = Enchants["Teamwork_👑"].Name,
 		},
 		["Pet2"] = {
 			ProductID = 3548669613,
 			PetName = "Doggy",
+			Enchant = Enchants["Lucky_👑"].Name,
 		},
 		["PetCombi"] = {
 			ProductID = 3548669728,
@@ -74,9 +72,24 @@ return {
 		},
 
 		["GemPack1"] = {
-			BaseGems = 500,
+			BaseGems = 10000,
 			ProductID = 3548669836,
 			LayoutOrder = 51,
+		},
+		["GemPack2"] = {
+			BaseGems = 500,
+			ProductID = 3548669836,
+			LayoutOrder = 52,
+		},
+		["GemPack3"] = {
+			BaseGems = 1000,
+			ProductID = 3548669836,
+			LayoutOrder = 53,
+		},
+		["GemPack4"] = {
+			BaseGems = 2500,
+			ProductID = 3548669836,
+			LayoutOrder = 54,
 		},
 	},
 }

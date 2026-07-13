@@ -1,6 +1,7 @@
 local EggHandler = {}
 
 -- Services
+local Lighting = game:GetService("Lighting")
 local players = game:GetService("Players")
 local workspace = game:GetService("Workspace")
 local rs = game:GetService("ReplicatedStorage")
@@ -154,6 +155,8 @@ local function HideUI()
 		closedFrame = menuHandler.activeFrame
 		menuHandler.closeFrame(closedFrame)
 	end
+
+	Lighting.EggDepth.Enabled = true
 end
 
 local function UnHideUI()
@@ -166,6 +169,8 @@ local function UnHideUI()
 		menuHandler.openFrame(closedFrame)
 		closedFrame = nil
 	end
+
+	Lighting.EggDepth.Enabled = false
 end
 
 function EggHandler.EggAnimation(eggName: string, amount: number, petsData)

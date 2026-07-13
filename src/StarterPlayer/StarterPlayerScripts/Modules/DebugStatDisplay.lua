@@ -10,6 +10,7 @@ local Debug = playerGui:WaitForChild("Debug")
 local holder = Debug.Holder
 
 local Globals = require(ReplicatedStorage.Framework.Globals)
+local Enchants = require(ReplicatedStorage.Framework.Library.Enchants)
 local Upgrades = require(ReplicatedStorage.Framework.Library.Upgrades)
 local DataSyncClient = require(script.Parent.DataSyncClient)
 
@@ -54,11 +55,22 @@ local statFrames = {
 			local baseLuckPercentage = DataSyncClient.Get("LuckPercentage")
 			local activePotions = DataSyncClient.Get("ActivePotions")
 			local ownedGamepasses = DataSyncClient.Get("OwnedGamepasses")
+			local pets = DataSyncClient.Get("Pets")
 			if activePotions["Lucky"] then
 				local tier, data = next(activePotions["Lucky"].Active)
 
 				if tier and data then
 					baseLuckPercentage += Globals.GetPotionBuffAmount(tier, "Lucky")
+				end
+			end
+
+			for _, data in ipairs(pets) do
+				if not data.equipped then
+					continue
+				end
+
+				if string.find(data.enchant, "Lucky") then
+					baseLuckPercentage += Enchants[data.enchant].Buff
 				end
 			end
 
@@ -94,6 +106,7 @@ function DebugDisplay.Initialize()
 	DataSyncClient.OnChanged("ActivePotions", UpdateStats)
 	DataSyncClient.OnChanged("OwnedGamepasses", UpdateStats)
 	DataSyncClient.OnChanged("UpgradeLevels", UpdateStats)
+	DataSyncClient.OnChanged("Pets", UpdateStats)
 
 	DataSyncClient.OnChanged("Settings", function(new, _)
 		holder.Visible = new.Debug

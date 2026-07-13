@@ -18,6 +18,84 @@ return {
 	["Shiny Bear"] = "rbxassetid://112744771723354",
 	["Shiny Fox"] = "rbxassetid://75485036982565", --
 
+	-- Jagged Egg
+	["Wolf"] = "rbxassetid://135992499739270",
+	["Mouse"] = "rbxassetid://108738878011777",
+	["Deer"] = "rbxassetid://95374109132633",
+	["Panda"] = "rbxassetid://101186020201974",
+	["Dino"] = "rbxassetid://128558788932209",
+	["Shiny Wolf"] = "rbxassetid://94491118727009",
+	["Shiny Mouse"] = "rbxassetid://133245593310709",
+	["Shiny Deer"] = "rbxassetid://108921725419298",
+	["Shiny Panda"] = "rbxassetid://86335416262502",
+	["Shiny Dino"] = "rbxassetid://107469265457939",
+
+	-- Candy Egg
+	["Candy Bull"] = "rbxassetid://132185240296892",
+	["Candy Pig"] = "rbxassetid://130090731668895",
+	["Candy Bee"] = "rbxassetid://82983191302088",
+	["Candy Jellyfish"] = "rbxassetid://113064472166990",
+	["Candy Dragon"] = "rbxassetid://72176461302785",
+	["Candy Stack"] = "rbxassetid://90029174057074",
+	["Shiny Candy Bull"] = "rbxassetid://75202943856685",
+	["Shiny Candy Pig"] = "rbxassetid://139437694232189",
+	["Shiny Candy Bee"] = "rbxassetid://111428253097342",
+	["Shiny Candy Jellyfish"] = "rbxassetid://85581996241188",
+	["Shiny Candy Dragon"] = "rbxassetid://134454605976840",
+	["Shiny Candy Stack"] = "rbxassetid://124950328194593",
+
+	-- Space Egg
+	["Space Doggy"] = "rbxassetid://116521139760691",
+	["Space Kitty"] = "rbxassetid://94510799325532",
+	["Space Bunny"] = "rbxassetid://120133559864640",
+	["Space Mouse"] = "rbxassetid://75841548117945",
+	["Space Deer"] = "rbxassetid://136851773517693",
+	["Space Fox"] = "rbxassetid://95711612127021",
+	["Spaceicorn"] = "rbxassetid://103030155691287",
+	["Alien"] = "rbxassetid://89770889663361",
+	["Space Dominus"] = "rbxassetid://138362582282648",
+	["Shiny Space Doggy"] = "rbxassetid://87107341091378",
+	["Shiny Space Kitty"] = "rbxassetid://116052635509264",
+	["Shiny Space Bunny"] = "rbxassetid://105714543088560",
+	["Shiny Space Mouse"] = "rbxassetid://111608710320818",
+	["Shiny Space Deer"] = "rbxassetid://128474864308340",
+	["Shiny Space Fox"] = "rbxassetid://139167619536526",
+	["Shiny Spaceicorn"] = "rbxassetid://129013040269054",
+	["Shiny Alien"] = "rbxassetid://75682224687249",
+	["Shiny Space Dominus"] = "rbxassetid://125631895350833",
+
+	-- Frozen Egg
+	["Frozen Doggy"] = "rbxassetid://97314866870245",
+	["Frozen Kitty"] = "rbxassetid://72696655810947",
+	["Frozen Deer"] = "rbxassetid://77530454854746",
+	["Frozen Bear"] = "rbxassetid://109047644511785",
+	["Frozen Balloon"] = "rbxassetid://135857645727733",
+	["Frozen Dragon"] = "rbxassetid://127992731109594",
+	["Shiny Frozen Doggy"] = "rbxassetid://129417958459674",
+	["Shiny Frozen Kitty"] = "rbxassetid://112168509086712",
+	["Shiny Frozen Deer"] = "rbxassetid://86022714743523",
+	["Shiny Frozen Bear"] = "rbxassetid://118822773896715",
+	["Shiny Frozen Balloon"] = "rbxassetid://111081738867599",
+	["Shiny Frozen Dragon"] = "rbxassetid://128716235286476",
+
+	-- Water Egg
+	["Water Doggy"] = "rbxassetid://82132647877196",
+	["Water Deer"] = "rbxassetid://124015777814061",
+	["Atlantis Crab"] = "rbxassetid://84274051072476",
+	["Shark"] = "rbxassetid://88194633492729",
+	["Angler Fish"] = "rbxassetid://105846676078811",
+	["Water Butterfly"] = "rbxassetid://93342822109981",
+	["Water Overlord"] = "rbxassetid://106464024606025",
+	["King Star"] = "rbxassetid://99292979985080",
+	["Shiny Water Doggy"] = "rbxassetid://136567412972587",
+	["Shiny Water Deer"] = "rbxassetid://112203751881912",
+	["Shiny Atlantis Crab"] = "rbxassetid://95798327107222",
+	["Shiny Shark"] = "rbxassetid://112706999346486",
+	["Shiny Angler Fish"] = "rbxassetid://111373844421541",
+	["Shiny Water Butterfly"] = "rbxassetid://95300060623344",
+	["Shiny Water Overlord"] = "rbxassetid://94399821275334",
+	["Shiny King Star"] = "rbxassetid://92713647999978",
+
 	["Lucky_I"] = "rbxassetid://138637051417624",
 	["Rebirths_I"] = "rbxassetid://126039343755806",
 	["Speed_I"] = "rbxassetid://97562019929274",
@@ -38,10 +116,6 @@ return {
 	["Rebirths_V"] = "rbxassetid://86541958861177",
 	["Speed_V"] = "rbxassetid://138703768114456",
 
-	-- Water Egg
-	["King Star"] = "rbxassetid://99292979985080",
-	["Shiny King Star"] = "rbxassetid://92713647999978",
-
 	-- Upgrades
 	["Faster Walkspeed"] = "rbxassetid://90031078660862",
 	["Faster Egg Open"] = "rbxassetid://78101075441396",
@@ -53,6 +127,6 @@ return {
 	["x2 Click Chance"] = "rbxassetid://130143670610388",
 	["More Rebirths"] = "rbxassetid://71299478410150",
 	["Faster Auto Click"] = "rbxassetid://118078966928904",
-	["More Pets"] = "rbxassetid://82677602846854",
+	["More Pets"] = "rbxassetid://74475134393135",
 	["Auto Rebirth"] = "rbxassetid://71299478410150",
 }

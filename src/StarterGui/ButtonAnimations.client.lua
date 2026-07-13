@@ -1,6 +1,18 @@
 -- Services
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local StarterPlayer = game:GetService("StarterPlayer")
 local players = game:GetService("Players")
 local ts = game:GetService("TweenService")
+
+local Assets = ReplicatedStorage:WaitForChild("Assets")
+
+local Sounds = Assets:WaitForChild("Sounds")
+
+local StarterPlayerScripts = StarterPlayer:WaitForChild("StarterPlayerScripts")
+
+local Modules = StarterPlayerScripts:WaitForChild("Modules")
+
+local SoundHandler = require(Modules:WaitForChild("SoundHandler"))
 
 -- Variables
 repeat
@@ -11,6 +23,17 @@ local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quint, Enum.EasingDirectio
 
 -- UI
 local playerGui = player:WaitForChild("PlayerGui")
+
+--for i,v in pairs(playerGui:GetDescendants()) do
+--	if v.Name == "Rotate" then
+--		local RotationTweenInfo = TweenInfo.new(10, Enum.EasingStyle.Linear, Enum.EasingDirection.Out, -1, true)
+--		local Goal = {Rotation = 360}
+
+--		local RotationTween = ts:Create(v, RotationTweenInfo, Goal)
+
+--		RotationTween:Play()
+--	end
+--end
 
 local function animateButton(button: ImageButton)
 	task.spawn(function()
@@ -56,6 +79,12 @@ local function animateButton(button: ImageButton)
 		end)
 		mouseDown = button.MouseButton1Down:Connect(function()
 			button:TweenSize(clickSize, Enum.EasingDirection.Out, Enum.EasingStyle.Quint, 0.2, true)
+			SoundHandler.PlaySound(Sounds.UIClick)
+			if button.Name == "Shop" then
+				SoundHandler.PlaySound(Sounds.ShopOpen)
+			else
+				SoundHandler.PlaySound(Sounds.UIClick)
+			end
 		end)
 		mouseUp = button.MouseButton1Up:Connect(function()
 			if isHovering == true then
@@ -97,3 +126,5 @@ end
 playerGui.DescendantAdded:Connect(function(descendant)
 	InitializeAnimation(descendant)
 end)
+
+SoundHandler.Initialize()

@@ -442,12 +442,12 @@ local function UpdateStatDisplay(currencyStr: string, newValue)
 		local tween = ts:Create(
 			currencyFrame,
 			TweenInfo.new(0.05, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
-			{ Size = UDim2.fromScale(0.95, 0.55) }
+			{ Size = UDim2.fromScale(0.937, 0.449) }
 		)
 		tween:Play()
 		tween.Completed:Wait()
 
-		ts:Create(currencyFrame, buttonTween, { Size = UDim2.fromScale(0.914, 0.38) }):Play()
+		ts:Create(currencyFrame, buttonTween, { Size = UDim2.fromScale(0.855, 0.367) }):Play()
 	end)
 
 	data.tweenNumber.Value = 0

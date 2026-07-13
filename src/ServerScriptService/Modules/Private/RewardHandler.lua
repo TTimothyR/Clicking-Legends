@@ -20,7 +20,7 @@ local playerData = require(dataModules.PlayerData)
 local generateID = require(framework.GenerateID)
 local infMath = require(framework.InfiniteMath)
 
-function RewardHandler.ClaimPet(player: Player, fullName: string, shiny: boolean)
+function RewardHandler.ClaimPet(player: Player, fullName: string, shiny: boolean, enchant: string)
 	local profile = playerData.GetData(player)
 
 	local petName: string = shiny and string.gsub(fullName, "Shiny ", "") or fullName
@@ -36,6 +36,10 @@ function RewardHandler.ClaimPet(player: Player, fullName: string, shiny: boolean
 		profile.PetIndex[fullName] = true
 	end
 
+	if not enchant then
+		enchant = ""
+	end
+
 	table.insert(pets, {
 		petName = petName,
 		fullName = fullName,
@@ -46,6 +50,7 @@ function RewardHandler.ClaimPet(player: Player, fullName: string, shiny: boolean
 		date = os.time(),
 		locked = false,
 		equipped = false,
+		enchant = enchant,
 	})
 
 	return true

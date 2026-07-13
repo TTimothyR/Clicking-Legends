@@ -19,6 +19,7 @@ local GlobalEventsModule = require(Library:WaitForChild("GlobalEventsModule"))
 
 -- Modules
 local Globals = require(ReplicatedStorage.Framework.Globals)
+local Enchants = require(ReplicatedStorage.Framework.Library.Enchants)
 local playerData = require(dataModules.PlayerData)
 local eggStats = require(library.EggStats)
 local petStats = require(library.PetStats)
@@ -45,6 +46,16 @@ function LuckHandler.RollPet(player: Player, eggName: string)
 
 		if tier and data then
 			luckPercentage += Globals.GetPotionBuffAmount(tier, "Lucky")
+		end
+	end
+
+	for _, data in ipairs(profile.Pets) do
+		if not data.equipped then
+			continue
+		end
+
+		if string.find(data.enchant, "Lucky") then
+			luckPercentage += Enchants[data.enchant].Buff
 		end
 	end
 

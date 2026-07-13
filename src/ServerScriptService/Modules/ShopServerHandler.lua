@@ -61,9 +61,9 @@ local callbacks = {
 		dataSync.SyncPlayer(player, profile)
 	end,
 
-	["Pet"] = function(player: Player, petNames)
-		for _, petName in pairs(petNames) do
-			local _ = rewardHandler.ClaimPet(player, petName, (petName:find("Shiny ") ~= nil))
+	["Pet"] = function(player: Player, pets)
+		for _, data in pairs(pets) do
+			local _ = rewardHandler.ClaimPet(player, data.PetName, (data.PetName:find("Shiny ") ~= nil), data.Enchant)
 		end
 
 		local profile = playerData.GetData(player)
@@ -154,14 +154,14 @@ local function ProductPurchaseHandler()
 		end
 
 		if string.match(productName, "Pet") then
-			local petNames = {}
+			local pets = {}
 			if string.match(productName, "Combi") then
-				table.insert(petNames, shopStats.DeveloperProducts["Pet1"].PetName)
-				table.insert(petNames, shopStats.DeveloperProducts["Pet2"].PetName)
+				table.insert(pets, shopStats.DeveloperProducts["Pet1"])
+				table.insert(pets, shopStats.DeveloperProducts["Pet2"])
 			else
-				table.insert(petNames, shopStats.DeveloperProducts[productName].PetName)
+				table.insert(pets, shopStats.DeveloperProducts[productName])
 			end
-			callbacks["Pet"](player, petNames)
+			callbacks["Pet"](player, pets)
 		elseif string.match(productName, "GemPack") then
 			callbacks["Gem"](player, shopStats.DeveloperProducts[productName].BaseGems)
 		elseif receiptInfo.ProductId == 3608435738 then

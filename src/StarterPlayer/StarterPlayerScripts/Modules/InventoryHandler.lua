@@ -599,6 +599,7 @@ local function CreateEquippedPet(petData, template)
 	clone.Frame.Locked.Visible = petData.locked
 	CreateFullNameVariable(clone, petData)
 	clone.Frame.ImageLabel.Image = imageService[petData.fullName] or imageService["Placeholder"]
+	clone.Frame.ImageLabel.Level.Text = petData.level
 	if clone.Frame:FindFirstChild("PetName") then
 		local egg = tblUtil.FindEgg(eggStats, petData.petName)
 		local chance = eggStats[egg].Pets[petData.petName][1]
@@ -638,6 +639,7 @@ local function CreateNormalPet(petData)
 	local rarity = petStats[petData.petName].Rarity
 	clone.Frame.BackgroundColor3 = globals.RarityColors[rarity]
 	clone.Frame.ImageLabel.Image = imageService[petData.fullName] or imageService["Placeholder"]
+	clone.Frame.ImageLabel.Level.Text = petData.level
 	if rarity == "Legendary" then
 		clone.Glow.Visible = true
 		clone.Frame.Legendary.Enabled = true
@@ -666,6 +668,7 @@ local function CreateSecretPet(petData)
 	local egg = tblUtil.FindEgg(eggStats, petData.petName)
 	local chance = eggStats[egg].Pets[petData.petName][1]
 	clone.Frame.ImageLabel.Image = imageService[petData.fullName] or imageService["Placeholder"]
+	clone.Frame.ImageLabel.Level.Text = petData.level
 	if chance == 0 then
 		clone.Frame.Chance.Text = "Unknown"
 	else
@@ -941,6 +944,8 @@ function InventoryHandler.LoadInventory()
 		end
 		if not equippedHolder:FindFirstChild(petData.id) then
 			CreateEquippedPet(petData, equippedSecretTemplate)
+		else
+			equippedHolder:FindFirstChild(petData.id).Frame.ImageLabel.Level.Text = petData.level
 		end
 		handledPetIds[petData.id] = true
 	end
@@ -951,6 +956,8 @@ function InventoryHandler.LoadInventory()
 		end
 		if not equippedHolder:FindFirstChild(petData.id) then
 			CreateEquippedPet(petData, normalTemplate)
+		else
+			equippedHolder:FindFirstChild(petData.id).Frame.ImageLabel.Level.Text = petData.level
 		end
 		handledPetIds[petData.id] = true
 	end
@@ -962,6 +969,8 @@ function InventoryHandler.LoadInventory()
 		end
 		if not notEquippedHolder:FindFirstChild(petData.id) then
 			CreateSecretPet(petData)
+		else
+			notEquippedHolder:FindFirstChild(petData.id).Frame.ImageLabel.Level.Text = petData.level
 		end
 		handledPetIds[petData.id] = true
 	end
@@ -972,6 +981,8 @@ function InventoryHandler.LoadInventory()
 		end
 		if not notEquippedHolder:FindFirstChild(petData.id) then
 			CreateNormalPet(petData)
+		else
+			notEquippedHolder:FindFirstChild(petData.id).Frame.ImageLabel.Level.Text = petData.level
 		end
 		handledPetIds[petData.id] = true
 	end

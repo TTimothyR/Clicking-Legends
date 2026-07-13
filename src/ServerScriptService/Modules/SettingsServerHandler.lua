@@ -14,16 +14,6 @@ local dataSync = require(dataModules.DataSyncServer).Private
 local playerData = require(dataModules.PlayerData)
 local settingsConfig = require(library.SettingsConfig)
 
-local applyFunctions = {
-	["SFX"] = function(value)
-		-- Do something to change the volume (idk if it should be here but i think so?)
-	end,
-
-	["Music"] = function(value)
-		-- Do something to change the volume (idk if it should be here but i think so?)
-	end,
-}
-
 local function SetupPlayerSettings(player: Player)
 	local profile = playerData.GetData(player)
 	local playerSettings = profile.Settings
@@ -60,11 +50,6 @@ function SettingsHandler.ApplySetting(player: Player, settingName, value: boolea
 	profile.Settings[settingName] = value
 
 	dataSync.SyncPlayer(player, profile)
-
-	if applyFunctions[settingName] then
-		applyFunctions[settingName](value)
-	end
-
 	return playerSettings[settingName]
 end
 

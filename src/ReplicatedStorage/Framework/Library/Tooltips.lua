@@ -1,3 +1,4 @@
+local Enchants = require(script.Parent.Enchants)
 local InfiniteMath = require("../InfiniteMath")
 local ImageService = require("./ImageService")
 local ItemUtility = require("../ItemUtility")
@@ -63,9 +64,26 @@ local Tooltips = {
 			LabelsFrame.Chance.Amount.Text = `1 in {InfiniteMath.new(Data.Chance):GetSuffix(true)}`
 		end
 
-		if Data.Enchant then
+		if Data.enchant and Data.enchant ~= "" then
+			local split = string.split(Data.enchant, "_")
+			local name, tier = split[1], split[2]
+
+			local tierColor = Color3.fromRGB(255, 255, 255)
+
+			if Enchants[Data.enchant].Rarity == "Exclusive" then
+				tierColor = Globals.RarityColors.Epic
+			end
+
+			LabelsFrame.Enchant.Text = string.format(
+				Enchants.Description[name],
+				ToHex(Enchants.Colors[name]),
+				name,
+				ToHex(tierColor),
+				tier,
+				ToHex(Enchants.Colors[name]),
+				Enchants[Data.enchant].Buff
+			)
 			LabelsFrame.Enchant.Visible = true
-			LabelsFrame.Enchant.Amount.Text = Data.Enchant
 		end
 
 		if Data.Replay then

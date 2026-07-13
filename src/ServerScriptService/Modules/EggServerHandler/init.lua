@@ -257,6 +257,7 @@ function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
 				date = os.time(),
 				locked = false,
 				equipped = false,
+				enchant = "",
 			})
 
 			if profile.AFKStartTime > 0 then

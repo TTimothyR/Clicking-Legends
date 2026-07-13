@@ -11,6 +11,7 @@ local GroupService = game:GetService("GroupService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local EggUnlockCutscene = require("@self/EggUnlockCutscene")
+local Enchants = require(ReplicatedStorage.Framework.Library.Enchants)
 
 -- Variables
 repeat
@@ -51,17 +52,11 @@ local dataSync = require(script.Parent.DataSyncClient)
 local menuHandler = require(script.Parent.MenuHandler)
 local infoClass = require(classes.InfoPopup)
 
-local function SetupTemplate(ui)
-	local petHolder = ui.Main.PetsFrame.Holder
-	local buttons = ui.Main.Buttons
-
-	local index = dataSync.Get("PetIndex")
+local function CalculateLuckPercentage()
 	local luckPercentage = dataSync.Get("LuckPercentage")
-	local gpsOwned = dataSync.Get("OwnedGamepasses")
-	local luckPassOwned = gpsOwned["Double Luck"] and true or false
-	local easyChance = dataSync.Get("Settings").EasyChances
-
 	local activePotions = dataSync.Get("ActivePotions")
+	local pets = dataSync.Get("Pets")
+
 	if activePotions["Lucky"] then
 		local tier, data = next(activePotions["Lucky"].Active)
 
@@ -69,6 +64,29 @@ local function SetupTemplate(ui)
 			luckPercentage += globals.GetPotionBuffAmount(tier, "Lucky")
 		end
 	end
+
+	for _, data in ipairs(pets) do
+		if not data.equipped then
+			continue
+		end
+
+		if string.find(data.enchant, "Lucky") then
+			luckPercentage += Enchants[data.enchant].Buff
+		end
+	end
+
+	return luckPercentage
+end
+
+local function SetupTemplate(ui)
+	local petHolder = ui.Main.PetsFrame.Holder
+	local buttons = ui.Main.Buttons
+
+	local index = dataSync.Get("PetIndex")
+	local luckPercentage = CalculateLuckPercentage()
+	local gpsOwned = dataSync.Get("OwnedGamepasses")
+	local luckPassOwned = gpsOwned["Double Luck"] and true or false
+	local easyChance = dataSync.Get("Settings").EasyChances
 
 	for _, item in ipairs(petHolder:GetChildren()) do
 		if item:IsA("ImageButton") then
@@ -239,19 +257,10 @@ local function ConfigureEggUI(egg: Model)
 	clone.Parent = eggHolder
 	lockedClone.Parent = eggHolder
 
-	local luckPercentage = dataSync.Get("LuckPercentage")
 	local gpsOwned = dataSync.Get("OwnedGamepasses")
 	local easyChance = dataSync.Get("Settings").EasyChances
 	local luckPassOwned = gpsOwned["Double Luck"] and true or false
-
-	local activePotions = dataSync.Get("ActivePotions")
-	if activePotions["Lucky"] then
-		local tier, data = next(activePotions["Lucky"].Active)
-
-		if tier and data then
-			luckPercentage += globals.GetPotionBuffAmount(tier, "Lucky")
-		end
-	end
+	local luckPercentage = CalculateLuckPercentage()
 
 	clone.Adornee = egg:FindFirstChild("View")
 	lockedClone.Adornee = egg:FindFirstChild("View")

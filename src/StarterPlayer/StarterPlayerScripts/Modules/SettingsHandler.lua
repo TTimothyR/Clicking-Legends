@@ -37,7 +37,7 @@ local sliderMaximumXPosition = 1.0
 local toggleConnections = {}
 local sliderConnections = {}
 
-local function CreateSliderConnections(settingName, sliderFrame: Frame)
+local function CreateSliderConnection(settingName, sliderFrame: Frame)
 	if not sliderConnections[settingName] then
 		local toggleButton = sliderFrame:FindFirstChild("Toggle") :: ImageButton
 		local bar = sliderFrame:FindFirstChild("Bar") :: CanvasGroup
@@ -83,7 +83,7 @@ local function CreateSliderConnections(settingName, sliderFrame: Frame)
 				if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 					sliderConnections[settingName].MouseDown = false
 
-					local _ = network:InvokeServer("ApplySetting", settingName, toggleButton.Position.Y.Scale)
+					local _ = network:InvokeServer("ApplySetting", settingName, toggleButton.Position.X.Scale)
 				end
 			end) :: RBXScriptConnection
 		)
@@ -169,7 +169,7 @@ function SettingsHandler.LoadSettings()
 			toggleButton.Position = UDim2.fromScale(togglePosition, toggleButton.Position.Y.Scale)
 			bar.Size = UDim2.fromScale(togglePosition, bar.Size.Y.Scale)
 
-			CreateSliderConnections(settingName, sliderFrame)
+			CreateSliderConnection(settingName, sliderFrame)
 		else
 			warn("Unknown setting type, possibly a typo.")
 		end

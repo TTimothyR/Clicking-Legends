@@ -35,7 +35,7 @@ return {
 			Duration = 240,
 			-- Name, Buff Percentage
 			Buffs = {
-				{ "Lucky", 40 },
+				{ "Lucky", 65 },
 				{ "Rebirths", 40 },
 				{ "Speed", 40 },
 			},
@@ -45,7 +45,7 @@ return {
 			Duration = 300,
 			-- Name, Buff Percentage
 			Buffs = {
-				{ "Lucky", 50 },
+				{ "Lucky", 150 },
 				{ "Rebirths", 50 },
 				{ "Speed", 50 },
 			},
