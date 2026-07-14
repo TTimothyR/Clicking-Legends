@@ -25,27 +25,21 @@ local ItemShopHandlerPrivate = require("./Private/ItemShopHandlerPrivate")
 local gpIDToName = {}
 local productIDToName = {}
 local callbacks = {
-	["+100 Pet Storage"] = function(player: Player)
-		local profile = playerData.GetData(player)
-		profile.PetStorage += 100
-
-		dataSync.SyncPlayer(player, profile)
-	end,
 	["+500 Pet Storage"] = function(player: Player)
 		local profile = playerData.GetData(player)
 		profile.PetStorage += 500
 
 		dataSync.SyncPlayer(player, profile)
 	end,
-	["+3 Pet Equips"] = function(player: Player)
+	["Extra Equips"] = function(player: Player)
 		local profile = playerData.GetData(player)
 		profile.PetEquips += 3
 
 		dataSync.SyncPlayer(player, profile)
 	end,
-	["+2 Eggs"] = function(player: Player)
+	["Extra Egg"] = function(player: Player)
 		local profile = playerData.GetData(player)
-		profile.EggHatches += 2
+		profile.EggHatches += 1
 
 		dataSync.SyncPlayer(player, profile)
 	end,
@@ -188,6 +182,9 @@ local function EnsureGamepassOwnership(player: Player)
 		end
 		if mps:UserOwnsGamePassAsync(player.UserId, data.GamepassID) then
 			ownedPasses[gpName] = true
+			if callbacks[gpName] then
+				callbacks[gpName](player)
+			end
 		end
 	end
 

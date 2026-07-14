@@ -25,6 +25,7 @@ local itemHolder = hud:WaitForChild("Items")
 
 -- Modules
 local ImageService = require(ReplicatedStorage.Framework.Library.ImageService)
+local Items = require(ReplicatedStorage.Framework.Library.Items)
 local dataSync = require(script.Parent.DataSyncClient)
 local globals = require(framework.Globals)
 
@@ -47,9 +48,18 @@ local function StartTimer(clone, endTime, boostType)
 end
 
 local function CreateTemplate(boostType, tier, remainingDuration)
+	local rarity = Items.Potions[tier].Rarity
+
 	local clone = potionTemplate:Clone()
 	clone.Icon.Image = ImageService[boostType .. "_" .. tier]
 	clone.Duration.Text = globals.FormatTime(remainingDuration, true)
+	clone.Tier.Text = tier
+	clone.Tier.TextColor3 = globals.RarityColors[rarity]
+
+	if rarity == "Legendary" then
+		clone.Tier.Legendary.Enabled = true
+	end
+
 	clone.Name = boostType
 	clone.Parent = itemHolder
 	clone.Visible = true

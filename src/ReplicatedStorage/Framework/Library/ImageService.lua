@@ -96,6 +96,12 @@ return {
 	["Shiny Water Overlord"] = "rbxassetid://94399821275334",
 	["Shiny King Star"] = "rbxassetid://92713647999978",
 
+	--
+	["Grand Patriotic Overlord"] = "rbxassetid://120158110368748",
+	["Patriotic Heart"] = "rbxassetid://87999603996959",
+	["Shiny Grand Patriotic Overlord"] = "rbxassetid://80915748226359",
+	["Shiny Patriotic Heart"] = "rbxassetid://87217938888745",
+
 	["Lucky_I"] = "rbxassetid://138637051417624",
 	["Rebirths_I"] = "rbxassetid://126039343755806",
 	["Speed_I"] = "rbxassetid://97562019929274",

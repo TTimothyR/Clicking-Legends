@@ -35,7 +35,7 @@ function GlobalEvents.Initialize()
 					continue
 				end
 
-				if attribute > 0 and not shouldHideEvents then
+				if attribute > os.time() and not shouldHideEvents then
 					EventFrame.Visible = true
 					EventFrame.Timer.Text = `({Globals.FormatTime(attribute - os.time(), false)})`
 				else

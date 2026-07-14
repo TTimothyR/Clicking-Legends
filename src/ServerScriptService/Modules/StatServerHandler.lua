@@ -129,7 +129,7 @@ function StatHandler.Click(player: Player, fromAutoClick: boolean)
 	end
 
 	local ownedGamepasses = profile.OwnedGamepasses
-	if ownedGamepasses["Double Clicks"] then
+	if ownedGamepasses["x2 Clicks"] then
 		increment *= 2
 	end
 

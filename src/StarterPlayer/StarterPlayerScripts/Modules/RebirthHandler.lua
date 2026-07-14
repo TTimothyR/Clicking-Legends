@@ -113,7 +113,7 @@ local function UpdateButtons(fromSignal: boolean)
 					rebirths = infMath.new(currentClicks / (globals.RebirthBasePrice * currentRebirths))
 					rebirths = infMath.floor(rebirths)
 
-					if not ownedGamepasses["Unlimited Rebirths"] then
+					if not ownedGamepasses["Max Rebirths"] then
 						clone.Inner.Locked.Visible = true
 						unlimRebirthPurchaseCon = clone.Inner.Locked.Buy.MouseButton1Click:Connect(function()
 							if not db then
@@ -121,7 +121,7 @@ local function UpdateButtons(fromSignal: boolean)
 								task.delay(0.15, function()
 									db = false
 								end)
-								mps:PromptGamePassPurchase(player, shopStats.Gamepasses["Unlimited Rebirths"].GamepassID)
+								mps:PromptGamePassPurchase(player, shopStats.Gamepasses["Max Rebirths"].GamepassID)
 								shopHandler.ShowGreyFrame()
 							end
 						end)
@@ -173,7 +173,7 @@ local function UpdateAutoRebirthButton(status: boolean)
 end
 
 local function CheckUnlimitedRebirthsOwned(newData)
-	if newData["Unlimited Rebirths"] then
+	if newData["Max Rebirths"] then
 		if holder:FindFirstChild("1") then
 			holder:FindFirstChild("1").Inner.Locked.Visible = false
 

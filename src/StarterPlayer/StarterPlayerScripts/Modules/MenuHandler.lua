@@ -159,6 +159,8 @@ function ButtonHandler.Initialize()
 			inventoryHandler.LoadInventory()
 			inventoryHandler.LoadItems()
 			inventoryHandler.LoadGifts()
+
+			inventoryHandler.StartLegendaryAnimations()
 		end)
 	end)
 	prizesButton.MouseButton1Click:Connect(function()

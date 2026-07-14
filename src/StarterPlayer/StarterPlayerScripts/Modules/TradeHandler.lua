@@ -2,6 +2,8 @@ local TradeHandler = {}
 local db = false
 
 -- Services
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local players = game:GetService("Players")
 local rs = game:GetService("ReplicatedStorage")
 local runService = game:GetService("RunService")
@@ -25,6 +27,11 @@ local acceptConnection = nil
 local declineConnection = nil
 local tradeRequestEndPos = UDim2.fromScale(0.5, 0.1)
 local tradeRequestStartPos = UDim2.fromScale(0.5, -0.1)
+
+local legendaryConnection: RBXScriptConnection = nil
+local gradientsToAnimate = {}
+local currentRotation = 0
+local animationLoaded = false :: boolean
 
 local isPrivateServer = false
 local canTrade = true
@@ -67,12 +74,14 @@ local meButtonHolder = meButtons:WaitForChild("Holder")
 local meGifts = tradeMain:WaitForChild("MeGifts")
 
 -- Modules
+local ImageService = require(ReplicatedStorage.Framework.Library.ImageService)
 local network = require(framework.Network)
 local globals = require(framework.Globals)
 local petStats = require(library.PetStats)
 local menuHandler = require(script.Parent.MenuHandler)
 local infoPopup = require(classes.InfoPopup)
 local dataSync = require(script.Parent.DataSyncClient)
+local Tooltip = require(script.Parent.Tooltip)
 
 local function UpdateTradeButton(color: string, text: string, button)
 	button.Frame.UIGradient.Color = globals.ButtonPresets[color].Gradient
@@ -108,11 +117,25 @@ local function CreatePetButton(clone, holder, petData)
 	clone.Parent = holder
 	clone.Name = petData.id
 
+	clone.Frame.Icon.Image = ImageService[petData.fullName] or ImageService["Placeholder"]
+
+	local tooltipTbl = petData
+	tooltipTbl.clicks = true
+	tooltipTbl.gems = true
+	tooltipTbl.ShowLevel = true
+	Tooltip.SetupTooltip(clone, "PetTooltip", petData)
+
 	local rarity = petStats[petData.petName].Rarity
 	clone.Frame.BackgroundColor3 = globals.RarityColors[rarity]
 	if rarity == "Legendary" then
 		clone.Glow.Visible = true
+		clone.Glow.Legendary.Enabled = true
 		clone.Frame.Legendary.Enabled = true
+
+		if animationLoaded then
+			table.insert(gradientsToAnimate, clone.Glow.Legendary)
+			table.insert(gradientsToAnimate, clone.Frame.Legendary)
+		end
 	end
 
 	clone.Visible = true
@@ -142,12 +165,12 @@ local function CleanUp()
 			child:Destroy()
 		end
 	end
-	for _, child: Instance in ipairs(meOffer.Pets:GetChildren()) do
+	for _, child: Instance in ipairs(meOffer.ScrollingFrame:GetChildren()) do
 		if child:IsA("ImageButton") then
 			child:Destroy()
 		end
 	end
-	for _, child: Instance in ipairs(youOffer.Pets:GetChildren()) do
+	for _, child: Instance in ipairs(youOffer.ScrollingFrame:GetChildren()) do
 		if child:IsA("ImageButton") then
 			child:Destroy()
 		end
@@ -169,6 +192,32 @@ local function CleanUp()
 		end
 	end
 	tradeConnections = {}
+end
+
+local function StartLegendaryAnimations()
+	globals.GetAnimatedGradients({
+		mePets.ScrollingFrame,
+		meGifts.ScrollingFrame,
+		meOffer.ScrollingFrame,
+		youPets.ScrollingFrame,
+		youGifts.ScrollingFrame,
+		youOffer.ScrollingFrame,
+	}, gradientsToAnimate)
+
+	legendaryConnection = RunService.Heartbeat:Connect(function(elapsedSec: number)
+		currentRotation += 360 / globals.LegendaryGradientRotateSpeed * elapsedSec % 360
+		for i = #gradientsToAnimate, 1, -1 do
+			local gradient = gradientsToAnimate[i] :: UIGradient
+
+			if not gradient or not gradient.Parent then
+				table.remove(gradientsToAnimate, i)
+			else
+				gradient.Rotation = currentRotation
+			end
+		end
+	end) :: RBXScriptConnection
+
+	animationLoaded = true
 end
 
 function TradeHandler.DeclineTrade(me: Player)
@@ -246,15 +295,16 @@ end
 function TradeHandler.ToggleGift(me: Player, id: string, gamepassName: string, state: string)
 	if state == "Removed" then
 		if player == me then
-			meOffer.Pets:FindFirstChild(id):Destroy()
+			meOffer.ScrollingFrame:FindFirstChild(id):Destroy()
 		else
-			youOffer.Pets:FindFirstChild(id):Destroy()
+			youOffer.ScrollingFrame:FindFirstChild(id):Destroy()
 		end
 	elseif state == "Added" then
 		local clone = offerTemplate:Clone() :: ImageButton
 		clone.Name = id
-		-- add the icon here
+		clone.Frame.Icon.Image = ImageService[gamepassName] or ImageService["Placeholder"]
 		clone.Frame.Legendary.Enabled = true
+		clone.Visible = true
 
 		if player == me then
 			local clickConnection = clone.MouseButton1Click:Connect(function()
@@ -270,9 +320,9 @@ function TradeHandler.ToggleGift(me: Player, id: string, gamepassName: string, s
 				clickConnection:Disconnect()
 			end)
 
-			clone.Parent = meOffer.Pets
+			clone.Parent = meOffer.ScrollingFrame
 		else
-			clone.Parent = youOffer.Pets
+			clone.Parent = youOffer.ScrollingFrame
 		end
 	end
 end
@@ -280,15 +330,15 @@ end
 function TradeHandler.TogglePet(me: Player, data, state)
 	if state == "Removed" then
 		if player == me then
-			meOffer.Pets:FindFirstChild(data.id):Destroy()
+			meOffer.ScrollingFrame:FindFirstChild(data.id):Destroy()
 		else
-			youOffer.Pets:FindFirstChild(data.id):Destroy()
+			youOffer.ScrollingFrame:FindFirstChild(data.id):Destroy()
 		end
 	elseif state == "Added" then
 		local clone: ImageButton = offerTemplate:Clone()
 
 		if player == me then
-			clone = CreatePetButton(clone, meOffer.Pets, data)
+			clone = CreatePetButton(clone, meOffer.ScrollingFrame, data)
 			local clickCon: RBXScriptConnection
 			clickCon = clone.MouseButton1Click:Connect(function()
 				if not db then
@@ -304,18 +354,23 @@ function TradeHandler.TogglePet(me: Player, data, state)
 				clickCon:Disconnect()
 			end)
 		else
-			clone = CreatePetButton(clone, youOffer.Pets, data)
+			clone = CreatePetButton(clone, youOffer.ScrollingFrame, data)
 		end
 	end
 end
 
 function TradeHandler.EnterTrade(_: Player, you: Player)
 	-- local myProfile = network:InvokeServer('GetData');
-	local yourProfile = dataSync.GetOtherData(you.UserId)
+	-- local yourProfile = dataSync.GetOtherData(you.UserId)
 	local myPets = dataSync.Get("Pets")
-	local yourPets = yourProfile.Pets
+	-- local yourPets = yourProfile.Pets
 	local myGifts = dataSync.Get("Gifts")
-	local yourGifts = yourProfile.Gifts
+	-- local yourGifts = yourProfile.Gifts
+	local yourPets = {}
+	local yourGifts = {}
+
+	table.sort(myPets, globals.SortPets)
+	table.sort(yourPets, globals.SortPets)
 
 	meOffer.Ready.Visible = false
 	youOffer.Ready.Visible = false
@@ -338,8 +393,13 @@ function TradeHandler.EnterTrade(_: Player, you: Player)
 		for id, gamepassName in pairs(inventory) do
 			local clone = petTemplate:Clone() :: ImageButton
 			clone.Name = id
-			-- Add the gamepass icon here
 			clone.Frame.Legendary.Enabled = true
+			clone.Glow.Legendary.Enabled = true
+			clone.Frame.Icon.Image = ImageService[gamepassName] or ImageService["Placeholder"]
+			if animationLoaded then
+				table.insert(gradientsToAnimate, clone.Glow.Legendary)
+				table.insert(gradientsToAnimate, clone.Frame.Legendary)
+			end
 			clone.Parent = holder
 			clone.Visible = true
 
@@ -466,7 +526,7 @@ function TradeHandler.EnterTrade(_: Player, you: Player)
 	CreateGamepassButtons(myGifts, meGifts.ScrollingFrame)
 	CreateGamepassButtons(yourGifts, youGifts.ScrollingFrame)
 
-	menuHandler.handleOpenClose(tradeFrame)
+	menuHandler.handleOpenClose(tradeFrame, StartLegendaryAnimations)
 end
 
 function TradeHandler.UpdateTradeButtons()
@@ -598,6 +658,16 @@ function TradeHandler.Initialize()
 	end
 
 	isPrivateServer = network:InvokeServer("GetPrivateServerStatus")
+
+	tradeFrame:GetPropertyChangedSignal("Visible"):Connect(function()
+		if not tradeFrame.Visible then
+			if legendaryConnection.Connected then
+				legendaryConnection:Disconnect()
+				table.clear(gradientsToAnimate)
+				animationLoaded = false
+			end
+		end
+	end)
 
 	dataSync.OnReady(function()
 		local tradeBanned = dataSync.Get("TradeBanned")

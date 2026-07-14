@@ -14,6 +14,7 @@ local GlobalEventsModule = require(ReplicatedStorage.Framework.Library.GlobalEve
 local eggStats = require(library.EggStats)
 local petStats = require(library.PetStats)
 
+Globals.LegendaryGradientRotateSpeed = 10 -- seconds per 360 degrees
 Globals.RebirthBasePrice = 2250
 Globals.UpgradeMultiplier = 1.35
 -- Globals.CostCoefficient = 5
@@ -128,6 +129,49 @@ function Globals.GetGiftDuplicates(gifts)
 	end
 
 	return dupes
+end
+
+function Globals.GetAnimatedGradients(
+	parents: { [number]: Folder | ScrollingFrame },
+	gradientsToAnimate: { [number]: UIGradient }
+): { [number]: UIGradient }
+	for _, parent in ipairs(parents) do
+		for _, child in ipairs(parent:GetChildren()) do
+			if child:IsA("ImageButton") then
+				if child.Glow.Legendary.Enabled then
+					table.insert(gradientsToAnimate, child.Glow.Legendary)
+				end
+				if child.Frame.Legendary.Enabled then
+					table.insert(gradientsToAnimate, child.Frame.Legendary)
+				end
+			end
+		end
+	end
+
+	return gradientsToAnimate
+end
+
+function Globals.SortPets(petA, petB)
+	local petStatsA = petStats[petA.petName]
+	local petStatsB = petStats[petB.petName]
+	local rarityA = petStatsA.Rarity
+	local rarityB = petStatsB.Rarity
+
+	local rarityOrderA = Globals.RarityOrder[rarityA] or 0
+	local rarityOrderB = Globals.RarityOrder[rarityB] or 0
+
+	if rarityOrderA ~= rarityOrderB then
+		return rarityOrderA > rarityOrderB
+	end
+
+	local petAClicks = petStatsA.Clicks
+	local petBClicks = petStatsB.Clicks
+
+	if petAClicks ~= petBClicks then
+		return petAClicks > petBClicks
+	end
+
+	return petA.petName > petB.petName
 end
 
 function Globals.GetPotionBuffAmount(tier, buff)

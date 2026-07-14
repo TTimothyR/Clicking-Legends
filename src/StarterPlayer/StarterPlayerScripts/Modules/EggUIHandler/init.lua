@@ -10,7 +10,10 @@ local uis = game:GetService("UserInputService")
 local GroupService = game:GetService("GroupService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local Framework = ReplicatedStorage:WaitForChild("Framework")
+
 local EggUnlockCutscene = require("@self/EggUnlockCutscene")
+local InfiniteMath = require(Framework:WaitForChild("InfiniteMath"))
 local Enchants = require(ReplicatedStorage.Framework.Library.Enchants)
 
 -- Variables
@@ -85,7 +88,7 @@ local function SetupTemplate(ui)
 	local index = dataSync.Get("PetIndex")
 	local luckPercentage = CalculateLuckPercentage()
 	local gpsOwned = dataSync.Get("OwnedGamepasses")
-	local luckPassOwned = gpsOwned["Double Luck"] and true or false
+	local luckPassOwned = gpsOwned["x2 Luck"] and true or false
 	local easyChance = dataSync.Get("Settings").EasyChances
 
 	for _, item in ipairs(petHolder:GetChildren()) do
@@ -259,7 +262,7 @@ local function ConfigureEggUI(egg: Model)
 
 	local gpsOwned = dataSync.Get("OwnedGamepasses")
 	local easyChance = dataSync.Get("Settings").EasyChances
-	local luckPassOwned = gpsOwned["Double Luck"] and true or false
+	local luckPassOwned = gpsOwned["x2 Luck"] and true or false
 	local luckPercentage = CalculateLuckPercentage()
 
 	clone.Adornee = egg:FindFirstChild("View")
@@ -282,15 +285,42 @@ local function ConfigureEggUI(egg: Model)
 
 	local currentStats = eggStats[egg.Name]
 	eggName.EggName.Text = tostring(egg.Name)
-	price.Amount.Text = currentStats.Price[2]
+	price.Amount.Text = InfiniteMath.new(currentStats.Price[2]):GetSuffix(true)
 
 	local lockedMain = lockedClone.Main
 	local Price = lockedMain.Price
 	local Amount = Price.Amount
 	local EggNameLabel = lockedMain.EggName
 
-	Amount.Text = currentStats.Price[2]
+	Amount.Text = InfiniteMath.new(currentStats.Price[2]):GetSuffix(true)
 	EggNameLabel.Text = tostring(egg.Name)
+
+	local buttons = lockedMain.Buttons
+	local hatchButton = buttons.Hatch :: ImageButton
+
+	local unlockConnection: RBXScriptConnection = nil
+
+	unlockConnection = hatchButton.MouseButton1Click:Connect(function()
+		if not db then
+			db = true
+			task.delay(0.15, function()
+				db = false
+			end)
+
+			local closeEgg = closestEgg2
+			if closeEgg ~= "" then
+				if UnlockedEggs[closeEgg] then
+					network:FireServer("OpenEgg", closeEgg, 1)
+				else
+					network:FireServer("UnlockEgg", closeEgg)
+				end
+
+				if unlockConnection.Connected then
+					unlockConnection:Disconnect()
+				end
+			end
+		end
+	end) :: RBXScriptConnection
 
 	for petName, data in pairs(currentStats.Pets) do
 		local petClone = petTemplate:Clone()

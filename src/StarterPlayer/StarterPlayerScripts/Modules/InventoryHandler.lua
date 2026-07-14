@@ -2,6 +2,7 @@ local InventoryHandler = {}
 local db = false
 
 -- Services
+local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local players = game:GetService("Players")
 local rs = game:GetService("ReplicatedStorage")
@@ -42,6 +43,11 @@ local giftInfoConnections = {}
 local itemConnections = {}
 local petConnections = {}
 local giftConnections = {}
+
+local legendaryConnection: RBXScriptConnection = nil
+local gradientsToAnimate = {}
+local currentRotation = 0
+local animationLoaded = false :: boolean
 
 local bulkButtonsConnected = false
 local multiDeleteActive = false
@@ -228,19 +234,6 @@ local function SeparatePets(petsTbl, equipped)
 	end
 
 	return normalTbl, secretTbl
-end
-
-local function SortPets(petA, petB)
-	local rarityA = petStats[petA.petName].Rarity
-	local rarityB = petStats[petB.petName].Rarity
-
-	local rarityOrderA = globals.RarityOrder[rarityA] or 0
-	local rarityOrderB = globals.RarityOrder[rarityB] or 0
-
-	if rarityOrderA ~= rarityOrderB then
-		return rarityOrderA > rarityOrderB
-	end
-	return
 end
 
 local function GetPetData(id: string)
@@ -603,6 +596,11 @@ local function CreateEquippedPet(petData, template)
 	if clone.Frame:FindFirstChild("PetName") then
 		local egg = tblUtil.FindEgg(eggStats, petData.petName)
 		local chance = eggStats[egg].Pets[petData.petName][1]
+
+		if petData.shiny == true then
+			chance /= 40
+		end
+
 		if chance == 0 then
 			clone.Frame.Chance.Text = "Unknown"
 		else
@@ -610,14 +608,20 @@ local function CreateEquippedPet(petData, template)
 			clone.Frame.Chance.Text = "1 in " .. simplifiedChance:GetSuffix(true)
 		end
 		clone.Frame.PetName.Text = petData.petName
-	else
-		local rarity = petStats[petData.petName].Rarity
-		clone.Frame.BackgroundColor3 = globals.RarityColors[rarity]
-		if rarity == "Legendary" then
-			clone.Glow.Visible = true
-			clone.Frame.Legendary.Enabled = true
+	end
+	local rarity = petStats[petData.petName].Rarity
+	clone.Frame.BackgroundColor3 = globals.RarityColors[rarity]
+	if rarity == "Legendary" then
+		clone.Glow.Visible = true
+		clone.Glow.Legendary.Enabled = true
+		clone.Frame.Legendary.Enabled = true
+
+		if animationLoaded then
+			table.insert(gradientsToAnimate, clone.Glow.Legendary)
+			table.insert(gradientsToAnimate, clone.Frame.Legendary)
 		end
 	end
+
 	-- clone:GetPropertyChangedSignal('Parent'):Once(function()
 	--     if petConnections[petData.id] then
 	--         if petConnections[petData.id].Connected then
@@ -642,7 +646,13 @@ local function CreateNormalPet(petData)
 	clone.Frame.ImageLabel.Level.Text = petData.level
 	if rarity == "Legendary" then
 		clone.Glow.Visible = true
+		clone.Glow.Legendary.Enabled = true
 		clone.Frame.Legendary.Enabled = true
+
+		if animationLoaded then
+			table.insert(gradientsToAnimate, clone.Glow.Legendary)
+			table.insert(gradientsToAnimate, clone.Frame.Legendary)
+		end
 	end
 
 	-- clone:GetPropertyChangedSignal('Parent'):Once(function()
@@ -667,6 +677,11 @@ local function CreateSecretPet(petData)
 
 	local egg = tblUtil.FindEgg(eggStats, petData.petName)
 	local chance = eggStats[egg].Pets[petData.petName][1]
+
+	if petData.shiny == true then
+		chance /= 40
+	end
+
 	clone.Frame.ImageLabel.Image = imageService[petData.fullName] or imageService["Placeholder"]
 	clone.Frame.ImageLabel.Level.Text = petData.level
 	if chance == 0 then
@@ -674,6 +689,15 @@ local function CreateSecretPet(petData)
 	else
 		local simplifiedChance = infMath.new((1 / chance) * 100)
 		clone.Frame.Chance.Text = "1 in " .. simplifiedChance:GetSuffix(true)
+	end
+
+	clone.Glow.Visible = true
+	clone.Glow.Legendary.Enabled = true
+	clone.Frame.Legendary.Enabled = true
+
+	if animationLoaded then
+		table.insert(gradientsToAnimate, clone.Glow.Legendary)
+		table.insert(gradientsToAnimate, clone.Frame.Legendary)
 	end
 	-- clone:GetPropertyChangedSignal('Parent'):Once(function()
 	--     if petConnections[petData.id] then
@@ -724,9 +748,8 @@ function InventoryHandler.LoadInventory()
 	end
 
 	local ownedPasses = dataSync.Get("OwnedGamepasses")
-	local ownsEquips = ownedPasses["+3 Pet Equips"]
-	local ownsStorageT1 = ownedPasses["+100 Pet Storage"]
-	local ownsStorageT2 = ownedPasses["+500 Pet Storage"]
+	local ownsEquips = ownedPasses["Extra Equips"]
+	local ownsStorage = ownedPasses["+500 Pet Storage"]
 
 	if increaseEquippedButtonCon and increaseEquippedButtonCon.Connected then
 		increaseEquippedButtonCon:Disconnect()
@@ -742,27 +765,24 @@ function InventoryHandler.LoadInventory()
 				task.delay(0.15, function()
 					db = false
 				end)
-				mps:PromptGamePassPurchase(player, shopStats.Gamepasses["+3 Pet Equips"].GamepassID)
+				mps:PromptGamePassPurchase(player, shopStats.Gamepasses["Extra Equips"].GamepassID)
 				shopHandler.ShowGreyFrame()
 			end
 		end)
 	else
 		increaseEquippedButton.Visible = false
 	end
-	if ownsStorageT1 and ownsStorageT2 then
+	if ownsStorage then
 		increaseStorageButton.Visible = false
 	end
-	if not ownsStorageT1 or not ownsStorageT2 then
+	if not ownsStorage then
 		increaseStorageButtonCon = increaseStorageButton.MouseButton1Click:Connect(function()
 			if not db then
 				db = true
 				task.delay(0.15, function()
 					db = false
 				end)
-				if not ownsStorageT1 then
-					mps:PromptGamePassPurchase(player, shopStats.Gamepasses["+100 Pet Storage"].GamepassID)
-					shopHandler.ShowGreyFrame()
-				elseif not ownsStorageT2 then
+				if not ownsStorage then
 					mps:PromptGamePassPurchase(player, shopStats.Gamepasses["+500 Pet Storage"].GamepassID)
 					shopHandler.ShowGreyFrame()
 				end
@@ -918,8 +938,8 @@ function InventoryHandler.LoadInventory()
 	local equippedNormalTbl, equippedSecretTbl = SeparatePets(pets, true)
 	local totalEquipped = #equippedNormalTbl + #equippedSecretTbl
 	local totalVisibleEquipped = dataSync.Get("CurrentEquips")
-	table.sort(normalTbl, SortPets)
-	table.sort(equippedNormalTbl, SortPets)
+	table.sort(normalTbl, globals.SortPets)
+	table.sort(equippedNormalTbl, globals.SortPets)
 
 	if totalEquipped == 0 then
 		equippedTag.Visible = false
@@ -1158,6 +1178,15 @@ function InventoryHandler.LoadGifts()
 		clone.Name = id
 		clone.Parent = giftList
 
+		clone.Glow.Visible = true
+		clone.Glow.Legendary.Enabled = true
+		clone.Frame.Legendary.Enabled = true
+
+		if animationLoaded then
+			table.insert(gradientsToAnimate, clone.Glow.Legendary)
+			table.insert(gradientsToAnimate, clone.Frame.Legendary)
+		end
+
 		CreateGiftClickConnection(clone, id)
 
 		clone.Visible = true
@@ -1241,7 +1270,13 @@ function InventoryHandler.LoadItems()
 
 			if rarity == "Legendary" then
 				clone.Glow.Visible = true
+				clone.Glow.Legendary.Enabled = true
 				clone.Frame.Legendary.Enabled = true
+
+				if animationLoaded then
+					table.insert(gradientsToAnimate, clone.Glow.Legendary)
+					table.insert(gradientsToAnimate, clone.Frame.Legendary)
+				end
 			end
 
 			clone.Name = data.potionName
@@ -1349,10 +1384,44 @@ function InventoryHandler.NewItem(data)
 	end) :: RBXScriptConnection
 end
 
+function InventoryHandler.StartLegendaryAnimations()
+	globals.GetAnimatedGradients({
+		notEquippedHolder,
+		equippedHolder,
+		giftList,
+		itemHolder,
+	}, gradientsToAnimate)
+
+	legendaryConnection = RunService.Heartbeat:Connect(function(elapsedSec: number)
+		currentRotation += 360 / globals.LegendaryGradientRotateSpeed * elapsedSec % 360
+		for i = #gradientsToAnimate, 1, -1 do
+			local gradient = gradientsToAnimate[i] :: UIGradient
+
+			if not gradient or not gradient.Parent then
+				table.remove(gradientsToAnimate, i)
+			else
+				gradient.Rotation = currentRotation
+			end
+		end
+	end) :: RBXScriptConnection
+
+	animationLoaded = true
+end
+
 function InventoryHandler.Initialize()
 	if not game.Loaded then
 		game.Loaded:Wait()
 	end
+
+	inventoryFrame:GetPropertyChangedSignal("Visible"):Connect(function()
+		if inventoryFrame.Visible == false then
+			if legendaryConnection.Connected then
+				legendaryConnection:Disconnect()
+				table.clear(gradientsToAnimate)
+				animationLoaded = false
+			end
+		end
+	end)
 
 	dataSync.OnChanged("Pets", function()
 		if not inventoryFrame.Visible then

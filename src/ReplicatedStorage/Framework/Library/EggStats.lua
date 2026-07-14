@@ -98,12 +98,15 @@ return {
 		},
 	},
 
-	["Release Egg"] = {
-		Price = { "Clicks", 1e10 },
+	["Patriotic Egg"] = {
+		Price = { "Clicks", 5e1 },
 		World = "Spawn",
-		Limited = true,
+		Limited = false,
+		Rewards = { { "Potion", "Lucky_I", 69 }, { "Potion", "Speed_III", 5 } },
+		ShinyRewards = { { "Currency", "Gems", 67420 } },
 		Pets = {
-			["Grand Patriotic Overlord"] = { 0.01, 1 },
+			["Grand Patriotic Overlord"] = { 5e-05, 8 },
+			["Patriotic Heart"] = { 2.5e-05, 8 },
 		},
 	},
 }

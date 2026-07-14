@@ -28,6 +28,7 @@ local dataSync = require(dataModules.DataSyncServer).Private
 -- Constants
 local startTime = 7
 local lockInTrigger = 3
+local maximumItemsInTrade = 8
 
 local function CheckTradeBan(player: Player, profile)
 	local petDupes = Globals.GetPetDuplicates(profile.Pets)
@@ -220,6 +221,18 @@ local function StartTimer(tradeID: string)
 	end)
 end
 
+local function CountOffer(pets, gifts)
+	local count = 0
+	for _, _ in pairs(pets) do
+		count += 1
+	end
+	for _, _ in pairs(gifts) do
+		count += 1
+	end
+
+	return count
+end
+
 function TradeHandler.RequestAnswer(you: Player, me: Player, choice: boolean)
 	if isPrivateServer then
 		return
@@ -235,48 +248,48 @@ function TradeHandler.RequestAnswer(you: Player, me: Player, choice: boolean)
 		end
 	end
 
-	if pendingRequests[you.Name] then
-		if pendingRequests[you.Name].fromPlayerName == me.Name then
-			pendingRequests[you.Name] = nil
-			profile1.TradeRequestFrom = ""
+	-- if pendingRequests[you.Name] then
+	-- 	if pendingRequests[you.Name].fromPlayerName == me.Name then
+	pendingRequests[you.Name] = nil
+	profile1.TradeRequestFrom = ""
 
-			profile1.IsInTrade = true
-			profile2.IsInTrade = true
+	profile1.IsInTrade = true
+	profile2.IsInTrade = true
 
-			network:FireClient(me, "EnterTrade", me, you)
-			network:FireClient(you, "EnterTrade", you, me)
+	network:FireClient(me, "EnterTrade", me, you)
+	network:FireClient(you, "EnterTrade", you, me)
 
-			local id: string = generateID.NewID()
+	local id: string = generateID.NewID()
 
-			trades[id] = {
-				Players = {
-					[me.Name] = {
-						Pets = {},
-						Gifts = {},
-						Ready = false,
-					},
-					[you.Name] = {
-						Pets = {},
-						Gifts = {},
-						Ready = false,
-					},
-				},
-				Settings = {
-					Timer = startTime,
-					TimerActive = false,
-					TradeLocked = false,
-					TimerConnection = nil,
-				},
-			}
+	trades[id] = {
+		Players = {
+			[me.Name] = {
+				Pets = {},
+				Gifts = {},
+				Ready = false,
+			},
+			[you.Name] = {
+				Pets = {},
+				Gifts = {},
+				Ready = false,
+			},
+		},
+		Settings = {
+			Timer = startTime,
+			TimerActive = false,
+			TradeLocked = false,
+			TimerConnection = nil,
+		},
+	}
 
-			for _, plr: Player in ipairs(players:GetPlayers()) do
-				network:FireClient(plr, "UpdateTradeButtons", me, you)
-			end
-
-			dataSync.SyncPlayer(you, profile1)
-			dataSync.SyncPlayer(me, profile2)
-		end
+	for _, plr: Player in ipairs(players:GetPlayers()) do
+		network:FireClient(plr, "UpdateTradeButtons", me, you)
 	end
+
+	dataSync.SyncPlayer(you, profile1)
+	dataSync.SyncPlayer(me, profile2)
+	-- 	end
+	-- end
 end
 
 function TradeHandler.SendTradeRequest(me: Player, you: Player)
@@ -338,6 +351,10 @@ function TradeHandler.ToggleGift(me: Player, id: string, gamepassName: string)
 	local state = nil
 
 	if not trade.Players[me.Name].Gifts[id] then
+		local offerCount = CountOffer(trade.Players[me.Name].Pets, trade.Players[me.Name].Gifts)
+		if offerCount >= maximumItemsInTrade then
+			return
+		end
 		trade.Players[me.Name].Gifts[id] = gamepassName
 		state = "Added"
 	else
@@ -347,7 +364,7 @@ function TradeHandler.ToggleGift(me: Player, id: string, gamepassName: string)
 
 	for playerName, _ in pairs(trade.Players) do
 		local plr = players:FindFirstChild(playerName) :: Player?
-		network:FireClient(plr, "ToggleGift", id, gamepassName, state)
+		network:FireClient(plr, "ToggleGift", me, id, gamepassName, state)
 		TradeHandler.Unready(plr)
 	end
 end
@@ -373,6 +390,10 @@ function TradeHandler.TogglePet(me: Player, id: string)
 
 	local state = nil
 	if not trade.Players[me.Name].Pets[id] then
+		local offerCount = CountOffer(trade.Players[me.Name].Pets, trade.Players[me.Name].Gifts)
+		if offerCount >= maximumItemsInTrade then
+			return
+		end
 		trade.Players[me.Name].Pets[id] = petData
 		state = "Added"
 	else

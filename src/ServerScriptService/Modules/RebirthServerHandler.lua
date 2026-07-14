@@ -41,7 +41,7 @@ function RebirthHandler.AttemptRebirth(player: Player, rebirthIndex: number)
 	local rebirths = infMath.new(profile.Rebirths)
 
 	if rebirthIndex == 1 then
-		if not profile.OwnedGamepasses["Unlimited Rebirths"] then
+		if not profile.OwnedGamepasses["Max Rebirths"] then
 			return
 		end
 
@@ -66,10 +66,10 @@ function RebirthHandler.AttemptRebirth(player: Player, rebirthIndex: number)
 				rebirthAmount *= 1 + (globals.GetPotionBuffAmount(tier, "Rebirths") / 100)
 			end
 		end
-		if profile.OwnedGamepasses["Double Rebirths"] then
+		if profile.OwnedGamepasses["x2 Rebirths"] then
 			rebirthAmount *= 2
 		end
-		if profile.OwnedGamepasses["Double Gems"] then
+		if profile.OwnedGamepasses["x2 Gems"] then
 			gemsPerRebirth *= 2
 		end
 

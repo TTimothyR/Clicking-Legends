@@ -24,6 +24,9 @@ local function StartMusic()
 	local musicClone = templateMusicObj:Clone() :: Sound
 
 	musicClone.Parent = playingMusic
+	if musicVolume == nil then
+		musicVolume = 1
+	end
 	musicClone.Volume = templateMusicObj.Volume * musicVolume
 	musicClone:Play()
 end
@@ -53,6 +56,9 @@ function SoundHandler.Initialize()
 		musicVolume, soundEffectVolume = new.Music, new.SFX
 
 		if playingMusic:FindFirstChildOfClass("Sound") then
+			if musicVolume == nil then
+				musicVolume = 1
+			end
 			playingMusic:FindFirstChildOfClass("Sound").Volume = templateMusicObj.Volume * musicVolume
 		end
 	end)

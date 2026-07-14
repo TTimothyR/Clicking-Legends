@@ -37,8 +37,15 @@ return {
 	["Grand Patriotic Overlord"] = {
 		Rarity = "Legendary",
 		State = "Fly",
-		Clicks = 23165456,
-		GemMulti = 105,
+		Clicks = 11e4,
+		GemMulti = 1100,
+		Secret = true,
+	},
+	["Patriotic Heart"] = {
+		Rarity = "Legendary",
+		State = "Fly",
+		Clicks = 23e4,
+		GemMulti = 2300,
 		Secret = true,
 	},
 
