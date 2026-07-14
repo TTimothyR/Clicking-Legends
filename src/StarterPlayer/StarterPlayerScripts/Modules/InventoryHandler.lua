@@ -1,6 +1,14 @@
 local InventoryHandler = {}
 local db = false
 
+-- Types
+type InventoryConnections = { [string]: TemplateConnections }
+
+type TemplateConnections = {
+	ClickConnection: RBXScriptConnection?,
+	TooltipConnections: { [number]: RBXScriptConnection },
+}
+
 -- Services
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
@@ -40,9 +48,9 @@ local petInfoConnections = {}
 local itemInfoConnections = {}
 local giftInfoConnections = {}
 
-local itemConnections = {}
-local petConnections = {}
-local giftConnections = {}
+local itemConnections: InventoryConnections = {}
+local petConnections: InventoryConnections = {}
+local giftConnections: InventoryConnections = {}
 
 local legendaryConnection: RBXScriptConnection = nil
 local gradientsToAnimate = {}
@@ -144,6 +152,10 @@ local menuHandler = nil
 -- Constants
 local maxColSecret = 3
 local maxColNormal = 6
+local templateConnections: TemplateConnections = {
+	ClickConnection = nil,
+	TooltipConnections = {},
+}
 
 -- Credits to: https://devforum.roblox.com/t/converting-a-color-to-a-hex-string/793018/2
 local function toInteger(color)
@@ -190,25 +202,22 @@ local function GetBuffPercentage(buff, tier)
 	return 0
 end
 
-local function RemovePetConnection(id: string)
-	if petConnections[id] then
-		petConnections[id]:Disconnect()
-		petConnections[id] = nil
-	end
-end
+local function RemoveConnection(key: string, container: InventoryConnections)
+	local connections = container[key]
+	if container[key] then
+		if connections.ClickConnection and connections.ClickConnection.Connected then
+			connections.ClickConnection:Disconnect()
+		end
 
-local function RemoveItemConnection(itemName: string)
-	if itemConnections[itemName] then
-		itemConnections[itemName]:Disconnect()
-		itemConnections[itemName] = nil
-	end
-end
+		for _, connection: RBXScriptConnection in ipairs(connections.TooltipConnections) do
+			if connection and connection.Connected then
+				connection:Disconnect()
+			end
+		end
 
-local function RemoveGiftConnection(giftID: string)
-	if giftConnections[giftID] then
-		giftConnections[giftID]:Disconnect()
-		giftConnections[giftID] = nil
+		table.clear(connections.TooltipConnections)
 	end
+	container[key] = templateConnections
 end
 
 local function SeparatePets(petsTbl, equipped)
@@ -442,7 +451,7 @@ local function LoadPetInfo(id: string)
 
 			-- InventoryHandler.LoadInventory();
 			holder:FindFirstChild(id, true):Destroy()
-			RemovePetConnection(id)
+			RemoveConnection(id, petConnections)
 		end
 	end)
 	shinyCon = petInfoButtons.Shiny.MouseButton1Click:Connect(function()
@@ -461,7 +470,7 @@ local function LoadPetInfo(id: string)
 			-- InventoryHandler.LoadInventory();
 			for _, iteratorID in ipairs(usedIds) do
 				holder:FindFirstChild(iteratorID, true):Destroy()
-				RemovePetConnection(iteratorID)
+				RemoveConnection(iteratorID, petConnections)
 			end
 		end
 	end)
@@ -492,8 +501,11 @@ local function LoadPetInfo(id: string)
 	petInfoHolder.Visible = true
 end
 
-CreateGiftClickConnection = function(clone: ImageButton, giftID)
-	RemoveGiftConnection(giftID)
+CreateGiftClickConnection = function(clone: ImageButton, giftID: string, gamepassName: string)
+	RemoveConnection(giftID, giftConnections)
+
+	local tooltipConnections =
+		Tooltip.SetupTooltip(clone, "Gifts", { gamepassName = gamepassName, reference = giftID }) :: { [number]: RBXScriptConnection }
 
 	local clickCon = clone.MouseButton1Click:Connect(function()
 		if not db then
@@ -511,12 +523,15 @@ CreateGiftClickConnection = function(clone: ImageButton, giftID)
 		end
 	end) :: RBXScriptConnection
 
-	giftConnections[giftID] = clickCon
+	giftConnections[giftID].ClickConnection = clickCon
+	giftConnections[giftID].TooltipConnections = tooltipConnections
 end
 
 CreateItemClickConnection = function(clone: ImageButton, itemName)
-	RemoveItemConnection(itemName)
-	Tooltip.SetupTooltip(clone, "Items", { itemName = itemName, Potion = true })
+	RemoveConnection(itemName, itemConnections)
+
+	local tooltipConnections =
+		Tooltip.SetupTooltip(clone, "Items", { itemName = itemName, reference = itemName, Potion = true })
 	local clickCon: RBXScriptConnection = clone.MouseButton1Click:Connect(function()
 		if not db then
 			db = true
@@ -533,17 +548,19 @@ CreateItemClickConnection = function(clone: ImageButton, itemName)
 		end
 	end)
 
-	itemConnections[itemName] = clickCon
+	itemConnections[itemName].ClickConnection = clickCon
+	itemConnections[itemName].TooltipConnections = tooltipConnections
 end
 
 CreatePetClickConnection = function(clone, petData)
-	RemovePetConnection(petData.id)
+	RemoveConnection(petData.id, petConnections)
 
 	local tooltipTbl = petData
 	tooltipTbl.clicks = true
 	tooltipTbl.gems = true
 	tooltipTbl.ShowLevel = true
-	Tooltip.SetupTooltip(clone, "PetTooltip", petData)
+	tooltipTbl.reference = petData.id
+	local tooltipConnections = Tooltip.SetupTooltip(clone, "PetTooltip", petData)
 	local clickCon: RBXScriptConnection = clone.MouseButton1Click:Connect(function()
 		if not db then
 			db = true
@@ -575,7 +592,9 @@ CreatePetClickConnection = function(clone, petData)
 			end
 		end
 	end)
-	petConnections[petData.id] = clickCon
+
+	petConnections[petData.id].ClickConnection = clickCon
+	petConnections[petData.id].TooltipConnections = tooltipConnections
 end
 
 local function CreateFullNameVariable(clone, petData)
@@ -622,14 +641,6 @@ local function CreateEquippedPet(petData, template)
 		end
 	end
 
-	-- clone:GetPropertyChangedSignal('Parent'):Once(function()
-	--     if petConnections[petData.id] then
-	--         if petConnections[petData.id].Connected then
-	--             petConnections[petData.id]:Disconnect();
-	--         end
-	--         petConnections[petData.id] = nil;
-	--     end
-	-- end)
 	CreatePetClickConnection(clone, petData)
 end
 
@@ -655,14 +666,6 @@ local function CreateNormalPet(petData)
 		end
 	end
 
-	-- clone:GetPropertyChangedSignal('Parent'):Once(function()
-	--     if petConnections[petData.id] then
-	--         if petConnections[petData.id].Connected then
-	--             petConnections[petData.id]:Disconnect();
-	--         end
-	--         petConnections[petData.id] = nil;
-	--     end
-	-- end)
 	CreatePetClickConnection(clone, petData)
 end
 
@@ -699,14 +702,6 @@ local function CreateSecretPet(petData)
 		table.insert(gradientsToAnimate, clone.Glow.Legendary)
 		table.insert(gradientsToAnimate, clone.Frame.Legendary)
 	end
-	-- clone:GetPropertyChangedSignal('Parent'):Once(function()
-	--     if petConnections[petData.id] then
-	--         if petConnections[petData.id].Connected then
-	--             petConnections[petData.id]:Disconnect();
-	--         end
-	--         petConnections[petData.id] = nil;
-	--     end
-	-- end)
 	CreatePetClickConnection(clone, petData)
 end
 
@@ -960,7 +955,7 @@ function InventoryHandler.LoadInventory()
 	for _, petData in ipairs(equippedSecretTbl) do
 		if notEquippedHolder:FindFirstChild(petData.id) then
 			notEquippedHolder:FindFirstChild(petData.id):Destroy()
-			RemovePetConnection(petData.id)
+			RemoveConnection(petData.id, petConnections)
 		end
 		if not equippedHolder:FindFirstChild(petData.id) then
 			CreateEquippedPet(petData, equippedSecretTemplate)
@@ -972,7 +967,7 @@ function InventoryHandler.LoadInventory()
 	for _, petData in ipairs(equippedNormalTbl) do
 		if notEquippedHolder:FindFirstChild(petData.id) then
 			notEquippedHolder:FindFirstChild(petData.id):Destroy()
-			RemovePetConnection(petData.id)
+			RemoveConnection(petData.id, petConnections)
 		end
 		if not equippedHolder:FindFirstChild(petData.id) then
 			CreateEquippedPet(petData, normalTemplate)
@@ -985,7 +980,7 @@ function InventoryHandler.LoadInventory()
 	for _, petData in ipairs(secretTbl) do
 		if equippedHolder:FindFirstChild(petData.id) then
 			equippedHolder:FindFirstChild(petData.id):Destroy()
-			RemovePetConnection(petData.id)
+			RemoveConnection(petData.id, petConnections)
 		end
 		if not notEquippedHolder:FindFirstChild(petData.id) then
 			CreateSecretPet(petData)
@@ -997,7 +992,7 @@ function InventoryHandler.LoadInventory()
 	for _, petData in ipairs(normalTbl) do
 		if equippedHolder:FindFirstChild(petData.id) then
 			equippedHolder:FindFirstChild(petData.id):Destroy()
-			RemovePetConnection(petData.id)
+			RemoveConnection(petData.id, petConnections)
 		end
 		if not notEquippedHolder:FindFirstChild(petData.id) then
 			CreateNormalPet(petData)
@@ -1010,7 +1005,7 @@ function InventoryHandler.LoadInventory()
 	for _, descendant in ipairs(holder:GetDescendants()) do
 		if descendant:IsA("ImageButton") then
 			if not handledPetIds[descendant.Name] then
-				RemovePetConnection(descendant.Name)
+				RemoveConnection(descendant.Name, petConnections)
 				descendant:Destroy()
 			end
 		end
@@ -1165,11 +1160,11 @@ function InventoryHandler.LoadGifts()
 	for _, child in ipairs(giftList:GetChildren()) do
 		if not playerGifts[child.Name] and child:IsA("Frame") then
 			child:Destroy()
-			RemoveGiftConnection(child.Name)
+			RemoveConnection(child.Name, giftConnections)
 		end
 	end
 
-	for id, _ in pairs(playerGifts) do
+	for id, gamepassName in pairs(playerGifts) do
 		if giftList:FindFirstChild(id) then
 			continue
 		end
@@ -1187,7 +1182,7 @@ function InventoryHandler.LoadGifts()
 			table.insert(gradientsToAnimate, clone.Frame.Legendary)
 		end
 
-		CreateGiftClickConnection(clone, id)
+		CreateGiftClickConnection(clone, id, gamepassName)
 
 		clone.Visible = true
 	end
@@ -1239,7 +1234,7 @@ function InventoryHandler.LoadItems()
 		if child:IsA("ImageButton") then
 			if not potions[child.Name] then
 				child:Destroy()
-				RemoveItemConnection(child.Name)
+				RemoveConnection(child.Name, itemConnections)
 			end
 		end
 	end
@@ -1393,7 +1388,10 @@ function InventoryHandler.StartLegendaryAnimations()
 	}, gradientsToAnimate)
 
 	legendaryConnection = RunService.Heartbeat:Connect(function(elapsedSec: number)
-		currentRotation += 360 / globals.LegendaryGradientRotateSpeed * elapsedSec % 360
+		currentRotation += 360 / globals.LegendaryGradientRotateSpeed * elapsedSec
+		if currentRotation >= 360 then
+			currentRotation -= 360
+		end
 		for i = #gradientsToAnimate, 1, -1 do
 			local gradient = gradientsToAnimate[i] :: UIGradient
 

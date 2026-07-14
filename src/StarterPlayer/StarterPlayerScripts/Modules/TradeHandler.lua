@@ -1,6 +1,14 @@
 local TradeHandler = {}
 local db = false
 
+-- Types
+type InventoryConnections = { [string]: TemplateConnections }
+
+type TemplateConnections = {
+	ClickConnection: RBXScriptConnection?,
+	TooltipConnections: { [number]: RBXScriptConnection },
+}
+
 -- Services
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -18,9 +26,15 @@ local framework = rs:WaitForChild("Framework")
 local library = framework:WaitForChild("Library")
 local classes = rs:WaitForChild("Classes")
 
+local templateConnections: TemplateConnections = {
+	ClickConnection = nil,
+	TooltipConnections = {},
+}
+
 local toggleButtonConnection = nil
 local playerConnections = {}
-local tradeConnections = {}
+local tradeConnections: InventoryConnections = {}
+local tradeButtonConnections: { [number]: RBXScriptConnection } = {}
 local timerConnection: RBXScriptConnection = nil
 local activeRequestSender = nil
 local acceptConnection = nil
@@ -113,7 +127,7 @@ local function CreatePlayerFrame(plr: Player)
 	playerConnections[plr.Name] = clickCon
 end
 
-local function CreatePetButton(clone, holder, petData)
+local function CreatePetButton(clone, holder, petData): (ImageButton, { [number]: RBXScriptConnection })
 	clone.Parent = holder
 	clone.Name = petData.id
 
@@ -123,7 +137,8 @@ local function CreatePetButton(clone, holder, petData)
 	tooltipTbl.clicks = true
 	tooltipTbl.gems = true
 	tooltipTbl.ShowLevel = true
-	Tooltip.SetupTooltip(clone, "PetTooltip", petData)
+	tooltipTbl.reference = petData.id
+	local tooltipConnections = Tooltip.SetupTooltip(clone, "PetTooltip", petData)
 
 	local rarity = petStats[petData.petName].Rarity
 	clone.Frame.BackgroundColor3 = globals.RarityColors[rarity]
@@ -139,7 +154,7 @@ local function CreatePetButton(clone, holder, petData)
 	end
 
 	clone.Visible = true
-	return clone
+	return clone, tooltipConnections
 end
 
 local function CleanUpRequestConnections()
@@ -186,12 +201,29 @@ local function CleanUp()
 		end
 	end
 
-	for _, con: RBXScriptConnection in ipairs(tradeConnections) do
+	for _, template: TemplateConnections in pairs(tradeConnections) do
+		if template.ClickConnection and template.ClickConnection.Connected then
+			template.ClickConnection:Disconnect()
+		end
+
+		if template.TooltipConnections then
+			for _, connection: RBXScriptConnection in ipairs(template.TooltipConnections) do
+				if connection.Connected then
+					connection:Disconnect()
+				end
+			end
+		end
+	end
+	table.clear(tradeConnections)
+	tradeConnections = {}
+
+	for _, con: RBXScriptConnection in ipairs(tradeButtonConnections) do
 		if con.Connected then
 			con:Disconnect()
 		end
 	end
-	tradeConnections = {}
+	table.clear(tradeButtonConnections)
+	tradeButtonConnections = {}
 end
 
 local function StartLegendaryAnimations()
@@ -205,7 +237,10 @@ local function StartLegendaryAnimations()
 	}, gradientsToAnimate)
 
 	legendaryConnection = RunService.Heartbeat:Connect(function(elapsedSec: number)
-		currentRotation += 360 / globals.LegendaryGradientRotateSpeed * elapsedSec % 360
+		currentRotation += 360 / globals.LegendaryGradientRotateSpeed * elapsedSec
+		if currentRotation >= 360 then
+			currentRotation -= 360
+		end
 		for i = #gradientsToAnimate, 1, -1 do
 			local gradient = gradientsToAnimate[i] :: UIGradient
 
@@ -306,6 +341,9 @@ function TradeHandler.ToggleGift(me: Player, id: string, gamepassName: string, s
 		clone.Frame.Legendary.Enabled = true
 		clone.Visible = true
 
+		local tooltipConnections =
+			Tooltip.SetupTooltip(clone, "Gifts", { gamepassName = gamepassName, reference = id }) :: { [number]: RBXScriptConnection }
+
 		if player == me then
 			local clickConnection = clone.MouseButton1Click:Connect(function()
 				if not db then
@@ -316,14 +354,22 @@ function TradeHandler.ToggleGift(me: Player, id: string, gamepassName: string, s
 					network:FireServer("ToggleGift", id, gamepassName)
 				end
 			end) :: RBXScriptConnection
+
+			clone.Parent = meOffer.ScrollingFrame
 			clone:GetPropertyChangedSignal("Parent"):Once(function()
 				clickConnection:Disconnect()
 			end)
-
-			clone.Parent = meOffer.ScrollingFrame
 		else
 			clone.Parent = youOffer.ScrollingFrame
 		end
+		clone:GetPropertyChangedSignal("Parent"):Once(function()
+			for _, connection: RBXScriptConnection in ipairs(tooltipConnections) do
+				if connection.Connected then
+					connection:Disconnect()
+				end
+			end
+			table.clear(tooltipConnections)
+		end)
 	end
 end
 
@@ -335,11 +381,9 @@ function TradeHandler.TogglePet(me: Player, data, state)
 			youOffer.ScrollingFrame:FindFirstChild(data.id):Destroy()
 		end
 	elseif state == "Added" then
-		local clone: ImageButton = offerTemplate:Clone()
-
 		if player == me then
-			clone = CreatePetButton(clone, meOffer.ScrollingFrame, data)
-			local clickCon: RBXScriptConnection
+			local clone, tooltipConnections = CreatePetButton(offerTemplate:Clone(), meOffer.ScrollingFrame, data)
+			local clickCon
 			clickCon = clone.MouseButton1Click:Connect(function()
 				if not db then
 					db = true
@@ -349,12 +393,26 @@ function TradeHandler.TogglePet(me: Player, data, state)
 					network:FireServer("TogglePet", data.id)
 					-- network:FireServer('Unready');
 				end
-			end)
+			end) :: RBXScriptConnection
 			clone:GetPropertyChangedSignal("Parent"):Once(function()
 				clickCon:Disconnect()
+				for _, connection: RBXScriptConnection in ipairs(tooltipConnections) do
+					if connection.Connected then
+						connection:Disconnect()
+					end
+				end
+				table.clear(tooltipConnections)
 			end)
 		else
-			clone = CreatePetButton(clone, youOffer.ScrollingFrame, data)
+			local clone, tooltipConnections = CreatePetButton(offerTemplate:Clone(), youOffer.ScrollingFrame, data)
+			clone:GetPropertyChangedSignal("Parent"):Once(function()
+				for _, connection: RBXScriptConnection in ipairs(tooltipConnections) do
+					if connection.Connected then
+						connection:Disconnect()
+					end
+				end
+				table.clear(tooltipConnections)
+			end)
 		end
 	end
 end
@@ -403,6 +461,9 @@ function TradeHandler.EnterTrade(_: Player, you: Player)
 			clone.Parent = holder
 			clone.Visible = true
 
+			local tooltipConnections =
+				Tooltip.SetupTooltip(clone, "Gifts", { gamepassName = gamepassName, reference = id }) :: { [number]: RBXScriptConnection }
+
 			local clickConnection = clone.MouseButton1Click:Connect(function()
 				if not db then
 					db = true
@@ -414,18 +475,22 @@ function TradeHandler.EnterTrade(_: Player, you: Player)
 						network:FireServer("ToggleGift", id, gamepassName)
 					end
 				end
-			end)
-			table.insert(tradeConnections, clickConnection)
+			end) :: RBXScriptConnection
+
+			if not tradeConnections[id] then
+				tradeConnections[id] = templateConnections
+			end
+
+			tradeConnections[id].ClickConnection = clickConnection
+			tradeConnections[id].TooltipConnections = tooltipConnections
 		end
 	end
 
 	local function CreatePetButtons(inventory, holder)
 		for _, petData in ipairs(inventory) do
-			local clone: ImageButton = petTemplate:Clone()
-			clone = CreatePetButton(clone, holder, petData)
+			local clone, tooltipConnections = CreatePetButton(petTemplate:Clone(), holder, petData)
 
-			local clickCon: RBXScriptConnection
-			clickCon = clone.MouseButton1Click:Connect(function()
+			local clickCon = clone.MouseButton1Click:Connect(function()
 				if not db then
 					db = true
 					task.delay(0.15, function()
@@ -436,8 +501,14 @@ function TradeHandler.EnterTrade(_: Player, you: Player)
 						-- network:FireServer('Unready');
 					end
 				end
-			end)
-			table.insert(tradeConnections, clickCon)
+			end) :: RBXScriptConnection
+
+			if not tradeConnections[petData.id] then
+				tradeConnections[petData.id] = templateConnections
+			end
+
+			tradeConnections[petData.id].ClickConnection = clickCon
+			tradeConnections[petData.id].TooltipConnections = tooltipConnections
 		end
 	end
 
@@ -481,10 +552,10 @@ function TradeHandler.EnterTrade(_: Player, you: Player)
 			youPets.Visible = false
 		end
 	end) :: RBXScriptConnection
-	table.insert(tradeConnections, mePetsConnection)
-	table.insert(tradeConnections, youPetsConnection)
-	table.insert(tradeConnections, meGiftsConnection)
-	table.insert(tradeConnections, youGiftsConnection)
+	table.insert(tradeButtonConnections, mePetsConnection)
+	table.insert(tradeButtonConnections, youPetsConnection)
+	table.insert(tradeButtonConnections, meGiftsConnection)
+	table.insert(tradeButtonConnections, youGiftsConnection)
 
 	local readyCon: RBXScriptConnection
 	local unreadyCon: RBXScriptConnection
@@ -517,9 +588,9 @@ function TradeHandler.EnterTrade(_: Player, you: Player)
 			network:FireServer("DeclineTrade")
 		end
 	end)
-	table.insert(tradeConnections, readyCon)
-	table.insert(tradeConnections, unreadyCon)
-	table.insert(tradeConnections, declineCon)
+	table.insert(tradeButtonConnections, readyCon)
+	table.insert(tradeButtonConnections, unreadyCon)
+	table.insert(tradeButtonConnections, declineCon)
 
 	CreatePetButtons(myPets, mePets.ScrollingFrame)
 	CreatePetButtons(yourPets, youPets.ScrollingFrame)

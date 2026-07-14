@@ -1,4 +1,5 @@
 local Enchants = require(script.Parent.Enchants)
+local ShopStats = require(script.Parent.ShopStats)
 local InfiniteMath = require("../InfiniteMath")
 local ImageService = require("./ImageService")
 local ItemUtility = require("../ItemUtility")
@@ -7,12 +8,21 @@ local PetStats = require("./PetStats")
 local Globals = require("../Globals")
 local ToHex = require("../Shared/ToHex")
 
+local function HideAll(labelsFrame: Frame)
+	for _, child in ipairs(labelsFrame:GetChildren()) do
+		if child:IsA("Frame") or child:IsA("TextLabel") then
+			child.Visible = false
+		end
+	end
+end
+
 local Tooltips = {
 	PetTooltip = function(Frame, Data)
 		if not Frame or not Data then
 			return
 		end
 		local LabelsFrame = Frame:FindFirstChild("Labels")
+		HideAll(LabelsFrame)
 		local TopFrame = Frame:FindFirstChild("Top")
 		local Image = ((Data.shiny and `Shiny {Data.petName}` or Data.petName) or ImageService.Doggy)
 		local Rarity = (PetStats[Data.petName].Rarity or "Common")
@@ -34,13 +44,13 @@ local Tooltips = {
 		end
 
 		if Data.clicks then
-			local PetClicks = Globals.GetPetClicks(Data)
+			local PetClicks = Globals.GetPetClicks(PetData)
 			LabelsFrame.Clicks.Visible = true
 			LabelsFrame.Clicks.Amount.Text = InfiniteMath.new(PetClicks):GetSuffix(true)
 		end
 
 		if Data.gems then
-			local PetGems = Globals.GetPetGems(Data)
+			local PetGems = Globals.GetPetGems(PetData)
 			LabelsFrame.Gems.Visible = true
 			LabelsFrame.Gems.Amount.Text = InfiniteMath.new(PetGems):GetSuffix(true)
 		end
@@ -51,6 +61,8 @@ local Tooltips = {
 			LabelsFrame.Level.Visible = true
 			LabelsFrame.Level.Progress.Level.Text = `Level {PetData.level}`
 			LabelsFrame.Level.Progress.XP.Text = PetData.xp .. " / " .. InfiniteMath.new(xpNeeded):GetSuffix(true) .. " XP"
+
+			LabelsFrame.Level.Progress.Green.Size = UDim2.fromScale(PetData.xp / xpNeeded, 1)
 		else
 			LabelsFrame.Level.Visible = false
 		end
@@ -102,11 +114,38 @@ local Tooltips = {
 			LabelsFrame.ExistHolder.Visible = false
 		end
 	end,
+	Gifts = function(frame: Frame, data: { [any]: any })
+		if not frame or not data then
+			return
+		end
+
+		local labelsFrame = frame:FindFirstChild("Labels") :: Frame
+		HideAll(labelsFrame)
+		local topFrame = frame:FindFirstChild("Top") :: Frame
+
+		topFrame.Info.Title.Text = data.gamepassName
+		topFrame.Icon.Image = ImageService[data.gamepassName] or ImageService["Placeholder"]
+
+		local rarity = "Legendary"
+
+		topFrame.Info.Rarity.TextColor3 = Globals.RarityColors[rarity]
+		if rarity == "Legendary" then
+			topFrame.Info.Rarity.TextColor3 = Color3.fromRGB(255, 255, 255)
+			topFrame.Info.Rarity.Legendary.Enabled = true
+		else
+			topFrame.Info.Rarity.Legendary.Enabled = false
+		end
+		topFrame.Info.Rarity.Text = rarity
+
+		labelsFrame.Description.Text = ShopStats.Gamepasses[data.gamepassName].Description
+		labelsFrame.Description.Visible = true
+	end,
 	Items = function(Frame, Data)
 		if not Frame or not Data then
 			return
 		end
 		local LabelsFrame = Frame:FindFirstChild("Labels")
+		HideAll(LabelsFrame)
 		local TopFrame = Frame:FindFirstChild("Top")
 
 		local ItemName = Data.itemName

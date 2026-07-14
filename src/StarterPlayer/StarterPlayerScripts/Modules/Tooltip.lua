@@ -2,6 +2,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local GuiService = game:GetService("GuiService")
+local RunService = game:GetService("RunService")
 
 local Framework = ReplicatedStorage:WaitForChild("Framework")
 
@@ -17,7 +18,17 @@ local Background = TooltipFrame.Background
 local Labels = TooltipFrame.Labels
 local Camera = workspace.CurrentCamera
 
+local Globals = require(ReplicatedStorage.Framework.Globals)
 local Tooltips = require(Library:WaitForChild("Tooltips"))
+
+local function DisconnectAll(connections)
+	for _, connection in ipairs(connections or {}) do
+		if connection and connection.Connected then
+			connection:Disconnect()
+		end
+	end
+	table.clear(connections or {})
+end
 
 local function GetMouseUIPos()
 	local MousePos = UserInputService:GetMouseLocation()
@@ -52,12 +63,25 @@ local function SetDefaultVisibility()
 	end
 end
 
-function Tooltip.SetupTooltip(Button: GuiButton, TooltipType: string, Data: {})
+function Tooltip.SetupTooltip(Button: GuiButton, TooltipType: string, Data): { [number]: RBXScriptConnection }
 	if not Tooltips[TooltipType] then
-		return
+		return {}
 	end
 
-	Button.MouseMoved:Connect(function()
+	local connections = {}
+	local isHovering = false
+
+	if not Data.reference then
+		warn("Data does not contain a reference string, cannot continue.")
+		return {}
+	end
+
+	local enterConnection = Button.MouseEnter:Connect(function()
+		if not isHovering then
+			isHovering = true
+		end
+		TooltipFrame.Name = Data.reference
+
 		SetDefaultVisibility()
 		local Pos = (GetMouseUIPos() + UDim2.fromScale(0.02, 0.02) + UDim2.new())
 		TooltipFrame.Position = Pos
@@ -65,12 +89,53 @@ function Tooltip.SetupTooltip(Button: GuiButton, TooltipType: string, Data: {})
 
 		Tooltips[TooltipType](TooltipFrame, Data)
 		SetBackgroundSize()
+	end) :: RBXScriptConnection
+
+	local cleanedUp = false
+
+	local function LeaveCallback()
+		if isHovering then
+			isHovering = false
+		end
+		if TooltipFrame.Name == Data.reference then
+			TooltipFrame.Visible = false
+			SetDefaultVisibility()
+		end
+	end
+	local function Cleanup()
+		if cleanedUp then
+			return
+		end
+		cleanedUp = true
+
+		LeaveCallback()
+
+		DisconnectAll(connections)
+	end
+
+	local hoverConnection = RunService.Heartbeat:Connect(function(elapsedSec: number)
+		if isHovering then
+			local Pos = (GetMouseUIPos() + UDim2.fromScale(0.02, 0.02) + UDim2.new())
+			TooltipFrame.Position = Pos
+			Tooltips[TooltipType](TooltipFrame, Data)
+
+			local legendaryGradient = TooltipFrame.Top.Info.Rarity.Legendary :: UIGradient
+
+			if legendaryGradient.Enabled then
+				legendaryGradient.Rotation += 360 / Globals.LegendaryGradientRotateSpeed * elapsedSec % 360
+			end
+		end
 	end)
 
-	Button.MouseLeave:Connect(function()
-		TooltipFrame.Visible = false
-		SetDefaultVisibility()
-	end)
+	local leaveConnection = Button.MouseLeave:Connect(LeaveCallback) :: RBXScriptConnection
+	local destroyConnection = Button.Destroying:Connect(Cleanup) :: RBXScriptConnection
+
+	table.insert(connections, enterConnection)
+	table.insert(connections, leaveConnection)
+	table.insert(connections, destroyConnection)
+	table.insert(connections, hoverConnection)
+
+	return connections
 end
 
 return Tooltip

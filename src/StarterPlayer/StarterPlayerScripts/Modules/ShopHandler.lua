@@ -170,6 +170,7 @@ local function LoadShop()
 					gems = Globals.GetPetGems({ petName = data.PetName, shiny = data.shiny, level = 1 }),
 					level = 1,
 					enchant = data.Enchant,
+					reference = data.PetName,
 				})
 			end
 		elseif string.match(productName, "Gem") then
