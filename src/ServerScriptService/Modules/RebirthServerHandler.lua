@@ -36,6 +36,10 @@ function RebirthHandler.AttemptRebirth(player: Player, rebirthIndex: number)
 		return
 	end
 
+	if not profile.OwnedRebirthButtons[rebirthIndex] then
+		return
+	end
+
 	local rebirthAmount = rebirthStats[rebirthIndex]
 	local clicks = infMath.new(profile.Clicks)
 	local rebirths = infMath.new(profile.Rebirths)
@@ -124,6 +128,10 @@ function RebirthHandler.SetAutoRebirthIndex(player: Player, rebirthIndex: number
 	end
 
 	if rebirthIndex == 1 then
+		return
+	end
+
+	if not profile.OwnedRebirthButtons[rebirthIndex] then
 		return
 	end
 

@@ -34,20 +34,6 @@ return {
 		GemMulti = 1.05,
 		Secret = false,
 	},
-	["Grand Patriotic Overlord"] = {
-		Rarity = "Legendary",
-		State = "Fly",
-		Clicks = 11e4,
-		GemMulti = 1100,
-		Secret = true,
-	},
-	["Patriotic Heart"] = {
-		Rarity = "Legendary",
-		State = "Fly",
-		Clicks = 23e4,
-		GemMulti = 2300,
-		Secret = true,
-	},
 
 	--
 	["Wolf"] = {
@@ -298,4 +284,75 @@ return {
 	},
 
 	--
+	["Patriotic Doggy"] = {
+		Rarity = "Common",
+		State = "Walk",
+		Clicks = 6500,
+		GemMulti = 65,
+		Secret = false,
+	},
+	["Patriotic Kitty"] = {
+		Rarity = "Common",
+		State = "Walk",
+		Clicks = 7500,
+		GemMulti = 75,
+		Secret = false,
+	},
+	["Patriotic Bear"] = {
+		Rarity = "Uncommon",
+		State = "Walk",
+		Clicks = 8750,
+		GemMulti = 88,
+		Secret = false,
+	},
+	["Patriotic Fox"] = {
+		Rarity = "Rare",
+		State = "Walk",
+		Clicks = 10000,
+		GemMulti = 100,
+		Secret = false,
+	},
+	["Patrioticorn"] = {
+		Rarity = "Epic",
+		State = "Fly",
+		Clicks = 11250,
+		GemMulti = 122,
+		Secret = false,
+	},
+	["Patriotic Butterfly"] = {
+		Rarity = "Epic",
+		State = "Fly",
+		Clicks = 12500,
+		GemMulti = 125,
+		Secret = false,
+	},
+	["Patriotic Wisp"] = {
+		Rarity = "Legendary",
+		State = "Fly",
+		Clicks = 30000,
+		GemMulti = 300,
+		Secret = false,
+	},
+	["Patriotic Domihydra"] = {
+		Rarity = "Legendary",
+		State = "Fly",
+		Clicks = 45000,
+		GemMulti = 450,
+		Secret = false,
+	},
+	["Grand Patriotic Overlord"] = {
+		Rarity = "Legendary",
+		State = "Fly",
+		Clicks = 11e4,
+		GemMulti = 1100,
+		Secret = true,
+	},
+	["Patriotic Heart"] = {
+		Rarity = "Legendary",
+		State = "Fly",
+		Clicks = 23e4,
+		GemMulti = 2300,
+		Secret = true,
+		EggUIBlacklist = true,
+	},
 }

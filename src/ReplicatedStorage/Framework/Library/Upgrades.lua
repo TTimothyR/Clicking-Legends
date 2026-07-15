@@ -59,7 +59,7 @@ return {
 		Order = 9,
 		Increment = nil, --%
 		Maximum = 50,
-		BasePrice = 6700,
+		BasePrice = 50,
 		Description = "Unlocks more rebirth options!",
 	},
 	["Faster Auto Click"] = {

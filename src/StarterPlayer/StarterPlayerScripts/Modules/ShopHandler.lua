@@ -100,7 +100,7 @@ local function LoadShop()
 
 		clone.Inner.PassName.Text = gamepassName
 		clone.Inner.PassDescription.Text = data.Description
-		-- clone.Icon.Image = to be done;
+		clone.Inner:WaitForChild("Icon").Image = ImageService[gamepassName] or ImageService["Placeholder"]
 
 		gpConnections[gamepassName] = clone.Inner.Buttons.Buy.MouseButton1Click:Connect(function()
 			if not db then
@@ -170,7 +170,8 @@ local function LoadShop()
 					gems = Globals.GetPetGems({ petName = data.PetName, shiny = data.shiny, level = 1 }),
 					level = 1,
 					enchant = data.Enchant,
-					reference = data.PetName,
+					reference = data.PetName .. "Shop",
+					FromShop = true,
 				})
 			end
 		elseif string.match(productName, "Gem") then

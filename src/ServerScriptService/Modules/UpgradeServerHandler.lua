@@ -28,6 +28,9 @@ local upgradeCallbacks = {
 	["More Pets"] = function(profile, upgradeName: string)
 		profile.PetEquips += upgrades[upgradeName].Increment
 	end,
+	["More Rebirths"] = function(profile, _: string)
+		table.insert(profile.OwnedRebirthButtons, true)
+	end,
 }
 
 local function AddUpgradesToData(player: Player)

@@ -152,10 +152,6 @@ local menuHandler = nil
 -- Constants
 local maxColSecret = 3
 local maxColNormal = 6
-local templateConnections: TemplateConnections = {
-	ClickConnection = nil,
-	TooltipConnections = {},
-}
 
 -- Credits to: https://devforum.roblox.com/t/converting-a-color-to-a-hex-string/793018/2
 local function toInteger(color)
@@ -217,7 +213,10 @@ local function RemoveConnection(key: string, container: InventoryConnections)
 
 		table.clear(connections.TooltipConnections)
 	end
-	container[key] = templateConnections
+	container[key] = {
+		ClickConnection = nil,
+		TooltipConnections = {},
+	}
 end
 
 local function SeparatePets(petsTbl, equipped)
@@ -295,6 +294,7 @@ local function LoadGiftInfo(giftID: string)
 
 	giftInfoHolder.GiftName.Text = gamepassName
 	giftInfoHolder.Description.Text = string.format("Applies %s gamepass when used", gamepassName)
+	giftInfoHolder.Icon.Image = imageService[gamepassName] or imageService["Placeholder"]
 
 	local useConnection = useGiftButton.MouseButton1Click:Connect(function()
 		if not db then
@@ -561,7 +561,7 @@ CreatePetClickConnection = function(clone, petData)
 	tooltipTbl.ShowLevel = true
 	tooltipTbl.reference = petData.id
 	local tooltipConnections = Tooltip.SetupTooltip(clone, "PetTooltip", petData)
-	local clickCon: RBXScriptConnection = clone.MouseButton1Click:Connect(function()
+	local clickCon = clone.MouseButton1Click:Connect(function()
 		if not db then
 			db = true
 			task.delay(0.15, function()
@@ -591,7 +591,7 @@ CreatePetClickConnection = function(clone, petData)
 				end
 			end
 		end
-	end)
+	end) :: RBXScriptConnection
 
 	petConnections[petData.id].ClickConnection = clickCon
 	petConnections[petData.id].TooltipConnections = tooltipConnections
@@ -744,7 +744,8 @@ function InventoryHandler.LoadInventory()
 
 	local ownedPasses = dataSync.Get("OwnedGamepasses")
 	local ownsEquips = ownedPasses["Extra Equips"]
-	local ownsStorage = ownedPasses["+500 Pet Storage"]
+	local ownsStorageT1 = ownedPasses["+500 Pet Storage"]
+	local ownsStorageT2 = ownedPasses["VIP"]
 
 	if increaseEquippedButtonCon and increaseEquippedButtonCon.Connected then
 		increaseEquippedButtonCon:Disconnect()
@@ -767,18 +768,21 @@ function InventoryHandler.LoadInventory()
 	else
 		increaseEquippedButton.Visible = false
 	end
-	if ownsStorage then
+	if ownsStorageT1 and ownsStorageT2 then
 		increaseStorageButton.Visible = false
 	end
-	if not ownsStorage then
+	if not ownsStorageT1 or not ownsStorageT2 then
 		increaseStorageButtonCon = increaseStorageButton.MouseButton1Click:Connect(function()
 			if not db then
 				db = true
 				task.delay(0.15, function()
 					db = false
 				end)
-				if not ownsStorage then
+				if not ownsStorageT1 then
 					mps:PromptGamePassPurchase(player, shopStats.Gamepasses["+500 Pet Storage"].GamepassID)
+					shopHandler.ShowGreyFrame()
+				elseif not ownsStorageT2 then
+					mps:PromptGamePassPurchase(player, shopStats.Gamepasses["VIP"].GamepassID)
 					shopHandler.ShowGreyFrame()
 				end
 			end
@@ -1156,11 +1160,11 @@ end
 
 function InventoryHandler.LoadGifts()
 	local playerGifts = dataSync.Get("Gifts")
-
 	for _, child in ipairs(giftList:GetChildren()) do
-		if not playerGifts[child.Name] and child:IsA("Frame") then
+		if not playerGifts[child.Name] and child:IsA("ImageButton") then
 			child:Destroy()
 			RemoveConnection(child.Name, giftConnections)
+			giftInfoHolder.Visible = false
 		end
 	end
 
@@ -1176,6 +1180,7 @@ function InventoryHandler.LoadGifts()
 		clone.Glow.Visible = true
 		clone.Glow.Legendary.Enabled = true
 		clone.Frame.Legendary.Enabled = true
+		clone.Frame.Icon.Image = imageService[gamepassName] or imageService["Placeholder"]
 
 		if animationLoaded then
 			table.insert(gradientsToAnimate, clone.Glow.Legendary)

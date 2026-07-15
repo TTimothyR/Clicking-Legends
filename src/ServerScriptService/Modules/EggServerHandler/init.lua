@@ -1,10 +1,12 @@
 local EggHandler = {}
 
 -- Services
+local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local players = game:GetService("Players")
 local rs = game:GetService("ReplicatedStorage")
 local sss = game:GetService("ServerScriptService")
+local ServerStorage = game:GetService("ServerStorage")
 
 local Framework = ReplicatedStorage:WaitForChild("Framework")
 
@@ -23,9 +25,11 @@ local network = require(framework.Network)
 local luckHandler = require(script.Parent.LuckHandler)
 local dataSync = require(dataModules.DataSyncServer).Private
 local Globals = require(ReplicatedStorage.Framework.Globals)
+local ImageService = require(ReplicatedStorage.Framework.Library.ImageService)
 local Upgrades = require(ReplicatedStorage.Framework.Library.Upgrades)
 local Network = require(Framework:WaitForChild("Network"))
-local Discord = require("./DiscordHandlers/Discord")
+
+local hatchBind = ServerStorage:WaitForChild("Hatch") :: BindableFunction
 
 local function ValidateDistance(player: Player, eggName: string)
 	local maxDistance = 15
@@ -208,6 +212,7 @@ function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
 	-- player:SetAttribute('Eggs', http:JSONEncode(profile.Eggs));
 
 	local petData = {}
+	local changes = {}
 
 	for _ = 1, amount do
 		local petName, shiny = luckHandler.RollPet(player, eggName)
@@ -223,7 +228,7 @@ function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
 			else
 				profile.SecretsHatched += 1
 			end
-			Discord.SecretPet(player, petName, (shiny == true and "Shiny" or nil), eggName)
+			-- Discord.SecretPet(player, petName, (shiny == true and "Shiny" or nil), eggName)
 		end
 		local fullName = shiny and "Shiny " .. petName or petName
 		local id = generateID.NewID()
@@ -260,6 +265,26 @@ function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
 				enchant = "",
 			})
 
+			if petStats[petName].Secret then
+				local found = false
+				for _, entry in ipairs(changes) do
+					if entry.petName == petName and entry.isShiny == shiny then
+						entry.delta += 1
+						found = true
+						break
+					end
+				end
+
+				if not found then
+					table.insert(changes, {
+						petName = petName,
+						isShiny = shiny,
+						imageId = tostring(ImageService[fullName]:gsub("rbxassetid://", "")) or "",
+						delta = 1,
+					})
+				end
+			end
+
 			if profile.AFKStartTime > 0 then
 				if profile.PreAFKInfo["Pets"][fullName] == nil then
 					profile.PreAFKInfo["Pets"][fullName] = 0
@@ -268,6 +293,10 @@ function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
 			end
 		end
 	end
+
+	task.spawn(function()
+		hatchBind:Invoke(player.Name, HttpService:JSONEncode(changes))
+	end)
 
 	local uiLock = player:FindFirstChild("UILock") :: BoolValue
 	uiLock.Value = true

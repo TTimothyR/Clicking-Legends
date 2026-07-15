@@ -33,6 +33,11 @@ Shared.DEFAULT_PLAYER_DATA = {
 	TotalRobuxSpent = 0,
 	TimePlayed = 0,
 
+	OwnedRebirthButtons = {
+		[1] = true,
+		[2] = true,
+	} :: { [number]: boolean },
+
 	Settings = {},
 
 	Gifts = {},

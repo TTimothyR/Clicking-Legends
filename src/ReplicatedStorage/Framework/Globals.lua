@@ -15,6 +15,7 @@ local eggStats = require(library.EggStats)
 local petStats = require(library.PetStats)
 
 Globals.LegendaryGradientRotateSpeed = 10 -- seconds per 360 degrees
+Globals.SecretGradientRotateSpeed = 10 -- seconds per 360 degrees
 Globals.RebirthBasePrice = 2250
 Globals.UpgradeMultiplier = 1.35
 -- Globals.CostCoefficient = 5

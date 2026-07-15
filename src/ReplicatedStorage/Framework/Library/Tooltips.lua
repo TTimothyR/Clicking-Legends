@@ -17,9 +17,12 @@ local function HideAll(labelsFrame: Frame)
 end
 
 local Tooltips = {
-	PetTooltip = function(Frame, Data)
+	PetTooltip = function(Frame, Data, FromShop)
 		if not Frame or not Data then
 			return
+		end
+		if not FromShop then
+			FromShop = false
 		end
 		local LabelsFrame = Frame:FindFirstChild("Labels")
 		HideAll(LabelsFrame)
@@ -28,29 +31,33 @@ local Tooltips = {
 		local Rarity = (PetStats[Data.petName].Rarity or "Common")
 		local PetData = PetUtility.GetPetData(Data.id)
 
-		if PetStats[Data.petName].Secret then
-			Data.Exist = 21
-		end
-
 		TopFrame.Info.Title.Text = Data.petName
 		TopFrame.Icon.Image = ImageService[Image] or ImageService["Placeholder"]
 		TopFrame.Info.Rarity.Text = Rarity
 		TopFrame.Info.Rarity.TextColor3 = Globals.RarityColors[Rarity]
 
-		if Rarity == "Legendary" then
-			TopFrame.Info.Rarity.Legendary.Enabled = true
-		else
+		if PetStats[Data.petName].Secret then
+			TopFrame.Info.Rarity.Secret.Enabled = true
 			TopFrame.Info.Rarity.Legendary.Enabled = false
+			TopFrame.Info.Rarity.Text = "Secret"
+		else
+			if Rarity == "Legendary" then
+				TopFrame.Info.Rarity.Legendary.Enabled = true
+				TopFrame.Info.Rarity.Secret.Enabled = false
+			else
+				TopFrame.Info.Rarity.Legendary.Enabled = false
+				TopFrame.Info.Rarity.Secret.Enabled = false
+			end
 		end
 
 		if Data.clicks then
-			local PetClicks = Globals.GetPetClicks(PetData)
+			local PetClicks = FromShop and Globals.GetPetClicks(Data) or Globals.GetPetClicks(PetData)
 			LabelsFrame.Clicks.Visible = true
 			LabelsFrame.Clicks.Amount.Text = InfiniteMath.new(PetClicks):GetSuffix(true)
 		end
 
 		if Data.gems then
-			local PetGems = Globals.GetPetGems(PetData)
+			local PetGems = FromShop and Globals.GetPetGems(Data) or Globals.GetPetGems(PetData)
 			LabelsFrame.Gems.Visible = true
 			LabelsFrame.Gems.Amount.Text = InfiniteMath.new(PetGems):GetSuffix(true)
 		end
@@ -132,8 +139,10 @@ local Tooltips = {
 		if rarity == "Legendary" then
 			topFrame.Info.Rarity.TextColor3 = Color3.fromRGB(255, 255, 255)
 			topFrame.Info.Rarity.Legendary.Enabled = true
+			topFrame.Info.Rarity.Secret.Enabled = false
 		else
 			topFrame.Info.Rarity.Legendary.Enabled = false
+			topFrame.Info.Rarity.Secret.Enabled = false
 		end
 		topFrame.Info.Rarity.Text = rarity
 
@@ -164,8 +173,10 @@ local Tooltips = {
 		if Rarity == "Legendary" then
 			TopFrame.Info.Rarity.TextColor3 = Color3.fromRGB(255, 255, 255)
 			TopFrame.Info.Rarity.Legendary.Enabled = true
+			TopFrame.Info.Rarity.Secret.Enabled = false
 		else
 			TopFrame.Info.Rarity.Legendary.Enabled = false
+			TopFrame.Info.Rarity.Secret.Enabled = false
 		end
 
 		if Description then

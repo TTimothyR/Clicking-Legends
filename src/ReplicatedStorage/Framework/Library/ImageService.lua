@@ -6,6 +6,15 @@ return {
 	["Gems"] = "rbxassetid://135513247600517",
 	["Eggs"] = "rbxassetid://103327510554655",
 
+	-- Egg Pictures
+	["Common Egg"] = "rbxassetid://82401551044643",
+	["Jagged Egg"] = "rbxassetid://139779513195049",
+	["Candy Egg"] = "rbxassetid://109239052444567",
+	["Space Egg"] = "rbxassetid://110789884021518",
+	["Frozen Egg"] = "rbxassetid://120611123486406",
+	["Water Egg"] = "rbxassetid://83368516481860",
+	["Patriotic Egg"] = "rbxassetid://86247022377897",
+
 	-- Common Egg
 	["Doggy"] = "rbxassetid://113590768710767",
 	["Kitty"] = "rbxassetid://100456194852605",
@@ -96,11 +105,39 @@ return {
 	["Shiny Water Overlord"] = "rbxassetid://94399821275334",
 	["Shiny King Star"] = "rbxassetid://92713647999978",
 
-	--
+	-- Patriotic Egg
+	["Patriotic Doggy"] = "rbxassetid://78540426610203",
+	["Patriotic Kitty"] = "rbxassetid://71815085494681",
+	["Patriotic Bear"] = "rbxassetid://117238218855228",
+	["Patriotic Fox"] = "rbxassetid://138661305644305",
+	["Patrioticorn"] = "rbxassetid://121334805939513",
+	["Patriotic Butterfly"] = "rbxassetid://101171336165699",
+	["Patriotic Wisp"] = "rbxassetid://92610024310798",
+	["Patriotic Domihydra"] = "rbxassetid://81026627060923",
 	["Grand Patriotic Overlord"] = "rbxassetid://120158110368748",
 	["Patriotic Heart"] = "rbxassetid://87999603996959",
+	["Shiny Patriotic Doggy"] = "rbxassetid://124745839919198",
+	["Shiny Patriotic Kitty"] = "rbxassetid://89053383485844",
+	["Shiny Patriotic Bear"] = "rbxassetid://121795050998168",
+	["Shiny Patriotic Fox"] = "rbxassetid://81894431042806",
+	["Shiny Patrioticorn"] = "rbxassetid://71596246241747",
+	["Shiny Patriotic Butterfly"] = "rbxassetid://120927687610487",
+	["Shiny Patriotic Wisp"] = "rbxassetid://70388042794084",
+	["Shiny Patriotic Domihydra"] = "rbxassetid://108722058683375",
 	["Shiny Grand Patriotic Overlord"] = "rbxassetid://80915748226359",
 	["Shiny Patriotic Heart"] = "rbxassetid://87217938888745",
+
+	-- Gamepass Gifts
+	["x2 Luck"] = "rbxassetid://126105407615709",
+	["Fast Hatch"] = "rbxassetid://81673863845471",
+	["Max Rebirths"] = "rbxassetid://95839387013334",
+	["+500 Pet Storage"] = "rbxassetid://86368175829927",
+	["Extra Egg"] = "rbxassetid://123321046421688",
+	["Extra Equips"] = "rbxassetid://116849125453147",
+	["VIP"] = "rbxassetid://102948467667170",
+	["x2 Rebirths"] = "rbxassetid://112461545555167",
+	["x2 Clicks"] = "rbxassetid://81376666750184",
+	["x2 Gems"] = "rbxassetid://92401708830734",
 
 	["Lucky_I"] = "rbxassetid://138637051417624",
 	["Rebirths_I"] = "rbxassetid://126039343755806",

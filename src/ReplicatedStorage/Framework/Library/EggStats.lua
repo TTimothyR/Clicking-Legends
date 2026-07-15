@@ -105,8 +105,16 @@ return {
 		Rewards = { { "Potion", "Lucky_I", 69 }, { "Potion", "Speed_III", 5 } },
 		ShinyRewards = { { "Currency", "Gems", 67420 } },
 		Pets = {
-			["Grand Patriotic Overlord"] = { 5e-05, 8 },
-			["Patriotic Heart"] = { 2.5e-05, 8 },
+			["Patriotic Doggy"] = { 30, 1 },
+			["Patriotic Kitty"] = { 29.957425, 2 },
+			["Patriotic Bear"] = { 18, 3 },
+			["Patriotic Fox"] = { 13, 4 },
+			["Patrioticorn"] = { 5, 5 },
+			["Patriotic Butterfly"] = { 1.5, 6 },
+			["Patriotic Wisp"] = { 0.04, 7 },
+			["Patriotic Domihydra"] = { 0.0025, 8 },
+			["Grand Patriotic Overlord"] = { 5e-05, 9 },
+			["Patriotic Heart"] = { 2.5e-05, 10 },
 		},
 	},
 }

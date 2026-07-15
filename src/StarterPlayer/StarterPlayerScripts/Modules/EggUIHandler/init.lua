@@ -323,6 +323,9 @@ local function ConfigureEggUI(egg: Model)
 	end) :: RBXScriptConnection
 
 	for petName, data in pairs(currentStats.Pets) do
+		if petStats[petName].EggUIBlacklist then
+			continue
+		end
 		local petClone = petTemplate:Clone()
 		local chance = globals.GetPetChance(luckPassOwned, luckPercentage, petName, egg.Name, false)
 		local rarity = petStats[petName].Rarity
@@ -364,6 +367,7 @@ local function ConfigureEggUI(egg: Model)
 		if not discovered then
 			petClone.Icon.ImageColor3 = Color3.fromRGB(0, 0, 0)
 		end
+
 		petClone.Visible = true
 	end
 	connections[egg.Name] = {}

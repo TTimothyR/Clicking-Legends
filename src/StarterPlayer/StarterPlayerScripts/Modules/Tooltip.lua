@@ -87,7 +87,7 @@ function Tooltip.SetupTooltip(Button: GuiButton, TooltipType: string, Data): { [
 		TooltipFrame.Position = Pos
 		TooltipFrame.Visible = true
 
-		Tooltips[TooltipType](TooltipFrame, Data)
+		Tooltips[TooltipType](TooltipFrame, Data, Data.FromShop)
 		SetBackgroundSize()
 	end) :: RBXScriptConnection
 
@@ -117,15 +117,19 @@ function Tooltip.SetupTooltip(Button: GuiButton, TooltipType: string, Data): { [
 		if isHovering then
 			local Pos = (GetMouseUIPos() + UDim2.fromScale(0.02, 0.02) + UDim2.new())
 			TooltipFrame.Position = Pos
-			Tooltips[TooltipType](TooltipFrame, Data)
+			Tooltips[TooltipType](TooltipFrame, Data, Data.FromShop)
 
 			local legendaryGradient = TooltipFrame.Top.Info.Rarity.Legendary :: UIGradient
+			local secretGradient = TooltipFrame.Top.Info.Rarity.Secret :: UIGradient
 
 			if legendaryGradient.Enabled then
 				legendaryGradient.Rotation += 360 / Globals.LegendaryGradientRotateSpeed * elapsedSec % 360
 			end
+			if secretGradient.Enabled then
+				secretGradient.Rotation += 360 / Globals.SecretGradientRotateSpeed * elapsedSec % 360
+			end
 		end
-	end)
+	end) :: RBXScriptConnection
 
 	local leaveConnection = Button.MouseLeave:Connect(LeaveCallback) :: RBXScriptConnection
 	local destroyConnection = Button.Destroying:Connect(Cleanup) :: RBXScriptConnection

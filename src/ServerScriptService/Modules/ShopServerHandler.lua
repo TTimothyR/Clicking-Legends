@@ -26,6 +26,7 @@ local gpIDToName = {}
 local productIDToName = {}
 local callbacks = {
 	["+500 Pet Storage"] = function(player: Player)
+		print("Gimme the storage dawg")
 		local profile = playerData.GetData(player)
 		profile.PetStorage += 500
 
@@ -40,6 +41,12 @@ local callbacks = {
 	["Extra Egg"] = function(player: Player)
 		local profile = playerData.GetData(player)
 		profile.EggHatches += 1
+
+		dataSync.SyncPlayer(player, profile)
+	end,
+	["VIP"] = function(player: Player)
+		local profile = playerData.GetData(player)
+		profile.PetStorage += 100
 
 		dataSync.SyncPlayer(player, profile)
 	end,
@@ -147,7 +154,7 @@ local function ProductPurchaseHandler()
 			return Enum.ProductPurchaseDecision.PurchaseGranted
 		end
 
-		if string.match(productName, "Pet") then
+		if string.match(productName, "Pet") and not string.match(productName, "Storage") then
 			local pets = {}
 			if string.match(productName, "Combi") then
 				table.insert(pets, shopStats.DeveloperProducts["Pet1"])
@@ -161,6 +168,7 @@ local function ProductPurchaseHandler()
 		elseif receiptInfo.ProductId == 3608435738 then
 			callbacks["RestockShop"](player)
 		else
+			print(productName)
 			callbacks["Gift"](player, productName)
 		end
 
@@ -216,6 +224,10 @@ function ShopHandler.UseGamepass(player: Player, id: string, gamepassName: strin
 
 	ownedGamepasses[gamepassName] = true
 	gifts[id] = nil
+
+	if callbacks[gamepassName] then
+		callbacks[gamepassName](player)
+	end
 
 	dataSync.SyncPlayer(player, profile)
 end

@@ -91,6 +91,7 @@ local function UpdateButtons(fromSignal: boolean)
 	local currentRebirths = dataSync.Get("Rebirths")
 	local currentClicks = dataSync.Get("Clicks")
 	local ownedGamepasses = dataSync.Get("OwnedGamepasses")
+	local ownedRebirthButtons = dataSync.Get("OwnedRebirthButtons")
 
 	if autoRebirthSelect then
 		for index, _ in ipairs(rebirthStats) do
@@ -102,6 +103,11 @@ local function UpdateButtons(fromSignal: boolean)
 				inner.Click.Title.Text = "Selected"
 			else
 				inner.Click.Title.Text = "Select"
+			end
+			if not ownedRebirthButtons[index] then
+				clone.Visible = false
+			else
+				clone.Visible = true
 			end
 		end
 	else
@@ -141,8 +147,12 @@ local function UpdateButtons(fromSignal: boolean)
 				end
 
 				inner.AutoStroke.Enabled = (selectedIndex == index)
-
-				clone.Visible = true
+				if not ownedRebirthButtons[index] then
+					clone.Visible = false
+				else
+					clone.Visible = true
+				end
+				-- clone.Visible = true
 			end
 		end
 	end
@@ -189,12 +199,18 @@ function RebirthHandler.LoadRebirthButtons()
 		UpdateButtons(false)
 		return
 	end
+	local ownedRebirthButtons = dataSync.Get("OwnedRebirthButtons")
 	for index, _ in ipairs(rebirthStats) do
 		local clone = rebirthTemplate:Clone()
 		local inner = clone.Inner
 		clone.Parent = holder
 		clone.LayoutOrder = index
 		clone.Name = index
+		if not ownedRebirthButtons[index] then
+			clone.Visible = false
+		else
+			clone.Visible = true
+		end
 
 		inner.Click.MouseButton1Click:Connect(function()
 			if not db then

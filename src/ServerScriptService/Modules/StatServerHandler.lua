@@ -132,6 +132,9 @@ function StatHandler.Click(player: Player, fromAutoClick: boolean)
 	if ownedGamepasses["x2 Clicks"] then
 		increment *= 2
 	end
+	if ownedGamepasses["VIP"] then
+		increment *= 1.2
+	end
 
 	profile.Clicks = infMath.new(profile.Clicks + increment)
 	profile.TotalClicks = infMath.new(profile.TotalClicks + increment)
