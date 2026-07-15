@@ -73,8 +73,10 @@ local function CalculateLuckPercentage()
 			continue
 		end
 
-		if string.find(data.enchant, "Lucky") then
-			luckPercentage += Enchants[data.enchant].Buff
+		if data.enchant then
+			if string.find(data.enchant, "Lucky") then
+				luckPercentage += Enchants[data.enchant].Buff
+			end
 		end
 	end
 

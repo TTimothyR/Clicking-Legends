@@ -69,8 +69,10 @@ local statFrames = {
 					continue
 				end
 
-				if string.find(data.enchant, "Lucky") then
-					baseLuckPercentage += Enchants[data.enchant].Buff
+				if data.enchant then
+					if string.find(data.enchant, "Lucky") then
+						baseLuckPercentage += Enchants[data.enchant].Buff
+					end
 				end
 			end
 

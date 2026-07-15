@@ -20,6 +20,7 @@ Globals.RebirthBasePrice = 2250
 Globals.UpgradeMultiplier = 1.35
 -- Globals.CostCoefficient = 5
 -- Globals.MultiplierCoefficient = 0.8
+Globals.ExistRefreshTime = 10 * 60
 Globals.BaseXP = 20
 Globals.XPMulti = 2.1
 Globals.MaxLevel = 50

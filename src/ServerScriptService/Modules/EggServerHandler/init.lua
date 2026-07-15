@@ -294,9 +294,11 @@ function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
 		end
 	end
 
-	task.spawn(function()
-		hatchBind:Invoke(player.Name, HttpService:JSONEncode(changes))
-	end)
+	if #changes > 0 then
+		task.spawn(function()
+			hatchBind:Invoke(player.Name, HttpService:JSONEncode(changes))
+		end)
+	end
 
 	local uiLock = player:FindFirstChild("UILock") :: BoolValue
 	uiLock.Value = true

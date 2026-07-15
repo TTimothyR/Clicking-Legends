@@ -1,15 +1,15 @@
--- ── Services ──────────────────────────────────────────────────────────────────
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 local HttpService = game:GetService("HttpService")
 local MessagingService = game:GetService("MessagingService")
+local RunService = game:GetService("RunService")
 
--- ── Config ────────────────────────────────────────────────────────────────────
 local config = {
 	BOT_URL = "https://clrbot.onrender.com",
 	ROBLOX_SECRET = "hG7kP2mN9qR4",
 	HATCH_CHANNEL = "1521124425913729136",
+	TEST_CHANNEL = "1525084250347409438",
 }
 
 local headers = {
@@ -17,12 +17,11 @@ local headers = {
 	["x-roblox-secret"] = config.ROBLOX_SECRET,
 }
 
--- ── Modules ───────────────────────────────────────────────────────────────────
 local framework = ReplicatedStorage:WaitForChild("Framework")
 local library = framework:WaitForChild("Library")
+local Globals = require(ReplicatedStorage.Framework.Globals)
 local petStats = require(library.PetStats)
 
--- ── HTTP helpers ──────────────────────────────────────────────────────────────
 local function PostRaw(endPoint, jsonBody)
 	local s, result = pcall(function()
 		return HttpService:RequestAsync({
@@ -81,7 +80,6 @@ local function Post(endPoint, payload)
 	return PostRaw(endPoint, body)
 end
 
--- ── 1. Sync secret PetStats ───────────────────────────────────────────────────
 local function SyncPetStats()
 	local payload = {}
 	for petName, data in pairs(petStats) do
@@ -111,7 +109,6 @@ end
 
 task.spawn(SyncPetStats)
 
--- ── 2. Account linking ────────────────────────────────────────────────────────
 local function HandleLinkCommand(player, token)
 	local result = Post("/confirm-link", {
 		token = token,
@@ -155,9 +152,10 @@ HatchBindable.OnInvoke = function(playerName, changesJson)
 		warn("[BotBridge] Hatch: invalid changesJson — " .. tostring(changes))
 		return
 	end
+	local channelId = RunService:IsStudio() and config.TEST_CHANNEL or config.HATCH_CHANNEL
 	local bodyOk, body = pcall(HttpService.JSONEncode, HttpService, {
 		playerName = tostring(playerName),
-		channelId = config.HATCH_CHANNEL,
+		channelId = channelId,
 		changes = changes,
 	})
 	if not bodyOk then
@@ -238,20 +236,17 @@ end
 --   local shinyCount = ReplicatedStorage.GetPetExist:InvokeServer("Void Serpent", true)
 --   -- returns number or nil if pet not found / bot unreachable
 
-local CACHE_TTL = 10 * 60 -- seconds
+local CACHE_TTL = Globals.ExistRefreshTime -- seconds
 local CACHE_TOPIC = "PetExistCache"
-local existCache = {} -- [cacheKey] = { value, fetchedAt }
-local fetchInProgress = false -- prevents concurrent fetches racing each other
+local existCache = {}
+local fetchInProgress = false
 
--- Fetch ALL secret pets at once and cache + broadcast the results
 local function FetchAllAndBroadcast()
 	if fetchInProgress then
 		return
 	end
 	fetchInProgress = true
 
-	-- Build query: fetch every known secret pet in one go
-	-- We hit a generic /pet-exist-all endpoint (added below to bot)
 	local s, result = pcall(function()
 		return HttpService:RequestAsync({
 			Url = config.BOT_URL .. "/pet-exist-all",
@@ -275,21 +270,16 @@ local function FetchAllAndBroadcast()
 
 	local now = os.clock()
 
-	-- Update local cache
 	for key, value in pairs(data.pets) do
 		existCache[key] = { value = value, fetchedAt = now }
 	end
 
-	-- Broadcast to all other servers
-	-- Encode as a flat { key = count } table so MessagingService handles it fine
 	local broadcastOk, broadcastJson = pcall(HttpService.JSONEncode, HttpService, data.pets)
 	if broadcastOk then
 		pcall(MessagingService.PublishAsync, MessagingService, CACHE_TOPIC, broadcastJson)
 	end
 end
 
--- Subscribe to cache broadcasts from other servers
--- When any server fetches, all others update instantly
 MessagingService:SubscribeAsync(CACHE_TOPIC, function(message)
 	local ok, pets = pcall(HttpService.JSONDecode, HttpService, message.Data)
 	if not ok or type(pets) ~= "table" then
@@ -301,8 +291,6 @@ MessagingService:SubscribeAsync(CACHE_TOPIC, function(message)
 	end
 end)
 
--- Periodic refresh: this server independently refreshes every 10 minutes
--- so the cache never goes permanently stale if MessagingService drops a message
 task.spawn(function()
 	while true do
 		task.wait(CACHE_TTL)
@@ -322,16 +310,12 @@ GetPetExist.OnServerInvoke = function(_, petName, isShiny)
 	local cacheKey = petName .. (isShiny and "_shiny" or "_base")
 	local cached = existCache[cacheKey]
 
-	-- Return cached value if still fresh
 	if cached and (os.clock() - cached.fetchedAt) < CACHE_TTL then
 		return cached.value
 	end
 
-	-- Cache cold or stale — fetch all pets and broadcast
-	-- This is the only code path that ever hits the bot for exist counts
 	FetchAllAndBroadcast()
 
-	-- Return freshly cached value, or stale value if fetch failed, or nil
 	local updated = existCache[cacheKey]
 	if updated then
 		return updated.value

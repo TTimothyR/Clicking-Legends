@@ -138,6 +138,7 @@ local function CreatePetButton(clone, holder, petData): (ImageButton, { [number]
 	tooltipTbl.gems = true
 	tooltipTbl.ShowLevel = true
 	tooltipTbl.reference = petData.id
+	tooltipTbl.ShowExist = petStats[petData.petName].Secret
 	local tooltipConnections = Tooltip.SetupTooltip(clone, "PetTooltip", petData)
 
 	local rarity = petStats[petData.petName].Rarity

@@ -1,3 +1,5 @@
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
 local Enchants = require(script.Parent.Enchants)
 local ShopStats = require(script.Parent.ShopStats)
 local InfiniteMath = require("../InfiniteMath")
@@ -7,6 +9,10 @@ local PetUtility = require("../PetUtility")
 local PetStats = require("./PetStats")
 local Globals = require("../Globals")
 local ToHex = require("../Shared/ToHex")
+
+local getPetExist = ReplicatedStorage:WaitForChild("GetPetExist") :: RemoteFunction
+
+local existCache = {}
 
 local function HideAll(labelsFrame: Frame)
 	for _, child in ipairs(labelsFrame:GetChildren()) do
@@ -48,6 +54,23 @@ local Tooltips = {
 				TopFrame.Info.Rarity.Legendary.Enabled = false
 				TopFrame.Info.Rarity.Secret.Enabled = false
 			end
+		end
+
+		if Data.ShowExist then
+			local fullName = Data.shiny and "Shiny " .. Data.petName or Data.petName
+			local count = 0
+
+			if existCache[fullName] and (os.time() - existCache[fullName].fetchTime) < Globals.ExistRefreshTime then
+				count = existCache[fullName].count
+			else
+				count = getPetExist:InvokeServer(Data.petName, Data.shiny)
+				existCache[fullName] = { count = count, fetchTime = os.time() }
+			end
+
+			LabelsFrame.ExistHolder.Amount.Text = `{count} Exist`
+			LabelsFrame.ExistHolder.Visible = true
+		else
+			LabelsFrame.ExistHolder.Visible = false
 		end
 
 		if Data.clicks then
@@ -112,13 +135,6 @@ local Tooltips = {
 		if Data.Tag then
 			LabelsFrame.Tag.Visible = true
 			LabelsFrame.Tag.Amount.Text = Data.Tag
-		end
-
-		if Data.Exist and Data.Exist > 0 then
-			LabelsFrame.ExistHolder.Visible = true
-			LabelsFrame.ExistHolder.Amount.Text = `{Data.Exist} Exist`
-		else
-			LabelsFrame.ExistHolder.Visible = false
 		end
 	end,
 	Gifts = function(frame: Frame, data: { [any]: any })

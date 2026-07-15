@@ -560,6 +560,7 @@ CreatePetClickConnection = function(clone, petData)
 	tooltipTbl.gems = true
 	tooltipTbl.ShowLevel = true
 	tooltipTbl.reference = petData.id
+	tooltipTbl.ShowExist = petStats[petData.petName].Secret
 	local tooltipConnections = Tooltip.SetupTooltip(clone, "PetTooltip", petData)
 	local clickCon = clone.MouseButton1Click:Connect(function()
 		if not db then

@@ -163,15 +163,18 @@ local function LoadShop()
 				clone.Icon.Image = ImageService[data.PetName] or ImageService["Placeholder"]
 				clone.Buy.Price.Text = "" .. info.PriceInRobux
 
+				local shiny = string.find(data.PetName, "Shiny") and true or false
+
 				Tooltip.SetupTooltip(clone.TooltipArea, "PetTooltip", {
 					petName = data.PetName,
-					shiny = data.Shiny,
-					clicks = Globals.GetPetClicks({ petName = data.PetName, shiny = data.shiny, level = 1 }),
-					gems = Globals.GetPetGems({ petName = data.PetName, shiny = data.shiny, level = 1 }),
+					shiny = shiny,
+					clicks = Globals.GetPetClicks({ petName = data.PetName, shiny = shiny, level = 1 }),
+					gems = Globals.GetPetGems({ petName = data.PetName, shiny = shiny, level = 1 }),
 					level = 1,
 					enchant = data.Enchant,
 					reference = data.PetName .. "Shop",
 					FromShop = true,
+					ShowExist = true,
 				})
 			end
 		elseif string.match(productName, "Gem") then
