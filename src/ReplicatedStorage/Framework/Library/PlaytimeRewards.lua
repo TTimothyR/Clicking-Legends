@@ -1,8 +1,9 @@
 local Items = require(script.Parent.Items)
+local PetStats = require(script.Parent.PetStats)
 local PlaytimeRewards = {}
 
 export type PotionReward = { Chance: number, MinimumAmount: number, MaximumAmount: number }
-export type Reward = { Name: string, Amount: number }
+export type Reward = { Name: string, Category: string, Amount: number }
 export type RewardCategory = "Potions" | "Pets" | "Items"
 
 PlaytimeRewards.DailyRewards = {
@@ -16,8 +17,8 @@ PlaytimeRewards.DailyRewards = {
 		} :: { [RewardCategory]: PotionReward },
 	},
 	["GuaranteedRewards"] = {
-		[7] = { Type = "Pet", Name = "Grand Patriotic Overlord" },
-		[14] = { Type = "Potion", Name = "Lucky_V", Amount = 25 },
+		[7] = { Category = "Pets", Name = "Grand Patriotic Overlord" },
+		[14] = { Category = "Potions", Name = "Lucky_V", Amount = 25 },
 	},
 }
 
@@ -49,15 +50,31 @@ PlaytimeRewards.GetRandomFromCategory = {
 			currentWeight += chance
 			if roll <= currentWeight then
 				local amount = math.random(potionRewards[tier].MinimumAmount, potionRewards[tier].MaximumAmount)
-				local randomBuff = Items[tier].Buffs[math.random(1, #Items[tier].Buffs)][1] :: string
+				local randomBuff = Items.Potions[tier].Buffs[math.random(1, #Items.Potions[tier].Buffs)][1] :: string
 
-				return { Name = randomBuff .. "_" .. tier, Amount = amount }
+				return { Name = randomBuff .. "_" .. tier, Category = "Potions", Amount = amount }
 			end
 		end
 
-		return { Name = nil, Amount = 0 }
+		return { Name = nil, Category = nil, Amount = 0 }
 	end,
 } :: { [RewardCategory]: () -> Reward }
+
+PlaytimeRewards.GetItemRarity = {
+	["Potions"] = function(name: string): string
+		local split = string.split(name, "_")
+		local _, tier = split[1], split[2]
+
+		local rarity = Items.Potions[tier].Rarity
+		return rarity
+	end,
+	["Pets"] = function(name: string): string
+		local actualName = string.find(name, "Shiny") and string.gsub(name, "Shiny ", "") or name
+		local rarity = PetStats[actualName].Rarity
+
+		return rarity
+	end,
+} :: { [RewardCategory]: () -> string }
 
 PlaytimeRewards.PlaytimeGifts = {}
 

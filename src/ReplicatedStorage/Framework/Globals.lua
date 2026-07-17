@@ -30,7 +30,7 @@ Globals.GroupID = 891290039
 Globals.BaseHatchTime = 6
 Globals.BestPotionTier = "V"
 Globals.DailyResetTime = 24 * 3600
-Globals.DailyClaimTreshold = 600
+Globals.DailyClaimTreshold = 15 * 60
 Globals.RarityColors = {
 	["Common"] = Color3.fromRGB(255, 214, 133),
 	["Uncommon"] = Color3.fromRGB(173, 255, 135),
@@ -136,12 +136,12 @@ function Globals.GetGiftDuplicates(gifts)
 end
 
 function Globals.GetAnimatedGradients(
-	parents: { [number]: Folder | ScrollingFrame },
+	parents: { [number]: Instance },
 	gradientsToAnimate: { [number]: UIGradient }
 ): { [number]: UIGradient }
 	for _, parent in ipairs(parents) do
 		for _, child in ipairs(parent:GetChildren()) do
-			if child:IsA("ImageButton") then
+			if child:IsA("ImageButton") or child:IsA("Frame") then
 				if child.Glow.Legendary.Enabled then
 					table.insert(gradientsToAnimate, child.Glow.Legendary)
 				end
@@ -384,8 +384,15 @@ function Globals.FormatChance(chance: number): string
 	return formatted
 end
 
-function Globals.GetDayCycle(secondsPerCycle)
+function Globals.GetCycle(secondsPerCycle)
 	return math.floor(os.time() / secondsPerCycle)
+end
+
+function Globals.GetResetTime(secondsPerCycle)
+	local now = os.time()
+	local cycleStart = math.floor(now / secondsPerCycle) * secondsPerCycle
+	local nextReset = cycleStart + secondsPerCycle
+	return nextReset
 end
 
 return Globals

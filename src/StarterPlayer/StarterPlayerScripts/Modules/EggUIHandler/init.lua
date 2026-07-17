@@ -437,7 +437,7 @@ local function LoadEggModels()
 
 		local Decor = EggInFolder.Decor :: Model
 		local DarkGrey, LightGrey = Decor.DarkGrey :: Model, Decor.LightGrey :: Model
-		local EggHolder: Part = LightGrey.EggHolder
+		local EggHolder: Part = LightGrey:WaitForChild("EggHolder")
 
 		local EggModel: Model
 		if not EggInFolder:FindFirstChild(EggName) then

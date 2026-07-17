@@ -7,7 +7,7 @@ local SettingsConfig = {
 	},
 	["Music"] = {
 		Type = "Slider",
-		DefaultValue = 1,
+		DefaultValue = 0,
 		MinimumValue = 0,
 		MaximumValue = 1,
 	},
