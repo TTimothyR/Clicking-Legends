@@ -280,6 +280,7 @@ function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
 						petName = petName,
 						isShiny = shiny,
 						imageId = tostring(ImageService[fullName]:gsub("rbxassetid://", "")) or "",
+						chance = tostring(infMath.new(calculatedChance):GetSuffix(true)),
 						delta = 1,
 					})
 				end
