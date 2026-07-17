@@ -3,6 +3,7 @@ local interfaceUtility = {}
 -- Services
 local TweenService = game:GetService("TweenService")
 local runService = game:GetService("RunService")
+local Globals = require(script.Parent.Globals)
 
 function interfaceUtility.ShakeUI(object, duration, strength, speed)
 	local originalPos = object.Position
@@ -75,6 +76,27 @@ function interfaceUtility.ShakeCamera(camera, duration, strength, speed)
 	--end
 
 	--camera.CFrame = start
+end
+
+function interfaceUtility.CreateGradientAnimation(
+	gradientsToAnimate: { [number]: UIGradient },
+	currentRotation: { value: number }
+): RBXScriptConnection
+	return runService.Heartbeat:Connect(function(elapsedSec: number)
+		currentRotation.value += 360 / Globals.LegendaryGradientRotateSpeed * elapsedSec
+		if currentRotation.value >= 360 then
+			currentRotation.value -= 360
+		end
+		for i = #gradientsToAnimate, 1, -1 do
+			local gradient = gradientsToAnimate[i] :: UIGradient
+
+			if not gradient or not gradient.Parent then
+				table.remove(gradientsToAnimate, i)
+			else
+				gradient.Rotation = currentRotation.value
+			end
+		end
+	end) :: RBXScriptConnection
 end
 
 function interfaceUtility.RotateGradient(gradient: UIGradient)

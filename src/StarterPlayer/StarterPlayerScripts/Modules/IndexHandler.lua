@@ -118,9 +118,31 @@ local function LoadPets(index, eggName: string, shiny: boolean)
 		clone.LayoutOrder = data[2]
 
 		local fullName = shiny and "Shiny " .. pet or pet
+		local chance = data[1] / (shiny and globals.ShinyChance or 1)
+		local chanceDisplay = nil
+
+		if chance <= 0 then
+			chanceDisplay = 0
+		else
+			if chance <= 0.001 then
+				chanceDisplay =
+					`<stroke color="#00295E" joins="miter" thickness="2"><font size="11">1</font>/{InfiniteMath.new(100 / chance)
+						:GetSuffix(true)}</stroke>`
+			else
+				chanceDisplay = `{chance}%`
+			end
+		end
+
 		clone.Frame.Icon.Image = ImageService[fullName] or ImageService["Placeholder"]
+		clone.Frame.Chance.Text = chanceDisplay
 
 		local rarity = petStats[pet].Rarity
+		if rarity == "Legendary" then
+			clone.Frame.Chance.Legendary.Enabled = true
+		else
+			clone.Frame.Chance.TextColor3 = globals.RarityColors[rarity]
+		end
+
 		clone.Frame.BackgroundColor3 = globals.RarityColors[rarity]
 		if rarity == "Legendary" then
 			clone.Glow.Visible = true
@@ -189,6 +211,7 @@ function IndexHandler.LoadIndex()
 			local clone = eggTemplate:Clone()
 			clone.Name = eggName
 			clone.Parent = eggHolder
+			clone.LayoutOrder = eggStats[eggName].LayoutOrder
 
 			local infoFrame = clone.Frame
 			local petsInEgg = eggPetCount[eggName]
@@ -198,6 +221,7 @@ function IndexHandler.LoadIndex()
 			infoFrame.LimitedTag.Visible = eggStats[eggName].Limited
 			infoFrame.NormalCollected.Text = normal .. "/" .. petsInEgg
 			infoFrame.ShinyCollected.Text = shiny .. "/" .. petsInEgg
+			infoFrame.EggIcon.Image = ImageService[eggName] or ImageService.Placeholder
 
 			local clickCon = clone.MouseButton1Click:Connect(function()
 				if not db then

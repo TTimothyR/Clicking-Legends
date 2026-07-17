@@ -31,6 +31,7 @@ local infoFrame = frames:WaitForChild("Info")
 local upgradesFrame = frames:WaitForChild("Upgrades")
 local statsFrame = frames:WaitForChild("Stats")
 local settingsFrame = frames:WaitForChild("Settings")
+local dailyRewardsFrame = frames:WaitForChild("DailyRewards") :: Frame
 
 local hud = playerGui:WaitForChild("HUD")
 local left = hud:WaitForChild("Left")
@@ -44,6 +45,7 @@ local tradeButton = buttons:WaitForChild("Trading")
 local upgradeButton = buttons:WaitForChild("Upgrades")
 local statsButton = buttons:WaitForChild("Stats")
 local settingsButton = buttons:WaitForChild("Settings") :: ImageButton
+local dailyRewardsButton = buttons:WaitForChild("DailyRewards") :: ImageButton
 
 -- Modules
 local inventoryHandler = require(script.Parent.InventoryHandler)
@@ -68,6 +70,7 @@ local sizePos = {
 	["Stats"] = { UDim2.fromScale(0.6, 0.6), UDim2.fromScale(0.5, 0.5) },
 	["ItemShop"] = { UDim2.fromScale(0.497, 0.6), UDim2.fromScale(0.5, 0.5) },
 	["Settings"] = { UDim2.fromScale(0.6, 0.6), UDim2.fromScale(0.5, 0.5) },
+	["DailyRewards"] = { UDim2.fromScale(0.6, 0.6), UDim2.fromScale(0.5, 0.5) },
 }
 local animationTime = 0.15
 local fov = camera.FieldOfView
@@ -180,6 +183,9 @@ function ButtonHandler.Initialize()
 	end)
 	statsButton.MouseButton1Click:Connect(function()
 		ButtonHandler.handleOpenClose(statsFrame)
+	end)
+	dailyRewardsButton.MouseButton1Click:Connect(function()
+		ButtonHandler.handleOpenClose(dailyRewardsFrame)
 	end)
 	settingsButton.MouseButton1Click:Connect(function()
 		ButtonHandler.handleOpenClose(settingsFrame, settingsHandler.LoadSettings)

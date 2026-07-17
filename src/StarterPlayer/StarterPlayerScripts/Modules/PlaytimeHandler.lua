@@ -1,0 +1,3 @@
+local PlaytimeHandler = {}
+
+return PlaytimeHandler

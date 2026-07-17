@@ -10,7 +10,6 @@ type TemplateConnections = {
 }
 
 -- Services
-local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local players = game:GetService("Players")
 local rs = game:GetService("ReplicatedStorage")
@@ -54,7 +53,7 @@ local giftConnections: InventoryConnections = {}
 
 local legendaryConnection: RBXScriptConnection = nil
 local gradientsToAnimate = {}
-local currentRotation = 0
+local currentRotation: { value: number } = { value = 0 }
 local animationLoaded = false :: boolean
 
 local bulkButtonsConnected = false
@@ -1393,21 +1392,8 @@ function InventoryHandler.StartLegendaryAnimations()
 		itemHolder,
 	}, gradientsToAnimate)
 
-	legendaryConnection = RunService.Heartbeat:Connect(function(elapsedSec: number)
-		currentRotation += 360 / globals.LegendaryGradientRotateSpeed * elapsedSec
-		if currentRotation >= 360 then
-			currentRotation -= 360
-		end
-		for i = #gradientsToAnimate, 1, -1 do
-			local gradient = gradientsToAnimate[i] :: UIGradient
-
-			if not gradient or not gradient.Parent then
-				table.remove(gradientsToAnimate, i)
-			else
-				gradient.Rotation = currentRotation
-			end
-		end
-	end) :: RBXScriptConnection
+	legendaryConnection =
+		InterfaceUtility.CreateGradientAnimation(gradientsToAnimate, currentRotation) :: RBXScriptConnection
 
 	animationLoaded = true
 end

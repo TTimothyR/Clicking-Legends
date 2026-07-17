@@ -80,10 +80,22 @@ function Local.SaveRemainingPotionTime(profile)
 	end
 end
 
+function Local.SaveRemainingDailyRewardTime(profile)
+	local dailyRewards = profile.DailyRewards
+
+	for day: string, data in pairs(dailyRewards) do
+		if data.Active then
+			local remaining = data.EndTime - os.time()
+			dailyRewards[day].Remaining = remaining
+		end
+	end
+end
+
 function Local.RemoveProfile(player: Player)
 	local profile = Profiles[player]
 	if profile ~= nil then
 		Local.SaveRemainingPotionTime(profile.Data)
+		Local.SaveRemainingDailyRewardTime(profile.Data)
 		profile:EndSession()
 	end
 end

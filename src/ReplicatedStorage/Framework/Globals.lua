@@ -29,6 +29,8 @@ Globals.ShinyChance = 40
 Globals.GroupID = 891290039
 Globals.BaseHatchTime = 6
 Globals.BestPotionTier = "V"
+Globals.DailyResetTime = 24 * 3600
+Globals.DailyClaimTreshold = 600
 Globals.RarityColors = {
 	["Common"] = Color3.fromRGB(255, 214, 133),
 	["Uncommon"] = Color3.fromRGB(173, 255, 135),
@@ -380,6 +382,10 @@ function Globals.FormatChance(chance: number): string
 	formatted = string.gsub(formatted, "%.$", "")
 
 	return formatted
+end
+
+function Globals.GetDayCycle(secondsPerCycle)
+	return math.floor(os.time() / secondsPerCycle)
 end
 
 return Globals

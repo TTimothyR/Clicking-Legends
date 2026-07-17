@@ -39,6 +39,9 @@ Shared.DEFAULT_PLAYER_DATA = {
 	} :: { [number]: boolean },
 
 	Settings = {},
+	DailyRewards = {},
+	DailyCycle = 0,
+	DailyStreak = 0,
 
 	Gifts = {},
 	Pets = {},

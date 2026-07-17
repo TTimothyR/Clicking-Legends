@@ -3,6 +3,7 @@ return {
 		Price = { "Clicks", 100 },
 		World = "Spawn",
 		Limited = false,
+		LayoutOrder = 0,
 		Rewards = { { "Potion", "Lucky_I", 69 }, { "Potion", "Speed_III", 5 } },
 		ShinyRewards = { { "Currency", "Gems", 67420 } },
 		Pets = {
@@ -18,6 +19,7 @@ return {
 		Price = { "Clicks", 25_000 },
 		World = "Spawn",
 		Limited = false,
+		LayoutOrder = 1,
 		Rewards = { { "Potion", "Lucky_I", 69 }, { "Potion", "Speed_III", 5 } },
 		ShinyRewards = { { "Currency", "Gems", 67420 } },
 		Pets = {
@@ -33,6 +35,7 @@ return {
 		Price = { "Clicks", 4e6 },
 		World = "Spawn",
 		Limited = false,
+		LayoutOrder = 2,
 		Rewards = { { "Potion", "Lucky_I", 69 }, { "Potion", "Speed_III", 5 } },
 		ShinyRewards = { { "Currency", "Gems", 67420 } },
 		Pets = {
@@ -49,6 +52,7 @@ return {
 		Price = { "Clicks", 5e9 },
 		World = "Spawn",
 		Limited = false,
+		LayoutOrder = 3,
 		Rewards = { { "Potion", "Lucky_I", 69 }, { "Potion", "Speed_III", 5 } },
 		ShinyRewards = { { "Currency", "Gems", 67420 } },
 		Pets = {
@@ -68,6 +72,7 @@ return {
 		Price = { "Clicks", 5e9 },
 		World = "Spawn",
 		Limited = false,
+		LayoutOrder = 4,
 		Rewards = { { "Potion", "Lucky_I", 69 }, { "Potion", "Speed_III", 5 } },
 		ShinyRewards = { { "Currency", "Gems", 67420 } },
 		Pets = {
@@ -84,6 +89,7 @@ return {
 		Price = { "Clicks", 5e9 },
 		World = "Spawn",
 		Limited = false,
+		LayoutOrder = 5,
 		Rewards = { { "Potion", "Lucky_I", 69 }, { "Potion", "Speed_III", 5 } },
 		ShinyRewards = { { "Currency", "Gems", 67420 } },
 		Pets = {
@@ -102,6 +108,7 @@ return {
 		Price = { "Clicks", 5e1 },
 		World = "Spawn",
 		Limited = false,
+		LayoutOrder = 6,
 		Rewards = { { "Potion", "Lucky_I", 69 }, { "Potion", "Speed_III", 5 } },
 		ShinyRewards = { { "Currency", "Gems", 67420 } },
 		Pets = {

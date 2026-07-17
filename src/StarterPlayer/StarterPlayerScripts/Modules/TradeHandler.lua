@@ -11,7 +11,6 @@ type TemplateConnections = {
 
 -- Services
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
 local players = game:GetService("Players")
 local rs = game:GetService("ReplicatedStorage")
 local runService = game:GetService("RunService")
@@ -44,7 +43,7 @@ local tradeRequestStartPos = UDim2.fromScale(0.5, -0.1)
 
 local legendaryConnection: RBXScriptConnection = nil
 local gradientsToAnimate = {}
-local currentRotation = 0
+local currentRotation: { value: number } = { value = 0 }
 local animationLoaded = false :: boolean
 
 local isPrivateServer = false
@@ -88,6 +87,7 @@ local meButtonHolder = meButtons:WaitForChild("Holder")
 local meGifts = tradeMain:WaitForChild("MeGifts")
 
 -- Modules
+local InterfaceUtility = require(ReplicatedStorage.Framework.InterfaceUtility)
 local ImageService = require(ReplicatedStorage.Framework.Library.ImageService)
 local network = require(framework.Network)
 local globals = require(framework.Globals)
@@ -237,21 +237,8 @@ local function StartLegendaryAnimations()
 		youOffer.ScrollingFrame,
 	}, gradientsToAnimate)
 
-	legendaryConnection = RunService.Heartbeat:Connect(function(elapsedSec: number)
-		currentRotation += 360 / globals.LegendaryGradientRotateSpeed * elapsedSec
-		if currentRotation >= 360 then
-			currentRotation -= 360
-		end
-		for i = #gradientsToAnimate, 1, -1 do
-			local gradient = gradientsToAnimate[i] :: UIGradient
-
-			if not gradient or not gradient.Parent then
-				table.remove(gradientsToAnimate, i)
-			else
-				gradient.Rotation = currentRotation
-			end
-		end
-	end) :: RBXScriptConnection
+	legendaryConnection =
+		InterfaceUtility.CreateGradientAnimation(gradientsToAnimate, currentRotation) :: RBXScriptConnection
 
 	animationLoaded = true
 end
