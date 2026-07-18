@@ -71,8 +71,14 @@ function AFKHandler.StopAFK(player: Player)
 
 	AFKHandler.ResetAFKReport(player)
 
+	print("---- STOP AFK (variables before stopping) ----")
+	print(startRebirths)
+	print(startEggs)
+	print(startTime)
+	print("----- EOF -------")
+
 	return {
-		deltaTime = endTime - startTime,
+		deltaTime = (endTime - startTime) or 0,
 		deltaRebirths = (endRebirths - startRebirths) or 0,
 		deltaEggs = (endEggs - startEggs) or 0,
 		petsHatched = petsGotten,

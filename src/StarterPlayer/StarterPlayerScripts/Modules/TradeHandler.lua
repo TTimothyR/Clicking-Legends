@@ -105,7 +105,13 @@ local function UpdateTradeButton(color: string, text: string, button)
 end
 
 local function CreatePlayerFrame(plr: Player)
-	local profile = dataSync.GetOtherData(plr.UserId)
+	local profile
+	repeat
+		profile = dataSync.GetOtherData(plr.UserId)
+		if not profile then
+			break
+		end
+	until profile ~= nil
 	local clone = playerTemplate:Clone()
 	clone.Parent = playerHolder
 	clone.Name = plr.Name
@@ -406,14 +412,21 @@ function TradeHandler.TogglePet(me: Player, data, state)
 end
 
 function TradeHandler.EnterTrade(_: Player, you: Player)
-	-- local myProfile = network:InvokeServer('GetData');
-	-- local yourProfile = dataSync.GetOtherData(you.UserId)
+	-- local myProfile = network:InvokeServer("GetData")
+	local yourProfile
+	repeat
+		yourProfile = dataSync.GetOtherData(you.UserId)
+		if not yourProfile then
+			break
+		end
+	until yourProfile ~= nil
+
 	local myPets = dataSync.Get("Pets")
-	-- local yourPets = yourProfile.Pets
+	local yourPets = yourProfile.Pets
 	local myGifts = dataSync.Get("Gifts")
-	-- local yourGifts = yourProfile.Gifts
-	local yourPets = {}
-	local yourGifts = {}
+	local yourGifts = yourProfile.Gifts
+	-- local yourPets = {}
+	-- local yourGifts = {}
 
 	table.sort(myPets, globals.SortPets)
 	table.sort(yourPets, globals.SortPets)
@@ -592,7 +605,13 @@ function TradeHandler.UpdateTradeButtons()
 	for _, child in ipairs(playerHolder:GetChildren()) do
 		if child:IsA("Frame") then
 			local playerName: string = child.Name
-			local profile = dataSync.GetOtherData(players:FindFirstChild(playerName).UserId)
+			local profile
+			repeat
+				profile = dataSync.GetOtherData(players:FindFirstChild(playerName).UserId)
+				if not profile then
+					break
+				end
+			until profile ~= nil
 
 			if profile.TradeBanned then
 				continue
@@ -672,7 +691,14 @@ end
 local function LoadPlayerList()
 	for _, plr: Player in ipairs(players:GetPlayers()) do
 		if playerHolder:FindFirstChild(plr.Name) then
-			local tradeBanned = dataSync.GetOtherData(plr.UserId).TradeBanned
+			local profile
+			repeat
+				profile = dataSync.GetOtherData(plr.UserId)
+				if not profile then
+					break
+				end
+			until profile ~= nil
+			local tradeBanned = profile.TradeBanned or false
 			playerHolder:FindFirstChild(plr.Name).Visible = not tradeBanned
 			continue
 		end

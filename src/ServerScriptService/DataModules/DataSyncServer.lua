@@ -162,7 +162,7 @@ end
 function DataSync.Private.SyncPlayer(player, data)
 	local old = lastSentData[player]
 	if not old then
-		DataSync.Private.InitializePlayer(player, data)(player, data)
+		DataSync.Private.InitializePlayer(player, data)
 		return
 	end
 

@@ -65,7 +65,10 @@ local function IsPrizeClaimed(prizeData, prizeIndex)
 	return false
 end
 
-local function UpdatePrizeProgress(clone, targetType, data, claimedPrizes)
+local function UpdatePrizeProgress(clone, targetType: string, data, claimedPrizes)
+	if targetType ~= "Eggs" and targetType ~= "ActualClicks" then
+		return
+	end
 	local claimed: boolean = IsPrizeClaimed(claimedPrizes[targetType], tonumber(clone.Name))
 
 	local target = infMath.new(data.Target)
@@ -79,7 +82,7 @@ local function UpdatePrizeProgress(clone, targetType, data, claimedPrizes)
 	clone.Progress.Level.Text = (currentProgress < target)
 			and currentProgress:GetSuffix(true) .. " / " .. target:GetSuffix(true)
 		or "Completed"
-	local number = tonumber(procentualProgress)
+	local number = tonumber(procentualProgress) or 0
 	clone.Progress.Frame.Size = UDim2.fromScale(math.min(number, 1), 1)
 
 	local rewardLabel = clone.Reward

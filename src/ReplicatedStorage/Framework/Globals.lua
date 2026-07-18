@@ -205,9 +205,12 @@ function Globals.XPForNextLevel(currentLevel, shiny: boolean)
 end
 
 function Globals.GetPetClicks(petData)
+	if not petData.petName then
+		return 0
+	end
 	local stats = petStats[petData.petName]
 	if not stats.Clicks then
-		return 1
+		return 0
 	end
 
 	local clicks = stats.Clicks
@@ -219,9 +222,12 @@ function Globals.GetPetClicks(petData)
 end
 
 function Globals.GetMaxLevelClicks(petData)
+	if not petData.petName then
+		return 0
+	end
 	local stats = petStats[petData.petName]
 	if not stats.Clicks then
-		return 1
+		return 0
 	end
 
 	local clicks = stats.Clicks
@@ -233,7 +239,13 @@ function Globals.GetMaxLevelClicks(petData)
 end
 
 function Globals.GetMaxLevelGems(petData)
+	if not petData.petName then
+		return 0
+	end
 	local stats = petStats[petData.petName]
+	if not stats.Gems then
+		return 0
+	end
 
 	local gems = stats.Gems
 	local total = gems * (1 + (2 * (Globals.MaxLevel - 1)) / (Globals.MaxLevel - 1))
@@ -244,7 +256,13 @@ function Globals.GetMaxLevelGems(petData)
 end
 
 function Globals.GetPetGems(petData)
+	if not petData.petName then
+		return 0
+	end
 	local stats = petStats[petData.petName]
+	if not stats.Gems then
+		return 0
+	end
 
 	local gems = stats.GemMulti
 	local total = gems * (1 + (2 * (petData.level - 1)) / (Globals.MaxLevel - 1))
