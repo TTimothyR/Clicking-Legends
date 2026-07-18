@@ -25,6 +25,7 @@ Shared.DEFAULT_PLAYER_DATA = {
 	ShinySecretsHatched = 0,
 
 	ClickMultiplier = 0,
+	HatchSpeed = 0,
 
 	PetEquips = 4,
 	CurrentEquips = 0,

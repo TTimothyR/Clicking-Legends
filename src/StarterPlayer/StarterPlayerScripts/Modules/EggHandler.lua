@@ -193,6 +193,7 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
 		speed += 0.35
 	end
 	speed += upgradeLevels["Faster Egg Open"] * (upgrades["Faster Egg Open"].Increment / 100)
+	speed += dataSync.Get("HatchSpeed") / 100
 
 	local eggData = {}
 	local eggAnimationConnections = {}

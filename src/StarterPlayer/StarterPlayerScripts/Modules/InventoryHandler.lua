@@ -471,11 +471,11 @@ local function LoadPetInfo(id: string)
 
 			-- InventoryHandler.LoadInventory();
 			for _, iteratorID in ipairs(usedIds) do
+				RemoveConnection(iteratorID, petConnections)
 				local obj = holder:FindFirstChild(iteratorID, true)
 				if obj then
 					obj:Destroy()
 				end
-				RemoveConnection(iteratorID, petConnections)
 			end
 		end
 	end)
@@ -972,8 +972,8 @@ function InventoryHandler.LoadInventory()
 
 	for _, petData in ipairs(equippedSecretTbl) do
 		if notEquippedHolder:FindFirstChild(petData.id) then
-			notEquippedHolder:FindFirstChild(petData.id):Destroy()
 			RemoveConnection(petData.id, petConnections)
+			notEquippedHolder:FindFirstChild(petData.id):Destroy()
 		end
 		if not equippedHolder:FindFirstChild(petData.id) then
 			CreateEquippedPet(petData, equippedSecretTemplate)
@@ -984,8 +984,8 @@ function InventoryHandler.LoadInventory()
 	end
 	for _, petData in ipairs(equippedNormalTbl) do
 		if notEquippedHolder:FindFirstChild(petData.id) then
-			notEquippedHolder:FindFirstChild(petData.id):Destroy()
 			RemoveConnection(petData.id, petConnections)
+			notEquippedHolder:FindFirstChild(petData.id):Destroy()
 		end
 		if not equippedHolder:FindFirstChild(petData.id) then
 			CreateEquippedPet(petData, normalTemplate)
@@ -997,8 +997,8 @@ function InventoryHandler.LoadInventory()
 
 	for _, petData in ipairs(secretTbl) do
 		if equippedHolder:FindFirstChild(petData.id) then
-			equippedHolder:FindFirstChild(petData.id):Destroy()
 			RemoveConnection(petData.id, petConnections)
+			equippedHolder:FindFirstChild(petData.id):Destroy()
 		end
 		if not notEquippedHolder:FindFirstChild(petData.id) then
 			CreateSecretPet(petData)
@@ -1009,8 +1009,8 @@ function InventoryHandler.LoadInventory()
 	end
 	for _, petData in ipairs(normalTbl) do
 		if equippedHolder:FindFirstChild(petData.id) then
-			equippedHolder:FindFirstChild(petData.id):Destroy()
 			RemoveConnection(petData.id, petConnections)
+			equippedHolder:FindFirstChild(petData.id):Destroy()
 		end
 		if not notEquippedHolder:FindFirstChild(petData.id) then
 			CreateNormalPet(petData)
@@ -1176,8 +1176,8 @@ function InventoryHandler.LoadGifts()
 	local playerGifts = dataSync.Get("Gifts")
 	for _, child in ipairs(giftList:GetChildren()) do
 		if not playerGifts[child.Name] and child:IsA("ImageButton") then
-			child:Destroy()
 			RemoveConnection(child.Name, giftConnections)
+			child:Destroy()
 			giftInfoHolder.Visible = false
 		end
 	end
@@ -1252,8 +1252,8 @@ function InventoryHandler.LoadItems()
 	for _, child in ipairs(itemHolder:GetChildren()) do
 		if child:IsA("ImageButton") then
 			if not potions[child.Name] then
-				child:Destroy()
 				RemoveConnection(child.Name, itemConnections)
+				child:Destroy()
 			end
 		end
 	end

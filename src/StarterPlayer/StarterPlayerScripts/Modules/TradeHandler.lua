@@ -97,6 +97,8 @@ local infoPopup = require(classes.InfoPopup)
 local dataSync = require(script.Parent.DataSyncClient)
 local Tooltip = require(script.Parent.Tooltip)
 
+local maximumTries = 7
+
 local function UpdateTradeButton(color: string, text: string, button)
 	button.Frame.UIGradient.Color = globals.ButtonPresets[color].Gradient
 	button.Frame.UIStroke.Color = globals.ButtonPresets[color].StrokeColor
@@ -106,19 +108,26 @@ end
 
 local function CreatePlayerFrame(plr: Player)
 	local profile
+	local tries = 0
 	repeat
 		profile = dataSync.GetOtherData(plr.UserId)
 		if not profile then
-			break
+			continue
 		end
-	until profile ~= nil
+		tries += 1
+		task.wait(1)
+	until profile ~= nil or tries >= maximumTries
+
+	if not profile then
+		return
+	end
 	local clone = playerTemplate:Clone()
 	clone.Parent = playerHolder
 	clone.Name = plr.Name
 
 	local inner = clone.Inner
 	inner.PlayerName.Text = plr.Name
-	clone.Visible = not profile.TradeBanned or true
+	clone.Visible = not profile.TradeBanned
 
 	local clickCon: RBXScriptConnection
 	clickCon = inner.Trade.MouseButton1Click:Connect(function()
@@ -177,6 +186,21 @@ local function CleanUpRequestConnections()
 end
 
 local function CleanUp()
+	for _, template: TemplateConnections in pairs(tradeConnections) do
+		if template.ClickConnection and template.ClickConnection.Connected then
+			template.ClickConnection:Disconnect()
+		end
+
+		if template.TooltipConnections then
+			for _, connection: RBXScriptConnection in ipairs(template.TooltipConnections) do
+				if connection.Connected then
+					connection:Disconnect()
+				end
+			end
+		end
+	end
+	table.clear(tradeConnections)
+	tradeConnections = {}
 	for _, child: Instance in ipairs(mePets.ScrollingFrame:GetChildren()) do
 		if child:IsA("ImageButton") then
 			child:Destroy()
@@ -207,22 +231,6 @@ local function CleanUp()
 			child:Destroy()
 		end
 	end
-
-	for _, template: TemplateConnections in pairs(tradeConnections) do
-		if template.ClickConnection and template.ClickConnection.Connected then
-			template.ClickConnection:Disconnect()
-		end
-
-		if template.TooltipConnections then
-			for _, connection: RBXScriptConnection in ipairs(template.TooltipConnections) do
-				if connection.Connected then
-					connection:Disconnect()
-				end
-			end
-		end
-	end
-	table.clear(tradeConnections)
-	tradeConnections = {}
 
 	for _, con: RBXScriptConnection in ipairs(tradeButtonConnections) do
 		if con.Connected then
@@ -414,12 +422,20 @@ end
 function TradeHandler.EnterTrade(_: Player, you: Player)
 	-- local myProfile = network:InvokeServer("GetData")
 	local yourProfile
+	local tries = 0
 	repeat
 		yourProfile = dataSync.GetOtherData(you.UserId)
 		if not yourProfile then
-			break
+			continue
 		end
-	until yourProfile ~= nil
+		tries += 1
+		task.wait(1)
+	until yourProfile ~= nil or tries >= maximumTries
+
+	if not yourProfile then
+		network:FireServer("DeclineTrade")
+		return
+	end
 
 	local myPets = dataSync.Get("Pets")
 	local yourPets = yourProfile.Pets
@@ -606,12 +622,19 @@ function TradeHandler.UpdateTradeButtons()
 		if child:IsA("Frame") then
 			local playerName: string = child.Name
 			local profile
+			local tries = 0
 			repeat
 				profile = dataSync.GetOtherData(players:FindFirstChild(playerName).UserId)
 				if not profile then
-					break
+					continue
 				end
-			until profile ~= nil
+				tries += 1
+				task.wait(1)
+			until profile ~= nil or tries >= maximumTries
+
+			if not profile then
+				continue
+			end
 
 			if profile.TradeBanned then
 				continue
@@ -692,13 +715,21 @@ local function LoadPlayerList()
 	for _, plr: Player in ipairs(players:GetPlayers()) do
 		if playerHolder:FindFirstChild(plr.Name) then
 			local profile
+			local tries = 0
 			repeat
 				profile = dataSync.GetOtherData(plr.UserId)
 				if not profile then
-					break
+					continue
 				end
-			until profile ~= nil
-			local tradeBanned = profile.TradeBanned or false
+				tries += 1
+				task.wait(1)
+			until profile ~= nil or tries >= maximumTries
+
+			if not profile then
+				continue
+			end
+
+			local tradeBanned = profile.TradeBanned
 			playerHolder:FindFirstChild(plr.Name).Visible = not tradeBanned
 			continue
 		end

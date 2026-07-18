@@ -58,7 +58,7 @@ return {
 	["More Rebirths"] = {
 		Order = 9,
 		Increment = nil, --%
-		Maximum = 50,
+		Maximum = 15,
 		BasePrice = 50,
 		Description = "Unlocks more rebirth options!",
 	},

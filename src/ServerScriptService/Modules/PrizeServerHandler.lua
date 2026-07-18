@@ -50,7 +50,7 @@ function PrizeHandler.ClaimPrize(player: Player, prizeType: string, prizeIndex: 
 
 	local rewardData = prizeStat.Reward
 	if rewardData[1] == "Pet" then
-		local success, warning = rewardHandler.ClaimPet(player, rewardData[2], rewardData[3])
+		local success, warning = rewardHandler.ClaimPet(player, rewardData[2], rewardData[3], "")
 		if not success then
 			return warning
 		end
