@@ -143,6 +143,10 @@ local function handlePets(folder: Folder)
 		local humanoidRootPart = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 		local radius = math.rad(360 / #folder:GetChildren())
 
+		if not humanoidRootPart then
+			return
+		end
+
 		for i, v in ipairs(folder:GetChildren()) do
 			local state
 			if string.find(v.Name, "Shiny") then

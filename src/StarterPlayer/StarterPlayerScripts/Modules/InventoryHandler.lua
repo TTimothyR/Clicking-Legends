@@ -449,7 +449,10 @@ local function LoadPetInfo(id: string)
 			petInfoHolder.Visible = false
 
 			-- InventoryHandler.LoadInventory();
-			holder:FindFirstChild(id, true):Destroy()
+			local obj = holder:FindFirstChild(id, true)
+			if obj then
+				obj:Destroy()
+			end
 			RemoveConnection(id, petConnections)
 		end
 	end)
@@ -468,7 +471,10 @@ local function LoadPetInfo(id: string)
 
 			-- InventoryHandler.LoadInventory();
 			for _, iteratorID in ipairs(usedIds) do
-				holder:FindFirstChild(iteratorID, true):Destroy()
+				local obj = holder:FindFirstChild(iteratorID, true)
+				if obj then
+					obj:Destroy()
+				end
 				RemoveConnection(iteratorID, petConnections)
 			end
 		end
@@ -736,7 +742,11 @@ function InventoryHandler.LoadInventory()
 			petInfoHolder.Visible = true
 		end
 		for id, _ in pairs(selectedPets) do
-			holder:FindFirstChild(id, true).Frame.ImageLabel.ImageColor3 = Color3.fromRGB(255, 255, 255)
+			local obj = holder:FindFirstChild(id, true)
+
+			if obj then
+				obj.Frame.ImageLabel.ImageColor3 = Color3.fromRGB(255, 255, 255)
+			end
 		end
 		table.clear(selectedPets)
 		selectedPetAmount = 0
@@ -835,7 +845,11 @@ function InventoryHandler.LoadInventory()
 				if success then
 					-- InventoryHandler.LoadInventory();
 					for _, id in ipairs(deletedIds) do
-						holder:FindFirstChild(id, true):Destroy()
+						local obj = holder:FindFirstChild(id, true)
+
+						if obj then
+							obj:Destroy()
+						end
 						if selectedPetID == id then
 							selectedPetID = nil
 							petInfoHolder.Visible = false

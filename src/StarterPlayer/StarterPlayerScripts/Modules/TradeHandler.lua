@@ -112,7 +112,7 @@ local function CreatePlayerFrame(plr: Player)
 
 	local inner = clone.Inner
 	inner.PlayerName.Text = plr.Name
-	clone.Visible = not profile.TradeBanned
+	clone.Visible = not profile.TradeBanned or true
 
 	local clickCon: RBXScriptConnection
 	clickCon = inner.Trade.MouseButton1Click:Connect(function()
@@ -685,8 +685,12 @@ local function LoadPlayerList()
 			if not players:FindFirstChild(child.Name) then
 				child:Destroy()
 
-				playerConnections[child.Name]:Disconnect()
-				playerConnections[child.Name] = nil
+				if playerConnections[child.Name] then
+					if playerConnections[child.Name].Connected then
+						playerConnections[child.Name]:Disconnect()
+					end
+					playerConnections[child.Name] = nil
+				end
 			end
 		end
 	end

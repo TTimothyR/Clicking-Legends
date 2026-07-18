@@ -73,8 +73,8 @@ function AFKHandler.StopAFK(player: Player)
 
 	return {
 		deltaTime = endTime - startTime,
-		deltaRebirths = endRebirths - startRebirths,
-		deltaEggs = endEggs - startEggs,
+		deltaRebirths = (endRebirths - startRebirths) or 0,
+		deltaEggs = (endEggs - startEggs) or 0,
 		petsHatched = petsGotten,
 	}
 end
