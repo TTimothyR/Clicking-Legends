@@ -114,7 +114,7 @@ local function animateButton(button: ImageButton)
 end
 
 local function InitializeAnimation(descendant)
-	if descendant:IsA("ImageButton") and next(descendant:GetAttributes()) then
+	if descendant:IsA("ImageButton") or descendant:IsA("TextButton") and next(descendant:GetAttributes()) then
 		animateButton(descendant)
 	end
 end
@@ -123,7 +123,14 @@ for _, descendant in playerGui:GetDescendants() do
 	InitializeAnimation(descendant)
 end
 
+for _, descendant in workspace:WaitForChild("Leaderboards"):GetDescendants() do
+	InitializeAnimation(descendant)
+end
+
 playerGui.DescendantAdded:Connect(function(descendant)
+	InitializeAnimation(descendant)
+end)
+workspace:WaitForChild("Leaderboards").DescendantAdded:Connect(function(descendant)
 	InitializeAnimation(descendant)
 end)
 

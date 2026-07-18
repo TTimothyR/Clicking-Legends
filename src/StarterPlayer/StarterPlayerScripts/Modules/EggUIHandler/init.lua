@@ -200,6 +200,9 @@ local function GetClosestEgg()
 
 		for i, data in ipairs(adornees) do
 			local adornee = data.part
+			if not adornee then
+				continue
+			end
 			local distance = (humanoidRootPart.Position - adornee.Position).Magnitude
 
 			adornees[i].distance = distance

@@ -32,7 +32,7 @@ return {
 	},
 
 	["Candy Egg"] = {
-		Price = { "Clicks", 4e6 },
+		Price = { "Clicks", 1 },
 		World = "Spawn",
 		Limited = false,
 		LayoutOrder = 2,
@@ -49,7 +49,7 @@ return {
 	},
 
 	["Space Egg"] = {
-		Price = { "Clicks", 5e9 },
+		Price = { "Clicks", 1 },
 		World = "Spawn",
 		Limited = false,
 		LayoutOrder = 3,
@@ -69,7 +69,7 @@ return {
 	},
 
 	["Frozen Egg"] = {
-		Price = { "Clicks", 5e9 },
+		Price = { "Clicks", 1 },
 		World = "Spawn",
 		Limited = false,
 		LayoutOrder = 4,
@@ -86,7 +86,7 @@ return {
 	},
 
 	["Water Egg"] = {
-		Price = { "Clicks", 5e9 },
+		Price = { "Clicks", 1 },
 		World = "Spawn",
 		Limited = false,
 		LayoutOrder = 5,
@@ -105,7 +105,7 @@ return {
 	},
 
 	["Patriotic Egg"] = {
-		Price = { "Clicks", 5e1 },
+		Price = { "Clicks", 1 },
 		World = "Spawn",
 		Limited = false,
 		LayoutOrder = 6,

@@ -40,7 +40,7 @@ local function UpdatePlayerTimers()
 				data.ElapsedTime -= data.TimeTrigger
 				local profile = playerData.GetData(players:FindFirstChild(playerName))
 				if profile then
-					profile.TimePlayed += data.TimeTrigger
+					profile.Playtime += data.TimeTrigger
 					dataSync.SyncPlayer(players:FindFirstChild(playerName), profile)
 				end
 			end

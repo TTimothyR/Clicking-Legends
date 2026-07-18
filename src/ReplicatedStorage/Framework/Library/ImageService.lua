@@ -2,9 +2,12 @@ return {
 	["Placeholder"] = "rbxasset://textures/ui/GuiImagePlaceholder.png",
 
 	["Clicks"] = "rbxassetid://111160873357689",
+	["TotalClicks"] = "rbxassetid://111160873357689",
 	["ActualClicks"] = "rbxassetid://111160873357689",
 	["Gems"] = "rbxassetid://135513247600517",
 	["Eggs"] = "rbxassetid://103327510554655",
+	["Rebirths"] = "rbxassetid://71299478410150",
+	["Playtime"] = "rbxassetid://138792197595367",
 
 	-- Egg Pictures
 	["Common Egg"] = "rbxassetid://82401551044643",

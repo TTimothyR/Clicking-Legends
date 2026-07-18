@@ -31,7 +31,9 @@ Shared.DEFAULT_PLAYER_DATA = {
 	PetStorage = 250,
 
 	TotalRobuxSpent = 0,
-	TimePlayed = 0,
+	Playtime = 0,
+
+	IsFreeToPlay = true,
 
 	OwnedRebirthButtons = {
 		[1] = true,
