@@ -41,7 +41,7 @@ local shinyButton = buttons:WaitForChild("Shiny")
 local discoveryFrame = miscFrame:WaitForChild("Discovery")
 local lockedFrame = discoveryFrame:WaitForChild("Locked")
 local rewardFrame = discoveryFrame:WaitForChild("RewardFrame")
-local claimButton = rewardFrame:WaitForChild("Claim") :: ImageButton
+local claimButton = rewardFrame:WaitForChild("Claim") :: Frame
 
 -- Modules
 local InfiniteMath = require(ReplicatedStorage.Framework.InfiniteMath)
@@ -81,7 +81,7 @@ end
 
 local function LoadRewards()
 	for _, child in ipairs(rewardFrame:GetChildren()) do
-		if child:IsA("ImageButton") and child.Name ~= "Claim" then
+		if child:IsA("Frame") and child.Name ~= "Claim" then
 			child:Destroy()
 		end
 	end
@@ -95,9 +95,9 @@ local function LoadRewards()
 		local rewardName = rewardData[2]
 		local amount = rewardData[3]
 
-		local clone = rewardTemplate:Clone() :: ImageButton
-		clone.Icon.Image = ImageService[rewardName] or ImageService["Placeholder"]
-		clone.Amount.Text = "x" .. InfiniteMath.new(amount):GetSuffix(true)
+		local clone = rewardTemplate:Clone() :: Frame
+		clone.Click.Icon.Image = ImageService[rewardName] or ImageService["Placeholder"]
+		clone.Click.Amount.Text = "x" .. InfiniteMath.new(amount):GetSuffix(true)
 
 		clone.Parent = rewardFrame
 		clone.Visible = true
@@ -106,7 +106,7 @@ end
 
 local function LoadPets(index, eggName: string, shiny: boolean)
 	for _, child in ipairs(petHolder:GetChildren()) do
-		if child:IsA("ImageButton") then
+		if child:IsA("Frame") then
 			child:Destroy()
 		end
 	end
@@ -121,6 +121,8 @@ local function LoadPets(index, eggName: string, shiny: boolean)
 		local chance = data[1] / (shiny and globals.ShinyChance or 1)
 		local chanceDisplay = nil
 
+		local newFrame = clone.Click
+
 		if chance <= 0 then
 			chanceDisplay = 0
 		else
@@ -133,29 +135,29 @@ local function LoadPets(index, eggName: string, shiny: boolean)
 			end
 		end
 
-		clone.Frame.Icon.Image = ImageService[fullName] or ImageService["Placeholder"]
-		clone.Frame.Chance.Text = chanceDisplay
+		newFrame.Frame.Icon.Image = ImageService[fullName] or ImageService["Placeholder"]
+		newFrame.Frame.Chance.Text = chanceDisplay
 
 		local rarity = petStats[pet].Rarity
 		if rarity == "Legendary" then
-			clone.Frame.Chance.Legendary.Enabled = true
+			newFrame.Frame.Chance.Legendary.Enabled = true
 		else
-			clone.Frame.Chance.TextColor3 = globals.RarityColors[rarity]
+			newFrame.Frame.Chance.TextColor3 = globals.RarityColors[rarity]
 		end
 
-		clone.Frame.BackgroundColor3 = globals.RarityColors[rarity]
+		newFrame.Frame.BackgroundColor3 = globals.RarityColors[rarity]
 		if rarity == "Legendary" then
-			clone.Glow.Visible = true
-			clone.Frame.Legendary.Enabled = true
+			newFrame.Glow.Visible = true
+			newFrame.Frame.Legendary.Enabled = true
 		end
 
 		if not shiny then
 			if not index[pet] then
-				clone.Frame.Icon.ImageColor3 = Color3.fromRGB(0, 0, 0)
+				newFrame.Frame.Icon.ImageColor3 = Color3.fromRGB(0, 0, 0)
 			end
 		else
 			if not index["Shiny " .. pet] then
-				clone.Frame.Icon.ImageColor3 = Color3.fromRGB(0, 0, 0)
+				newFrame.Frame.Icon.ImageColor3 = Color3.fromRGB(0, 0, 0)
 			end
 		end
 
@@ -171,6 +173,11 @@ local function LoadPets(index, eggName: string, shiny: boolean)
 		local progress = shiny and shinyCount or normalCount
 		lockedFrame.XP.Progress.Text = progress .. "/" .. petsInEgg
 	end
+
+	local fullEggName = shinySelected and "Shiny " .. eggName or eggName
+	if not dataSync.Get("ClaimedEggs")[fullEggName] and not visible then
+		rewardFrame.Visible = true
+	end
 	lockedFrame.Visible = visible
 end
 
@@ -182,10 +189,11 @@ local function SelectEgg(eggName: string)
 	local fullEggName = shinySelected and "Shiny " .. eggName or eggName
 
 	if claimedEggs[fullEggName] then
-		rewardFrame.Visible = false
+		lockedFrame.Visible = false
 	else
-		rewardFrame.Visible = true
+		lockedFrame.Visible = true
 	end
+	rewardFrame.Visible = false
 
 	LoadPets(index, eggName, shinySelected)
 	LoadRewards()
@@ -195,7 +203,7 @@ end
 
 function IndexHandler.LoadIndex()
 	for _, child in ipairs(eggHolder:GetChildren()) do
-		if child:IsA("ImageButton") then
+		if child:IsA("Frame") then
 			child:Destroy()
 		end
 	end
@@ -213,7 +221,7 @@ function IndexHandler.LoadIndex()
 			clone.Parent = eggHolder
 			clone.LayoutOrder = eggStats[eggName].LayoutOrder
 
-			local infoFrame = clone.Frame
+			local infoFrame = clone.Click.Frame
 			local petsInEgg = eggPetCount[eggName]
 			local normal, shiny = GetPlayerPetCount(eggName)
 
@@ -223,7 +231,7 @@ function IndexHandler.LoadIndex()
 			infoFrame.ShinyCollected.Text = shiny .. "/" .. petsInEgg
 			infoFrame.EggIcon.Image = ImageService[eggName] or ImageService.Placeholder
 
-			local clickCon = clone.MouseButton1Click:Connect(function()
+			local clickCon = clone.Click.MouseButton1Click:Connect(function()
 				if not db then
 					db = true
 					task.delay(0.15, function()
@@ -237,6 +245,10 @@ function IndexHandler.LoadIndex()
 			clone.Visible = true
 		end
 	end)
+
+	if selectedEgg then
+		SelectEgg(selectedEgg)
+	end
 end
 
 function IndexHandler.Initialize()
@@ -271,7 +283,7 @@ function IndexHandler.Initialize()
 		end
 	end)
 
-	claimButton.MouseButton1Click:Connect(function()
+	claimButton.Click.MouseButton1Click:Connect(function()
 		if not db then
 			db = true
 			task.delay(0.15, function()

@@ -85,6 +85,10 @@ local function AFKEnded()
 
 		local afkInfo = network:InvokeServer("StopAFK")
 
+		if not afkInfo then
+			return
+		end
+
 		if afkInfo.deltaTime < showReportThreshold then
 			return
 		end
@@ -96,7 +100,11 @@ local function AFKEnded()
 		end
 
 		eggsHatchedFrame.Title.Text = eggsHatchedFormat:format(globals.FormatNumber(afkInfo.deltaEggs))
-		rebirthsFrame.Title.Text = rebirthsFormat:format(infMath.new(afkInfo.deltaRebirths):GetSuffix(true))
+		if afkInfo.deltaRebirths then
+			rebirthsFrame.Title.Text = rebirthsFormat:format(infMath.new(afkInfo.deltaRebirths):GetSuffix(true))
+		else
+			rebirthsFrame.Title.Text = rebirthsFormat:format("N/A")
+		end
 		timeFrame.Title.Text = globals.FormatTime(afkInfo.deltaTime, true)
 
 		ShowPets(afkInfo.petsHatched)

@@ -153,7 +153,7 @@ function PrizeHandler.Initialize()
 		game.Loaded:Wait()
 	end
 
-	eggsButton.MouseButton1Click:Connect(function()
+	eggsButton.Click.MouseButton1Click:Connect(function()
 		if not db then
 			db = true
 			task.delay(0.15, function()
@@ -165,7 +165,7 @@ function PrizeHandler.Initialize()
 			end
 		end
 	end)
-	clicksButton.MouseButton1Click:Connect(function()
+	clicksButton.Click.MouseButton1Click:Connect(function()
 		if not db then
 			db = true
 			task.delay(0.15, function()

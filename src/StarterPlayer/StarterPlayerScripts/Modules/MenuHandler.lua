@@ -28,7 +28,6 @@ local shopFrame = frames:WaitForChild("Shop")
 local playerListFrame = frames:WaitForChild("PlayerList")
 local tradeFrame = frames:WaitForChild("Trade")
 local infoFrame = frames:WaitForChild("Info")
-local upgradesFrame = frames:WaitForChild("Upgrades")
 local statsFrame = frames:WaitForChild("Stats")
 local settingsFrame = frames:WaitForChild("Settings")
 local dailyRewardsFrame = frames:WaitForChild("DailyRewards") :: Frame
@@ -36,16 +35,15 @@ local dailyRewardsFrame = frames:WaitForChild("DailyRewards") :: Frame
 local hud = playerGui:WaitForChild("HUD")
 local left = hud:WaitForChild("Left")
 local buttons = left:WaitForChild("Buttons")
-local indexButton = buttons:WaitForChild("Index")
-local inventoryButton = buttons:WaitForChild("Pets")
-local prizesButton = buttons:WaitForChild("Prizes")
-local rebirthButton = buttons:WaitForChild("Rebirth")
-local shopButton = buttons:WaitForChild("Shop")
-local tradeButton = buttons:WaitForChild("Trading")
-local upgradeButton = buttons:WaitForChild("Upgrades")
-local statsButton = buttons:WaitForChild("Stats")
-local settingsButton = buttons:WaitForChild("Settings") :: ImageButton
-local dailyRewardsButton = buttons:WaitForChild("DailyRewards") :: ImageButton
+local indexButton = buttons:WaitForChild("Index") :: Frame
+local inventoryButton = buttons:WaitForChild("Pets") :: Frame
+local prizesButton = buttons:WaitForChild("Prizes") :: Frame
+local rebirthButton = buttons:WaitForChild("Rebirth") :: Frame
+local shopButton = buttons:WaitForChild("Shop") :: Frame
+local tradeButton = buttons:WaitForChild("Trading") :: Frame
+local statsButton = buttons:WaitForChild("Stats") :: Frame
+local settingsButton = buttons:WaitForChild("Settings") :: Frame
+local dailyRewardsButton = buttons:WaitForChild("DailyRewards") :: Frame
 
 -- Modules
 local inventoryHandler = require(script.Parent.InventoryHandler)
@@ -155,10 +153,10 @@ function ButtonHandler.Initialize()
 
 	inventoryHandler.ParseMenuHandler(ButtonHandler)
 
-	indexButton.MouseButton1Click:Connect(function()
+	indexButton.Click.MouseButton1Click:Connect(function()
 		ButtonHandler.handleOpenClose(indexFrame, indexHandler.LoadIndex)
 	end)
-	inventoryButton.MouseButton1Click:Connect(function()
+	inventoryButton.Click.MouseButton1Click:Connect(function()
 		ButtonHandler.handleOpenClose(inventoryFrame, function()
 			inventoryHandler.LoadInventory()
 			inventoryHandler.LoadItems()
@@ -167,28 +165,25 @@ function ButtonHandler.Initialize()
 			inventoryHandler.StartLegendaryAnimations()
 		end)
 	end)
-	prizesButton.MouseButton1Click:Connect(function()
+	prizesButton.Click.MouseButton1Click:Connect(function()
 		ButtonHandler.handleOpenClose(prizesFrame, prizeHandler.LoadPrizes)
 	end)
-	rebirthButton.MouseButton1Click:Connect(function()
+	rebirthButton.Click.MouseButton1Click:Connect(function()
 		ButtonHandler.handleOpenClose(rebirthsFrame, rebirthHandler.LoadRebirthButtons)
 	end)
-	shopButton.MouseButton1Click:Connect(function()
+	shopButton.Click.MouseButton1Click:Connect(function()
 		ButtonHandler.handleOpenClose(shopFrame)
 	end)
-	tradeButton.MouseButton1Click:Connect(function()
+	tradeButton.Click.MouseButton1Click:Connect(function()
 		ButtonHandler.handleOpenClose(playerListFrame)
 	end)
-	upgradeButton.MouseButton1Click:Connect(function()
-		ButtonHandler.handleOpenClose(upgradesFrame)
-	end)
-	statsButton.MouseButton1Click:Connect(function()
+	statsButton.Click.MouseButton1Click:Connect(function()
 		ButtonHandler.handleOpenClose(statsFrame)
 	end)
-	dailyRewardsButton.MouseButton1Click:Connect(function()
+	dailyRewardsButton.Click.MouseButton1Click:Connect(function()
 		ButtonHandler.handleOpenClose(dailyRewardsFrame, PlaytimeHandler.LoadDailyRewards)
 	end)
-	settingsButton.MouseButton1Click:Connect(function()
+	settingsButton.Click.MouseButton1Click:Connect(function()
 		ButtonHandler.handleOpenClose(settingsFrame, settingsHandler.LoadSettings)
 	end)
 

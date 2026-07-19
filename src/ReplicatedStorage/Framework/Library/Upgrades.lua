@@ -3,7 +3,7 @@ return {
 		Order = 1,
 		Increment = 1, -- studs/second
 		Maximum = 15,
-		BasePrice = 67000,
+		BasePrice = 6700,
 		Description = "Increase walkspeed by +%s stud/second!",
 	},
 	["Faster Egg Open"] = {

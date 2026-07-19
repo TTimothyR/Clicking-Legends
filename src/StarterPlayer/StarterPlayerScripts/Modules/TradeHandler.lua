@@ -115,7 +115,7 @@ local function CreatePlayerFrame(plr: Player)
 			continue
 		end
 		tries += 1
-		task.wait(1)
+		task.wait(0.01)
 	until profile ~= nil or tries >= maximumTries
 
 	if not profile then
@@ -142,11 +142,11 @@ local function CreatePlayerFrame(plr: Player)
 	playerConnections[plr.Name] = clickCon
 end
 
-local function CreatePetButton(clone, holder, petData): (ImageButton, { [number]: RBXScriptConnection })
+local function CreatePetButton(clone, holder, petData): (Frame, { [number]: RBXScriptConnection })
 	clone.Parent = holder
 	clone.Name = petData.id
 
-	clone.Frame.Icon.Image = ImageService[petData.fullName] or ImageService["Placeholder"]
+	clone.Click.Frame.Icon.Image = ImageService[petData.fullName] or ImageService["Placeholder"]
 
 	local tooltipTbl = petData
 	tooltipTbl.clicks = true
@@ -154,18 +154,19 @@ local function CreatePetButton(clone, holder, petData): (ImageButton, { [number]
 	tooltipTbl.ShowLevel = true
 	tooltipTbl.reference = petData.id
 	tooltipTbl.ShowExist = petStats[petData.petName].Secret
-	local tooltipConnections = Tooltip.SetupTooltip(clone, "PetTooltip", petData)
+	tooltipTbl.FromTrade = true
+	local tooltipConnections = Tooltip.SetupTooltip(clone.Click, "PetTooltip", petData)
 
 	local rarity = petStats[petData.petName].Rarity
-	clone.Frame.BackgroundColor3 = globals.RarityColors[rarity]
+	clone.Click.Frame.BackgroundColor3 = globals.RarityColors[rarity]
 	if rarity == "Legendary" then
-		clone.Glow.Visible = true
-		clone.Glow.Legendary.Enabled = true
-		clone.Frame.Legendary.Enabled = true
+		clone.Click.Glow.Visible = true
+		clone.Click.Glow.Legendary.Enabled = true
+		clone.Click.Frame.Legendary.Enabled = true
 
 		if animationLoaded then
-			table.insert(gradientsToAnimate, clone.Glow.Legendary)
-			table.insert(gradientsToAnimate, clone.Frame.Legendary)
+			table.insert(gradientsToAnimate, clone.Click.Glow.Legendary)
+			table.insert(gradientsToAnimate, clone.Click.Frame.Legendary)
 		end
 	end
 
@@ -202,32 +203,32 @@ local function CleanUp()
 	table.clear(tradeConnections)
 	tradeConnections = {}
 	for _, child: Instance in ipairs(mePets.ScrollingFrame:GetChildren()) do
-		if child:IsA("ImageButton") then
+		if child:IsA("Frame") then
 			child:Destroy()
 		end
 	end
 	for _, child: Instance in ipairs(youPets.ScrollingFrame:GetChildren()) do
-		if child:IsA("ImageButton") then
+		if child:IsA("Frame") then
 			child:Destroy()
 		end
 	end
 	for _, child: Instance in ipairs(meOffer.ScrollingFrame:GetChildren()) do
-		if child:IsA("ImageButton") then
+		if child:IsA("Frame") then
 			child:Destroy()
 		end
 	end
 	for _, child: Instance in ipairs(youOffer.ScrollingFrame:GetChildren()) do
-		if child:IsA("ImageButton") then
+		if child:IsA("Frame") then
 			child:Destroy()
 		end
 	end
 	for _, child: Instance in ipairs(meGifts.ScrollingFrame:GetChildren()) do
-		if child:IsA("ImageButton") then
+		if child:IsA("Frame") then
 			child:Destroy()
 		end
 	end
 	for _, child: Instance in ipairs(youGifts.ScrollingFrame:GetChildren()) do
-		if child:IsA("ImageButton") then
+		if child:IsA("Frame") then
 			child:Destroy()
 		end
 	end
@@ -337,17 +338,17 @@ function TradeHandler.ToggleGift(me: Player, id: string, gamepassName: string, s
 			youOffer.ScrollingFrame:FindFirstChild(id):Destroy()
 		end
 	elseif state == "Added" then
-		local clone = offerTemplate:Clone() :: ImageButton
+		local clone = offerTemplate:Clone() :: Frame
 		clone.Name = id
-		clone.Frame.Icon.Image = ImageService[gamepassName] or ImageService["Placeholder"]
-		clone.Frame.Legendary.Enabled = true
+		clone.Click.Frame.Icon.Image = ImageService[gamepassName] or ImageService["Placeholder"]
+		clone.Click.Frame.Legendary.Enabled = true
 		clone.Visible = true
 
 		local tooltipConnections =
-			Tooltip.SetupTooltip(clone, "Gifts", { gamepassName = gamepassName, reference = id }) :: { [number]: RBXScriptConnection }
+			Tooltip.SetupTooltip(clone.Click, "Gifts", { gamepassName = gamepassName, reference = id }) :: { [number]: RBXScriptConnection }
 
 		if player == me then
-			local clickConnection = clone.MouseButton1Click:Connect(function()
+			local clickConnection = clone.Click.MouseButton1Click:Connect(function()
 				if not db then
 					db = true
 					task.delay(0.15, function()
@@ -429,7 +430,7 @@ function TradeHandler.EnterTrade(_: Player, you: Player)
 			continue
 		end
 		tries += 1
-		task.wait(1)
+		task.wait(0.01)
 	until yourProfile ~= nil or tries >= maximumTries
 
 	if not yourProfile then
@@ -466,22 +467,25 @@ function TradeHandler.EnterTrade(_: Player, you: Player)
 
 	local function CreateGamepassButtons(inventory, holder)
 		for id, gamepassName in pairs(inventory) do
-			local clone = petTemplate:Clone() :: ImageButton
+			local clone = petTemplate:Clone() :: Frame
 			clone.Name = id
-			clone.Frame.Legendary.Enabled = true
-			clone.Glow.Legendary.Enabled = true
-			clone.Frame.Icon.Image = ImageService[gamepassName] or ImageService["Placeholder"]
+			clone.Click.Frame.Legendary.Enabled = true
+			clone.Click.Glow.Legendary.Enabled = true
+			clone.Click.Frame.Icon.Image = ImageService[gamepassName] or ImageService["Placeholder"]
 			if animationLoaded then
-				table.insert(gradientsToAnimate, clone.Glow.Legendary)
-				table.insert(gradientsToAnimate, clone.Frame.Legendary)
+				table.insert(gradientsToAnimate, clone.Click.Glow.Legendary)
+				table.insert(gradientsToAnimate, clone.Click.Frame.Legendary)
 			end
 			clone.Parent = holder
 			clone.Visible = true
 
-			local tooltipConnections =
-				Tooltip.SetupTooltip(clone, "Gifts", { gamepassName = gamepassName, reference = id }) :: { [number]: RBXScriptConnection }
+			local tooltipConnections = Tooltip.SetupTooltip(
+				clone.Click,
+				"Gifts",
+				{ gamepassName = gamepassName, reference = id }
+			) :: { [number]: RBXScriptConnection }
 
-			local clickConnection = clone.MouseButton1Click:Connect(function()
+			local clickConnection = clone.Click.MouseButton1Click:Connect(function()
 				if not db then
 					db = true
 					task.delay(0.15, function()
@@ -529,7 +533,7 @@ function TradeHandler.EnterTrade(_: Player, you: Player)
 		end
 	end
 
-	local mePetsConnection = meButtonHolder.Pets.MouseButton1Click:Connect(function()
+	local mePetsConnection = meButtonHolder.Pets.Click.MouseButton1Click:Connect(function()
 		if not db then
 			db = true
 			task.delay(0.15, function()
@@ -539,7 +543,7 @@ function TradeHandler.EnterTrade(_: Player, you: Player)
 			mePets.Visible = true
 		end
 	end) :: RBXScriptConnection
-	local youPetsConnection = youButtonHolder.Pets.MouseButton1Click:Connect(function()
+	local youPetsConnection = youButtonHolder.Pets.Click.MouseButton1Click:Connect(function()
 		if not db then
 			db = true
 			task.delay(0.15, function()
@@ -549,7 +553,7 @@ function TradeHandler.EnterTrade(_: Player, you: Player)
 			youPets.Visible = true
 		end
 	end) :: RBXScriptConnection
-	local meGiftsConnection = meButtonHolder.Gifts.MouseButton1Click:Connect(function()
+	local meGiftsConnection = meButtonHolder.Gifts.Click.MouseButton1Click:Connect(function()
 		if not db then
 			db = true
 			task.delay(0.15, function()
@@ -559,7 +563,7 @@ function TradeHandler.EnterTrade(_: Player, you: Player)
 			mePets.Visible = false
 		end
 	end) :: RBXScriptConnection
-	local youGiftsConnection = youButtonHolder.Gifts.MouseButton1Click:Connect(function()
+	local youGiftsConnection = youButtonHolder.Gifts.Click.MouseButton1Click:Connect(function()
 		if not db then
 			db = true
 			task.delay(0.15, function()
@@ -578,7 +582,7 @@ function TradeHandler.EnterTrade(_: Player, you: Player)
 	local unreadyCon: RBXScriptConnection
 	local declineCon: RBXScriptConnection
 
-	readyCon = tradeButtons.Ready.MouseButton1Click:Connect(function()
+	readyCon = tradeButtons.Ready.Click.MouseButton1Click:Connect(function()
 		if not db then
 			db = true
 			task.delay(0.15, function()
@@ -587,7 +591,7 @@ function TradeHandler.EnterTrade(_: Player, you: Player)
 			network:FireServer("Ready")
 		end
 	end)
-	unreadyCon = tradeButtons.Unready.MouseButton1Click:Connect(function()
+	unreadyCon = tradeButtons.Unready.Click.MouseButton1Click:Connect(function()
 		if not db then
 			db = true
 			task.delay(0.15, function()
@@ -596,7 +600,7 @@ function TradeHandler.EnterTrade(_: Player, you: Player)
 			network:FireServer("Unready")
 		end
 	end)
-	declineCon = tradeButtons.Decline.MouseButton1Click:Connect(function()
+	declineCon = tradeButtons.Decline.Click.MouseButton1Click:Connect(function()
 		if not db then
 			db = true
 			task.delay(0.15, function()
@@ -624,12 +628,16 @@ function TradeHandler.UpdateTradeButtons()
 			local profile
 			local tries = 0
 			repeat
+				local tradePlayer = players:FindFirstChild(playerName)
+				if not tradePlayer then
+					continue
+				end
 				profile = dataSync.GetOtherData(players:FindFirstChild(playerName).UserId)
 				if not profile then
 					continue
 				end
 				tries += 1
-				task.wait(1)
+				task.wait(0.01)
 			until profile ~= nil or tries >= maximumTries
 
 			if not profile then
@@ -687,7 +695,7 @@ function TradeHandler.TradeRequest(tradeSender: Player)
 
 	local buttons = requestMain.Buttons
 
-	acceptConnection = buttons.Accept.MouseButton1Click:Connect(function()
+	acceptConnection = buttons.Accept.Click.MouseButton1Click:Connect(function()
 		if not db then
 			db = true
 			task.delay(0.15, function()
@@ -698,7 +706,7 @@ function TradeHandler.TradeRequest(tradeSender: Player)
 			network:FireServer("RequestAnswer", sender, true)
 		end
 	end)
-	declineConnection = buttons.Decline.MouseButton1Click:Connect(function()
+	declineConnection = buttons.Decline.Click.MouseButton1Click:Connect(function()
 		if not db then
 			db = true
 			task.delay(0.15, function()
@@ -722,7 +730,7 @@ local function LoadPlayerList()
 					continue
 				end
 				tries += 1
-				task.wait(1)
+				task.wait(0.01)
 			until profile ~= nil or tries >= maximumTries
 
 			if not profile then

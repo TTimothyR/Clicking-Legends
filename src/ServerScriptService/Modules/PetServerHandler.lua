@@ -235,8 +235,7 @@ function PetHandler.DeleteAllUnlocked(player: Player)
 			continue
 		end
 		if petData.equipped then
-			petData.equipped = false
-			profile.CurrentEquips -= 1
+			PetHandler.UnequipPet(player, petData.id)
 		end
 		table.insert(idsToRemove, petData.id)
 	end
@@ -308,8 +307,7 @@ function PetHandler.DeleteSelection(player: Player, selection)
 		end
 
 		if petData.equipped then
-			petData.equipped = false
-			profile.CurrentEquips -= 1
+			PetHandler.UnequipPet(player, id)
 		end
 		table.insert(idsToRemove, id)
 	end
@@ -386,8 +384,7 @@ function PetHandler.MakeShiny(player: Player, petName: string)
 			table.insert(idsToRemove, petData.id)
 			count += 1
 			if petData.equipped then
-				petData.equipped = false
-				profile.CurrentEquips -= 1
+				PetHandler.UnequipPet(player, petData.id)
 			end
 		end
 	end

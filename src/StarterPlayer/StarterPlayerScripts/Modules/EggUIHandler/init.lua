@@ -94,7 +94,7 @@ local function SetupTemplate(ui)
 	local easyChance = dataSync.Get("Settings").EasyChances
 
 	for _, item in ipairs(petHolder:GetChildren()) do
-		if item:IsA("ImageButton") then
+		if item:IsA("Frame") then
 			local clickConnection: RBXScriptConnection
 
 			local discovered = index[item.Name]
@@ -103,25 +103,24 @@ local function SetupTemplate(ui)
 			local autoDeleted = dataSync.Get("AutoDeletedPets")
 
 			if autoDeleted[item.Name] then
-				item.Icon.ImageTransparency = 0.5
+				item.Click.Icon.ImageTransparency = 0.5
 			else
-				item.Icon.ImageTransparency = 0
+				item.Click.Icon.ImageTransparency = 0
 			end
 
 			if discovered then
-				item.Icon.ImageColor3 = Color3.fromRGB(255, 255, 255)
+				item.Click.Icon.ImageColor3 = Color3.fromRGB(255, 255, 255)
 			end
 
 			local chance = globals.GetPetChance(luckPassOwned, luckPercentage, item.Name, ui.Name, false)
 
 			if not easyChance then
-				item.Chance.Text = globals.FormatChance(chance) .. "%"
+				item.Click.Chance.Text = globals.FormatChance(chance) .. "%"
 			else
 				local calculatedChance = 100 / chance
-				item.Chance.Text = "1 in " .. globals.FormatNumber(calculatedChance)
+				item.Click.Chance.Text = "1 in " .. globals.FormatNumber(calculatedChance)
 			end
-
-			clickConnection = item.MouseButton1Click:Connect(function()
+			clickConnection = item.Click.MouseButton1Click:Connect(function()
 				if not db then
 					db = true
 					task.delay(0.15, function()
@@ -129,9 +128,9 @@ local function SetupTemplate(ui)
 					end)
 					local newStatus = network:InvokeServer("ToggleAutoDelete", item.Name)
 					if newStatus then
-						item.Icon.ImageTransparency = 0.5
+						item.Click.Icon.ImageTransparency = 0.5
 					else
-						item.Icon.ImageTransparency = 0
+						item.Click.Icon.ImageTransparency = 0
 					end
 				end
 			end)
@@ -207,7 +206,7 @@ local function GetClosestEgg()
 
 			adornees[i].distance = distance
 
-			if distance < minDistance then
+			if distance < minDistance and adornee.Parent then
 				minDistance = distance
 				closestEgg1 = adornee.Parent.Name
 			end
@@ -338,20 +337,20 @@ local function ConfigureEggUI(egg: Model)
 		petClone.Parent = holder
 		petClone.Name = petName
 
-		petClone.Icon.Image = ImageService[petName] or ImageService["Placeholder"]
+		petClone.Click.Icon.Image = ImageService[petName] or ImageService["Placeholder"]
 
 		if not easyChance then
-			petClone.Chance.Text = globals.FormatChance(chance) .. "%"
+			petClone.Click.Chance.Text = globals.FormatChance(chance) .. "%"
 		else
 			local calculatedChance = 100 / chance
-			petClone.Chance.Text = "1 in " .. globals.FormatNumber(calculatedChance)
+			petClone.Click.Chance.Text = "1 in " .. globals.FormatNumber(calculatedChance)
 		end
-		petClone.Chance.TextColor3 = globals.RarityColors[rarity]
+		petClone.Click.Chance.TextColor3 = globals.RarityColors[rarity]
 		if rarity == "Legendary" then
 			local colorConnection = runService.Heartbeat:Connect(function()
 				local t = tick() * 0.4 % 1
 				local color = Color3.fromHSV(t, 0.55, 1)
-				petClone.Chance.TextColor3 = color
+				petClone.Click.Chance.TextColor3 = color
 			end)
 			petClone:GetPropertyChangedSignal("Parent"):Once(function()
 				colorConnection:Disconnect()
@@ -364,13 +363,13 @@ local function ConfigureEggUI(egg: Model)
 		local autoDeleted = dataSync.Get("AutoDeletedPets")
 
 		if autoDeleted[petName] then
-			petClone.Icon.ImageTransparency = 0.5
+			petClone.Click.Icon.ImageTransparency = 0.5
 		else
-			petClone.Icon.ImageTransparency = 0
+			petClone.Click.Icon.ImageTransparency = 0
 		end
 
 		if not discovered then
-			petClone.Icon.ImageColor3 = Color3.fromRGB(0, 0, 0)
+			petClone.Click.Icon.ImageColor3 = Color3.fromRGB(0, 0, 0)
 		end
 
 		petClone.Visible = true

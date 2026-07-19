@@ -48,6 +48,8 @@ function IndexHandler.ClaimIndexReward(player: Player, eggName: string, shiny: b
 		end
 	end
 
+	claimedEggs[fullEggName] = true
+
 	return true
 end
 

@@ -1,8 +1,14 @@
 local db = false
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+local Upgrades = require(ReplicatedStorage.Framework.Library.Upgrades)
 local Network = require(ReplicatedStorage.Framework.Network)
 local DataSyncClient = require(script.Parent.DataSyncClient)
+
+local player = Players.LocalPlayer
+
+local baseSpeed = 16
 
 local PlayerHandler = {}
 
@@ -47,10 +53,38 @@ local function ConnectButtons()
 	end
 end
 
+local function WalkspeedHandle(character: Model)
+	local humanoid = character:WaitForChild("Humanoid") :: Humanoid
+	if not humanoid then
+		return
+	end
+
+	local upgrades = DataSyncClient.Get("UpgradeLevels")
+	local walkspeedLevel = upgrades["Faster Walkspeed"]
+
+	humanoid.WalkSpeed = baseSpeed + (Upgrades["Faster Walkspeed"].Increment * walkspeedLevel)
+end
+
 function PlayerHandler.Initialize()
 	DataSyncClient.OnReady(function()
 		Network:FireServer("ClientReady")
 		ConnectButtons()
+
+		if player.Character then
+			WalkspeedHandle(player.Character)
+		end
+
+		player.CharacterAdded:Connect(function(character: Model)
+			WalkspeedHandle(character)
+		end)
+	end)
+
+	DataSyncClient.OnChanged("UpgradeLevels", function(new, old)
+		if new and old then
+			if new["Faster Walkspeed"] ~= old["Faster Walkspeed"] then
+				WalkspeedHandle(player.Character)
+			end
+		end
 	end)
 end
 

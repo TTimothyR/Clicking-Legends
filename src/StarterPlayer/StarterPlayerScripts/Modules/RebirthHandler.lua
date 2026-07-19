@@ -139,7 +139,13 @@ local function UpdateButtons(fromSignal: boolean)
 				local cost = infMath.new(globals.RebirthBasePrice * rebirths * currentRebirths)
 
 				local inner = clone.Inner
-				inner.Amount.Text = "+" .. tostring(rebirths) .. " " .. word .. " (" .. cost:GetSuffix(true) .. " Clicks)"
+				inner.Amount.Text = "+"
+					.. infMath.new(rebirths):GetSuffix(true)
+					.. " "
+					.. word
+					.. " ("
+					.. cost:GetSuffix(true)
+					.. " Clicks)"
 				if rebirths == infMath.new(0) then
 					UpdateButton(inner, nil)
 				else

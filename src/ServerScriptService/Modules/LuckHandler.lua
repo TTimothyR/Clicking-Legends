@@ -73,37 +73,33 @@ function LuckHandler.RollPet(player: Player, eggName: string)
 	local tbl = eggStats[eggName].Pets
 	local boosted = { ["Epic"] = true, ["Legendary"] = true }
 
-	local rawChances = {}
-	local boostedChances = {}
 	local chances = {}
 	local addedChance = 0
-	local totalNonBoosted = 0
+	local totalNonBoostedRaw = 0
 	local totalWeight = 0
 
 	local luckBoost = 1 + (luckPercentage / 100)
 
 	for item, chance in pairs(tbl) do
-		rawChances[item] = chance[1]
 		local rarity = petStats[item].Rarity
 		if boosted[rarity] and luckBoost > 1 then
-			boostedChances[item] = chance[1] * luckBoost
+			local boostedChance = chance[1] * luckBoost
+			addedChance += (boostedChance - chance[1])
+			chances[item] = boostedChance
 		else
-			totalNonBoosted += 1
+			totalNonBoostedRaw += chance[1]
 		end
 	end
 
-	if luckBoost > 1 then
-		for item, _ in pairs(boostedChances) do
-			addedChance += boostedChances[item] - rawChances[item]
-		end
+	local scaleFactor = 1
+	if luckBoost > 1 and totalNonBoostedRaw > 0 then
+		scaleFactor = math.max(0, (totalNonBoostedRaw - addedChance) / totalNonBoostedRaw)
 	end
 
 	for item, chance in pairs(tbl) do
 		local rarity = petStats[item].Rarity
-		if boosted[rarity] then
-			chances[item] = chance[1] * luckBoost
-		else
-			chances[item] = luckBoost ~= 1 and chance[1] - (addedChance / totalNonBoosted) or chance[1]
+		if not (boosted[rarity] and luckBoost > 1) then
+			chances[item] = chance[1] * scaleFactor
 		end
 		totalWeight += chances[item]
 	end

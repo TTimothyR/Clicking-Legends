@@ -87,7 +87,7 @@ function Tooltip.SetupTooltip(Button: GuiButton, TooltipType: string, Data): { [
 		TooltipFrame.Position = Pos
 		TooltipFrame.Visible = true
 
-		Tooltips[TooltipType](TooltipFrame, Data, Data.FromShop)
+		Tooltips[TooltipType](TooltipFrame, Data, Data.FromShop, Data.FromTrade)
 		SetBackgroundSize()
 	end) :: RBXScriptConnection
 
@@ -117,7 +117,7 @@ function Tooltip.SetupTooltip(Button: GuiButton, TooltipType: string, Data): { [
 		if isHovering then
 			local Pos = (GetMouseUIPos() + UDim2.fromScale(0.02, 0.02) + UDim2.new())
 			TooltipFrame.Position = Pos
-			Tooltips[TooltipType](TooltipFrame, Data, Data.FromShop)
+			Tooltips[TooltipType](TooltipFrame, Data, Data.FromShop, Data.FromTrade)
 
 			local legendaryGradient = TooltipFrame.Top.Info.Rarity.Legendary :: UIGradient
 			local secretGradient = TooltipFrame.Top.Info.Rarity.Secret :: UIGradient

@@ -20,7 +20,7 @@ function Popup.new(title, message, confirmCallback, cancelCallback, frame)
 
 	table.insert(
 		self.connections,
-		self.confirmButton.MouseButton1Click:Connect(function()
+		self.confirmButton.Click.MouseButton1Click:Connect(function()
 			if type(self.confirmCallback) == "function" then
 				self.confirmCallback()
 			end
@@ -29,7 +29,7 @@ function Popup.new(title, message, confirmCallback, cancelCallback, frame)
 	)
 	table.insert(
 		self.connections,
-		self.cancelButton.MouseButton1Click:Connect(function()
+		self.cancelButton.Click.MouseButton1Click:Connect(function()
 			if type(self.cancelCallback) == "function" then
 				self.cancelCallback()
 			end

@@ -28,12 +28,13 @@ local plr: Player = players.LocalPlayer
 local framework = rs:WaitForChild("Framework")
 local assets = rs:WaitForChild("Assets")
 local clickModels = assets:WaitForChild("ClickModels")
-local criticalModel = clickModels:WaitForChild("CriticalClick")
+local criticalModel = clickModels:WaitForChild("CriticalClick") :: Model
 local library = framework:WaitForChild("Library")
 local cpsNumber = script:WaitForChild("CPSNumber")
 local criticalEffects = script:WaitForChild("Critical")
 
 local rng = Random.new()
+
 local statsLoaded = false
 
 -- UI
@@ -69,8 +70,7 @@ local rotationTime: number = 15
 local animationTime: number = 0.5
 local debounceTime: number = 0.15
 local textEndSize: UDim2 = UDim2.fromScale(1, 0.5)
-local characterGroup = "CHAR"
-local debrisGroup = "DEBRIS"
+
 local buttonTween = TweenInfo.new(0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 
 -- Globals
@@ -84,13 +84,13 @@ local function SetupCharacter(character)
 	end
 	for _, part in ipairs(character:GetDescendants()) do
 		if part:IsA("BasePart") then
-			part.CollisionGroup = characterGroup
+			part.CollisionGroup = globals.CharacterGroup
 		end
 	end
 
 	character.DescendantAdded:Connect(function(part)
 		if part:IsA("BasePart") then
-			part.CollisionGroup = characterGroup
+			part.CollisionGroup = globals.CharacterGroup
 		end
 	end)
 end
@@ -116,7 +116,7 @@ local function CriticalHitEffect()
 		return
 	end
 	for _, child: Instance in ipairs(root:GetChildren()) do
-		if child:IsA("ParticleEmitter") then
+		if child:IsA("ParticleEmitter") and child.Name ~= "Cuts" then
 			child:Emit(50)
 		end
 	end
@@ -129,13 +129,6 @@ local function CriticalHitEffect()
 
 			if not clone.PrimaryPart then
 				clone:Destroy()
-			end
-
-			for _, part in ipairs(clone:GetDescendants()) do
-				if part:IsA("BasePart") then
-					part.CanQuery = false
-					part.CollisionGroup = debrisGroup
-				end
 			end
 
 			clone:PivotTo(root.CFrame * CFrame.new(0, 2, 0))
@@ -153,7 +146,7 @@ local function CriticalHitEffect()
 
 			clone.PrimaryPart:ApplyAngularImpulse(randomRot * clone.PrimaryPart.AssemblyMass)
 
-			debris:AddItem(clone, 5)
+			debris:AddItem(clone, 2)
 		end)
 	end
 end
@@ -346,7 +339,7 @@ end
 function ClickHandler.PopUp(increment, currencyStr: string, critical: boolean?, position: UDim2?, isScreen: boolean)
 	--warn(increment.. " - from PopUp Function")
 	local popupsEnabled = dataSync.Get("Settings").ClickPopups
-	if not increment or increment == infMath.new(0) or not popupsEnabled then
+	if not increment or infMath.new(increment) <= infMath.new(0) or not popupsEnabled then
 		return
 	end
 
@@ -560,6 +553,7 @@ local function PlayClickEFX()
 	effect.Parent = humanoidRootPart
 	cuts.Parent = humanoidRootPart
 	debris:AddItem(effect, 0.5)
+	debris:AddItem(cuts, 0.5)
 	effect:Emit(math.random(2, 5))
 	cuts:Emit(5)
 	task.wait(0.1)
@@ -718,6 +712,14 @@ end
 function ClickHandler.Initialize()
 	if not game.Loaded then
 		game.Loaded:Wait()
+	end
+
+	for _, part in ipairs(criticalModel:GetDescendants()) do
+		if part:IsA("BasePart") then
+			part.CanQuery = false
+			part.CanCollide = false
+			part.CollisionGroup = globals.DebrisGroup
+		end
 	end
 
 	task.spawn(AnimateShine)

@@ -248,48 +248,78 @@ function TradeHandler.RequestAnswer(you: Player, me: Player, choice: boolean)
 		end
 	end
 
-	-- if pendingRequests[you.Name] then
-	-- 	if pendingRequests[you.Name].fromPlayerName == me.Name then
-	pendingRequests[you.Name] = nil
-	profile1.TradeRequestFrom = ""
+	local function CancelExtraTradeRequest()
+		if pendingRequests[me.Name] then
+			local fromPlayer = players:FindFirstChild(pendingRequests[me.Name]) :: Player?
 
-	profile1.IsInTrade = true
-	profile2.IsInTrade = true
+			pendingRequests[me.Name] = nil
 
-	network:FireClient(me, "EnterTrade", me, you)
-	network:FireClient(you, "EnterTrade", you, me)
+			if me then
+				if profile2 then
+					profile2.TradeRequestFrom = ""
+					dataSync.SyncPlayer(me, profile2)
+				end
+				network:FireClient(me, "HideTradeRequest")
+			end
 
-	local id: string = generateID.NewID()
-
-	trades[id] = {
-		Players = {
-			[me.Name] = {
-				Pets = {},
-				Gifts = {},
-				Ready = false,
-			},
-			[you.Name] = {
-				Pets = {},
-				Gifts = {},
-				Ready = false,
-			},
-		},
-		Settings = {
-			Timer = startTime,
-			TimerActive = false,
-			TradeLocked = false,
-			TimerConnection = nil,
-		},
-	}
-
-	for _, plr: Player in ipairs(players:GetPlayers()) do
-		network:FireClient(plr, "UpdateTradeButtons", me, you)
+			if fromPlayer then
+				network:FireClient(fromPlayer, "UpdateTradeButtons")
+			end
+		end
 	end
 
-	dataSync.SyncPlayer(you, profile1)
-	dataSync.SyncPlayer(me, profile2)
-	-- 	end
-	-- end
+	if FindTradeID(me) then
+		CancelExtraTradeRequest()
+		return
+	end
+	if FindTradeID(you) then
+		CancelExtraTradeRequest()
+		return
+	end
+
+	if pendingRequests[you.Name] then
+		if pendingRequests[you.Name].fromPlayerName == me.Name then
+			CancelExtraTradeRequest()
+			pendingRequests[you.Name] = nil
+			profile1.TradeRequestFrom = ""
+
+			profile1.IsInTrade = true
+			profile2.IsInTrade = true
+
+			network:FireClient(me, "EnterTrade", me, you)
+			network:FireClient(you, "EnterTrade", you, me)
+
+			local id: string = generateID.NewID()
+
+			trades[id] = {
+				Players = {
+					[me.Name] = {
+						Pets = {},
+						Gifts = {},
+						Ready = false,
+					},
+					[you.Name] = {
+						Pets = {},
+						Gifts = {},
+						Ready = false,
+					},
+				},
+				Settings = {
+					Timer = startTime,
+					TimerActive = false,
+					TradeLocked = false,
+					TimerConnection = nil,
+				},
+			}
+
+			for _, plr: Player in ipairs(players:GetPlayers()) do
+				network:FireClient(plr, "UpdateTradeButtons", me, you)
+			end
+
+			dataSync.SyncPlayer(you, profile1)
+			dataSync.SyncPlayer(me, profile2)
+		end
+	end
 end
 
 function TradeHandler.SendTradeRequest(me: Player, you: Player)
@@ -545,12 +575,9 @@ function TradeHandler.Initialize()
 		while true do
 			local time = os.time()
 			for receivingPlayer, data in pairs(pendingRequests) do
-				print(time - data.timestamp)
 				if time - data.timestamp >= 10 then
 					local receivingPlayerInstance = players:FindFirstChild(receivingPlayer) :: Player?
 					local fromPlayerInstance = players:FindFirstChild(data.fromPlayerName) :: Player?
-
-					print(receivingPlayerInstance, fromPlayerInstance)
 
 					pendingRequests[receivingPlayer] = nil
 

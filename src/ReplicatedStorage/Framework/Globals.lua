@@ -31,6 +31,9 @@ Globals.BaseHatchTime = 6
 Globals.BestPotionTier = "V"
 Globals.DailyResetTime = 24 * 3600
 Globals.DailyClaimTreshold = 15 * 60
+
+Globals.CharacterGroup = "CHAR"
+Globals.DebrisGroup = "DEBRIS"
 Globals.RarityColors = {
 	["Common"] = Color3.fromRGB(255, 214, 133),
 	["Uncommon"] = Color3.fromRGB(173, 255, 135),
@@ -139,14 +142,22 @@ function Globals.GetAnimatedGradients(
 	parents: { [number]: Instance },
 	gradientsToAnimate: { [number]: UIGradient }
 ): { [number]: UIGradient }
+	local function AddGradient(child)
+		if child.Glow.Legendary.Enabled then
+			table.insert(gradientsToAnimate, child.Glow.Legendary)
+		end
+		if child.Frame.Legendary.Enabled then
+			table.insert(gradientsToAnimate, child.Frame.Legendary)
+		end
+	end
 	for _, parent in ipairs(parents) do
 		for _, child in ipairs(parent:GetChildren()) do
 			if child:IsA("ImageButton") or child:IsA("Frame") then
-				if child.Glow.Legendary.Enabled then
-					table.insert(gradientsToAnimate, child.Glow.Legendary)
-				end
-				if child.Frame.Legendary.Enabled then
-					table.insert(gradientsToAnimate, child.Frame.Legendary)
+				if not child:FindFirstChild("Glow") then
+					local click = child:FindFirstChildOfClass("ImageButton")
+					AddGradient(click)
+				else
+					AddGradient(child)
 				end
 			end
 		end
@@ -205,6 +216,9 @@ function Globals.XPForNextLevel(currentLevel, shiny: boolean)
 end
 
 function Globals.GetPetClicks(petData)
+	if not petData then
+		return 0
+	end
 	if not petData.petName then
 		return 0
 	end
@@ -222,6 +236,9 @@ function Globals.GetPetClicks(petData)
 end
 
 function Globals.GetMaxLevelClicks(petData)
+	if not petData then
+		return 0
+	end
 	if not petData.petName then
 		return 0
 	end
@@ -239,6 +256,9 @@ function Globals.GetMaxLevelClicks(petData)
 end
 
 function Globals.GetMaxLevelGems(petData)
+	if not petData then
+		return 0
+	end
 	if not petData.petName then
 		return 0
 	end
@@ -256,6 +276,9 @@ function Globals.GetMaxLevelGems(petData)
 end
 
 function Globals.GetPetGems(petData)
+	if not petData then
+		return 0
+	end
 	if not petData.petName then
 		return 0
 	end
@@ -286,11 +309,9 @@ function Globals.GetPetChance(gpOwned: boolean, luckPercentage, petName: string,
 	local tbl = eggStats[eggName].Pets
 	local boosted = { ["Epic"] = true, ["Legendary"] = true }
 
-	local raw = {}
-	local boostedChances = {}
 	local chances = {}
 	local addedChance = 0
-	local totalNonBoosted = 0
+	local totalNonBoostedRaw = 0
 	local totalWeight = 0
 	if gpOwned then
 		luckPercentage *= 2
@@ -303,34 +324,31 @@ function Globals.GetPetChance(gpOwned: boolean, luckPercentage, petName: string,
 	local luckBoost = 1 + (luckPercentage / 100)
 
 	for item, chance in pairs(tbl) do
-		raw[item] = chance[1]
 		local rarity = petStats[item].Rarity
 		if boosted[rarity] and luckBoost > 1 then
-			boostedChances[item] = chance[1] * luckBoost
+			local boostedChance = chance[1] * luckBoost
+			addedChance += (boostedChance - chance[1])
+			chances[item] = boostedChance
 		else
-			totalNonBoosted += 1
+			totalNonBoostedRaw += chance[1]
 		end
 	end
 
-	if luckBoost > 1 then
-		for item, _ in pairs(boostedChances) do
-			addedChance += boostedChances[item] - raw[item]
-		end
+	local scaleFactor = 1
+	if luckBoost > 1 and totalNonBoostedRaw > 0 then
+		scaleFactor = math.max(0, (totalNonBoostedRaw - addedChance) / totalNonBoostedRaw)
 	end
 
 	for item, chance in pairs(tbl) do
 		local rarity = petStats[item].Rarity
-		if boosted[rarity] then
-			chances[item] = chance[1] * luckBoost
-		else
-			chances[item] = luckBoost ~= 1 and chance[1] - (addedChance / totalNonBoosted) or chance[1]
+		if not (boosted[rarity] and luckBoost > 1) then
+			chances[item] = chance[1] * scaleFactor
 		end
 		totalWeight += chances[item]
 	end
 
-	local chance = 0
-	chance = shiny and chance / 40 or chances[petName]
-	return chance
+	local finalChance = shiny and chances[petName] / Globals.ShinyChance or chances[petName]
+	return finalChance
 end
 
 function Globals.FormatTime(seconds, letterRepresentation: boolean)

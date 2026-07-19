@@ -37,6 +37,10 @@ function AFKHandler.StartAFK(player: Player)
 	local profile = playerData.GetData(player)
 	local startTime = tick()
 
+	if profile.AFKStartTime ~= 0 then
+		return
+	end
+
 	profile.AFKStartTime = startTime
 	profile.PreAFKInfo["Rebirths"] = profile.Rebirths
 	profile.PreAFKInfo["Eggs"] = profile.Eggs
@@ -55,6 +59,10 @@ end
 function AFKHandler.StopAFK(player: Player)
 	local profile = playerData.GetData(player)
 
+	if profile.AFKStartTime == 0 then
+		return nil
+	end
+
 	local startTime = profile.AFKStartTime
 	local endTime = tick()
 
@@ -71,11 +79,13 @@ function AFKHandler.StopAFK(player: Player)
 
 	AFKHandler.ResetAFKReport(player)
 
-	print("---- STOP AFK (variables before stopping) ----")
-	print(startRebirths)
-	print(startEggs)
-	print(startTime)
-	print("----- EOF -------")
+	if not startRebirths then
+		return {
+			deltaTime = (endTime - startTime) or 0,
+			deltaEggs = (endEggs - startEggs) or 0,
+			petsHatched = petsGotten,
+		}
+	end
 
 	return {
 		deltaTime = (endTime - startTime) or 0,

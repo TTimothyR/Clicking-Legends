@@ -26,7 +26,6 @@ local gpIDToName = {}
 local productIDToName = {}
 local callbacks = {
 	["+500 Pet Storage"] = function(player: Player)
-		print("Gimme the storage dawg")
 		local profile = playerData.GetData(player)
 		profile.PetStorage += 500
 
@@ -168,7 +167,6 @@ local function ProductPurchaseHandler()
 		elseif receiptInfo.ProductId == 3608435738 then
 			callbacks["RestockShop"](player)
 		else
-			print(productName)
 			callbacks["Gift"](player, productName)
 		end
 

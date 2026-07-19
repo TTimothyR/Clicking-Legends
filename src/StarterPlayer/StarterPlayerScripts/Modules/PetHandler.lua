@@ -12,6 +12,7 @@ repeat
 until players.LocalPlayer
 local plr = players.LocalPlayer
 local petsFolder = workspace:WaitForChild("EquippedPets")
+local eggOpenFolder = workspace:WaitForChild("EggOpens")
 
 local framework = rs:WaitForChild("Framework")
 local library = framework:WaitForChild("Library")
@@ -47,7 +48,7 @@ local function CalculateYOffset(model, rayDistance)
 
 	local params = RaycastParams.new()
 	params.FilterType = Enum.RaycastFilterType.Exclude
-	params.FilterDescendantsInstances = { petsFolder }
+	params.FilterDescendantsInstances = { petsFolder, eggOpenFolder }
 
 	local resultDown: RaycastResult = workspace:Raycast(
 		model.PrimaryPart.Position - Vector3.new(0, lowestOffset, 0),
@@ -134,6 +135,9 @@ local function SyncPetVisibility()
 end
 
 local function handlePets(folder: Folder)
+	if not folder then
+		return
+	end
 	local playerName = folder.Name
 	local player = players:FindFirstChild(playerName)
 
@@ -319,7 +323,7 @@ function PetHandler.Initialize()
 	end)
 	players.PlayerAdded:Connect(function(player)
 		LoadPets(player)
-		task.delay(0.2, handlePets, petsFolder:FindFirstChild(player.Name))
+		task.delay(0.2, handlePets, petsFolder:WaitForChild(player.Name))
 	end)
 end
 

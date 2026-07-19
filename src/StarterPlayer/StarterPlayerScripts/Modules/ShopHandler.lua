@@ -61,10 +61,10 @@ local function UpdateGamepasses(newData)
 		if not clone then
 			continue
 		end
-		for _, child in ipairs(clone.Inner.Buttons.Buy:GetChildren()) do
+		for _, child in ipairs(clone.Inner.Buttons.Buy.Click:GetChildren()) do
 			child.Visible = (child.Name == "Owns")
 		end
-		clone.Inner.Buttons.Buy:SetAttribute("Scale", nil)
+		clone.Inner.Buttons.Buy.Click:SetAttribute("Scale", nil)
 		if gpConnections[gpName] then
 			gpConnections[gpName]:Disconnect()
 		end
@@ -95,14 +95,14 @@ local function LoadShop()
 			return mps:GetProductInfoAsync(data.GamepassID, Enum.InfoType.GamePass)
 		end)
 		if s then
-			clone.Inner.Buttons.Buy.PriceHolder.Title.Text = info.PriceInRobux or "???"
+			clone.Inner.Buttons.Buy.Click.PriceHolder.Title.Text = info.PriceInRobux or "???"
 		end
 
 		clone.Inner.PassName.Text = gamepassName
 		clone.Inner.PassDescription.Text = data.Description
 		clone.Inner:WaitForChild("Icon").Image = ImageService[gamepassName] or ImageService["Placeholder"]
 
-		gpConnections[gamepassName] = clone.Inner.Buttons.Buy.MouseButton1Click:Connect(function()
+		gpConnections[gamepassName] = clone.Inner.Buttons.Buy.Click.MouseButton1Click:Connect(function()
 			if not db then
 				db = true
 				task.delay(0.15, function()
@@ -112,7 +112,7 @@ local function LoadShop()
 				ShopHandler.ShowGreyFrame()
 			end
 		end)
-		clone.Inner.Buttons.Gift.MouseButton1Click:Connect(function()
+		clone.Inner.Buttons.Gift.Click.MouseButton1Click:Connect(function()
 			if not db then
 				db = true
 				task.delay(0.15, function()
@@ -156,7 +156,7 @@ local function LoadShop()
 				clone.Pets.Pet1.Image = ImageService[shopStats.DeveloperProducts.Pet1.PetName] or ImageService["Placeholder"]
 				clone.Pets.Pet2.Image = ImageService[shopStats.DeveloperProducts.Pet2.PetName] or ImageService["Placeholder"]
 
-				clone.Buy.Discounted.Text = "" .. info.PriceInRobux
+				clone.Buy.Click.Discounted.Text = "" .. info.PriceInRobux
 			else
 				clone = exclusivePetFrame.Inner.Pets[productName]
 				clone.PetName.Text = data.PetName
@@ -189,16 +189,29 @@ local function LoadShop()
 		end
 
 		local buyButton = clone:FindFirstChild("Buy", true)
-		buyButton.MouseButton1Click:Connect(function()
-			if not db then
-				db = true
-				task.delay(0.15, function()
-					db = false
-				end)
-				mps:PromptProductPurchase(player, data.ProductID)
-				ShopHandler.ShowGreyFrame()
-			end
-		end)
+		if buyButton:IsA("Frame") then
+			buyButton.Click.MouseButton1Click:Connect(function()
+				if not db then
+					db = true
+					task.delay(0.15, function()
+						db = false
+					end)
+					mps:PromptProductPurchase(player, data.ProductID)
+					ShopHandler.ShowGreyFrame()
+				end
+			end)
+		else
+			buyButton.MouseButton1Click:Connect(function()
+				if not db then
+					db = true
+					task.delay(0.15, function()
+						db = false
+					end)
+					mps:PromptProductPurchase(player, data.ProductID)
+					ShopHandler.ShowGreyFrame()
+				end
+			end)
+		end
 	end
 
 	UpdateGamepasses(dataSync.Get("OwnedGamepasses"))

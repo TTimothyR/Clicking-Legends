@@ -23,7 +23,7 @@ local function HideAll(labelsFrame: Frame)
 end
 
 local Tooltips = {
-	PetTooltip = function(Frame, Data, FromShop)
+	PetTooltip = function(Frame, Data, FromShop, FromTrade)
 		if not Frame or not Data then
 			return
 		end
@@ -35,7 +35,7 @@ local Tooltips = {
 		local TopFrame = Frame:FindFirstChild("Top")
 		local Image = ((Data.shiny and `Shiny {Data.petName}` or Data.petName) or ImageService.Doggy)
 		local Rarity = (PetStats[Data.petName].Rarity or "Common")
-		local PetData = PetUtility.GetPetData(Data.id)
+		local PetData = FromTrade and Data or PetUtility.GetPetData(Data.id)
 
 		TopFrame.Info.Title.Text = Data.petName
 		TopFrame.Icon.Image = ImageService[Image] or ImageService["Placeholder"]
