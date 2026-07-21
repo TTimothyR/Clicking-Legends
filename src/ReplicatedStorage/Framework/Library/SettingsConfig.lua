@@ -49,6 +49,9 @@ local SettingsConfig = {
 		Type = "Toggle",
 		DefaultValue = false,
 	},
+	["BotLink"] = {
+		Type = "TextInput",
+	},
 }
 
 return SettingsConfig

@@ -2,6 +2,7 @@ local PrizeHandler = {}
 local db = false
 
 -- Services
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local players = game:GetService("Players")
 local rs = game:GetService("ReplicatedStorage")
 
@@ -31,6 +32,7 @@ local holderFrame = main:WaitForChild("Holder")
 local scrollingHolder = holderFrame:WaitForChild("ScrollingFrame")
 
 -- Modules
+local ImageService = require(ReplicatedStorage.Framework.Library.ImageService)
 local prizes = require(library.Prizes)
 local infMath = require(framework.InfiniteMath)
 local network = require(framework.Network)
@@ -87,6 +89,7 @@ local function UpdatePrizeProgress(clone, targetType: string, data, claimedPrize
 
 	local rewardLabel = clone.Reward
 	local rewardData = data.Reward
+	clone.RewardHolder.Icon.Image = ImageService[rewardData[2]] or ImageService["Placeholder"]
 
 	local func = rewardFormat[rewardData[1]]
 	rewardLabel.Text = func and "Reward: " .. func(rewardData) or "Reward: N/A"

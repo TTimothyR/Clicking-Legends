@@ -9,6 +9,7 @@ local framework = rs:WaitForChild("Framework")
 local library = framework:WaitForChild("Library")
 
 -- Modules
+local Enchants = require(ReplicatedStorage.Framework.Library.Enchants)
 local items = require(ReplicatedStorage.Framework.Library.Items)
 local GlobalEventsModule = require(ReplicatedStorage.Framework.Library.GlobalEventsModule)
 local eggStats = require(library.EggStats)
@@ -31,6 +32,8 @@ Globals.BaseHatchTime = 6
 Globals.BestPotionTier = "V"
 Globals.DailyResetTime = 24 * 3600
 Globals.DailyClaimTreshold = 15 * 60
+Globals.MaximumExclusiveEnchants = 3
+Globals.BotVerifyRequestCooldown = 5 * 60
 
 Globals.CharacterGroup = "CHAR"
 Globals.DebrisGroup = "DEBRIS"
@@ -223,7 +226,7 @@ function Globals.XPForNextLevel(currentLevel, shiny: boolean)
 	return 0
 end
 
-function Globals.GetPetClicks(petData)
+function Globals.GetPetClicks(pets, petData)
 	if not petData then
 		return 0
 	end
@@ -235,7 +238,29 @@ function Globals.GetPetClicks(petData)
 		return 0
 	end
 
+	local count = 0
+	local totalBuff = 0
+	for _, data in ipairs(pets) do
+		if not data.equipped then
+			continue
+		end
+
+		if count >= Globals.MaximumExclusiveEnchants then
+			break
+		end
+
+		if data.enchant then
+			if string.find(data.enchant, "Teamwork") then
+				count += 1
+				totalBuff += Enchants[data.enchant].Buff
+			end
+		end
+	end
+
 	local clicks = stats.Clicks
+	if petData.equipped then
+		clicks *= (1 + totalBuff / 100)
+	end
 	local total = clicks * (1 + (2 * (petData.level - 1)) / (Globals.MaxLevel - 1))
 	if petData.shiny then
 		total *= 1.5
@@ -283,7 +308,7 @@ function Globals.GetMaxLevelGems(petData)
 	return total
 end
 
-function Globals.GetPetGems(petData)
+function Globals.GetPetGems(pets, petData)
 	if not petData then
 		return 0
 	end
@@ -295,7 +320,29 @@ function Globals.GetPetGems(petData)
 		return 0
 	end
 
+	local count = 0
+	local totalBuff = 0
+	for _, data in ipairs(pets) do
+		if not data.equipped then
+			continue
+		end
+
+		if count >= Globals.MaximumExclusiveEnchants then
+			break
+		end
+
+		if data.enchant then
+			if string.find(data.enchant, "Teamwork") then
+				count += 1
+				totalBuff += Enchants[data.enchant].Buff
+			end
+		end
+	end
+
 	local gems = stats.GemMulti
+	if petData.equipped then
+		gems *= (1 + totalBuff / 100)
+	end
 	local total = gems * (1 + (2 * (petData.level - 1)) / (Globals.MaxLevel - 1))
 	if petData.shiny then
 		total *= 1.5

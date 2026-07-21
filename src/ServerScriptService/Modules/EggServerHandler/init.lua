@@ -6,7 +6,6 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local players = game:GetService("Players")
 local rs = game:GetService("ReplicatedStorage")
 local sss = game:GetService("ServerScriptService")
-local ServerStorage = game:GetService("ServerStorage")
 
 local Framework = ReplicatedStorage:WaitForChild("Framework")
 
@@ -16,6 +15,7 @@ local library = framework:WaitForChild("Library")
 local dataModules = sss:WaitForChild("DataModules")
 
 -- Modules
+local BotHandler = require(script.Parent.BotHandler).Private
 local eggStats = require(library.EggStats)
 local petStats = require(library.PetStats)
 local playerData = require(dataModules.PlayerData)
@@ -28,8 +28,6 @@ local Globals = require(ReplicatedStorage.Framework.Globals)
 local ImageService = require(ReplicatedStorage.Framework.Library.ImageService)
 local Upgrades = require(ReplicatedStorage.Framework.Library.Upgrades)
 local Network = require(Framework:WaitForChild("Network"))
-
-local hatchBind = ServerStorage:WaitForChild("Hatch") :: BindableFunction
 
 local function ValidateDistance(player: Player, eggName: string)
 	local maxDistance = 15
@@ -180,6 +178,11 @@ function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
 		return
 	end
 
+	local world = eggStats[eggName].World
+	if not profile.OwnedWorlds[world] then
+		return
+	end
+
 	local clicks = infMath.new(profile.Clicks)
 	local priceForOne = infMath.new(eggStats[eggName].Price[2])
 	local price = infMath.new(priceForOne * amount)
@@ -297,7 +300,7 @@ function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
 
 	if #changes > 0 then
 		task.spawn(function()
-			hatchBind:Invoke(player.Name, HttpService:JSONEncode(changes))
+			BotHandler.Hatch(player.Name, HttpService:JSONEncode(changes))
 		end)
 	end
 

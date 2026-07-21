@@ -1,5 +1,8 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local StarterPlayer = game:GetService("StarterPlayer")
 
+local Network = require(ReplicatedStorage.Framework.Network)
+local DataSyncClient = require(StarterPlayer.StarterPlayerScripts.Modules.DataSyncClient)
 local Enchants = require(script.Parent.Enchants)
 local ShopStats = require(script.Parent.ShopStats)
 local InfiniteMath = require("../InfiniteMath")
@@ -9,8 +12,6 @@ local PetUtility = require("../PetUtility")
 local PetStats = require("./PetStats")
 local Globals = require("../Globals")
 local ToHex = require("../Shared/ToHex")
-
-local getPetExist = ReplicatedStorage:WaitForChild("GetPetExist") :: RemoteFunction
 
 local existCache = {}
 
@@ -63,7 +64,7 @@ local Tooltips = {
 			if existCache[fullName] and (os.time() - existCache[fullName].fetchTime) < Globals.ExistRefreshTime then
 				count = existCache[fullName].count
 			else
-				count = getPetExist:InvokeServer(Data.petName, Data.shiny)
+				count = Network:InvokeServer("GetPetExist", Data.petName, Data.shiny)
 				existCache[fullName] = { count = count, fetchTime = os.time() }
 			end
 
@@ -72,15 +73,15 @@ local Tooltips = {
 		else
 			LabelsFrame.ExistHolder.Visible = false
 		end
-
+		local pets = DataSyncClient.Get("Pets")
 		if Data.clicks then
-			local PetClicks = FromShop and Globals.GetPetClicks(Data) or Globals.GetPetClicks(PetData)
+			local PetClicks = FromShop and Globals.GetPetClicks({}, Data) or Globals.GetPetClicks(pets, PetData)
 			LabelsFrame.Clicks.Visible = true
 			LabelsFrame.Clicks.Amount.Text = InfiniteMath.new(PetClicks):GetSuffix(true)
 		end
 
 		if Data.gems then
-			local PetGems = FromShop and Globals.GetPetGems(Data) or Globals.GetPetGems(PetData)
+			local PetGems = FromShop and Globals.GetPetGems({}, Data) or Globals.GetPetGems(pets, PetData)
 			LabelsFrame.Gems.Visible = true
 			LabelsFrame.Gems.Amount.Text = InfiniteMath.new(PetGems):GetSuffix(true)
 		end

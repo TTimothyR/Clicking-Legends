@@ -5,19 +5,19 @@ return {
 			Reward = { "Pet", "Doggy", false },
 		},
 		[2] = {
-			Target = 10,
+			Target = 100,
 			Reward = { "Currency", "Gems", 1000 },
 		},
 		[3] = {
-			Target = 10,
+			Target = 1000,
 			Reward = { "Perk", "EggHatches", 1 },
 		},
 		[4] = {
-			Target = 10,
+			Target = 10000,
 			Reward = { "Perk", "HatchSpeed", 5 },
 		},
 		[5] = {
-			Target = 10,
+			Target = 100000,
 			Reward = { "Perk", "LuckPercentage", 5 },
 		},
 	},
@@ -40,7 +40,7 @@ return {
 		},
 		[5] = {
 			Target = 100000,
-			Reward = {},
+			Reward = { "Pet", "King Star", false },
 		},
 	},
 }

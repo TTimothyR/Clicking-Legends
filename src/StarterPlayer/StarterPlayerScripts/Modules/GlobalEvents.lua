@@ -12,6 +12,7 @@ local PlayerGui = Player.PlayerGui
 local HUD = PlayerGui:WaitForChild("HUD")
 local Boost = HUD:WaitForChild("Boost")
 
+local Worlds = require(ReplicatedStorage.Framework.Library.Worlds)
 local DataSyncClient = require(script.Parent.DataSyncClient)
 local GlobalEventsModule = require(Library:WaitForChild("GlobalEventsModule"))
 local Globals = require(Framework:WaitForChild("Globals"))
@@ -21,9 +22,13 @@ local shouldHideEvents = false
 function GlobalEvents.Initialize()
 	DataSyncClient.OnReady(function()
 		shouldHideEvents = DataSyncClient.Get("Settings").HideEvents
+		Boost.Title.Text = string.format("🌍 World Boost: x%s 🌍", Worlds[DataSyncClient.Get("CurrentWorld")].Boost)
 	end)
 	DataSyncClient.OnChanged("Settings", function(new, _)
 		shouldHideEvents = new.HideEvents
+	end)
+	DataSyncClient.OnChanged("CurrentWorld", function(new, _)
+		Boost.Title.Text = string.format("🌍 World Boost: x%s 🌍", Worlds[new].Boost)
 	end)
 
 	task.spawn(function()

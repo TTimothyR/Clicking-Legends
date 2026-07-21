@@ -40,6 +40,12 @@ Shared.DEFAULT_PLAYER_DATA = {
 		[1] = true,
 		[2] = true,
 	} :: { [number]: boolean },
+	OwnedWorlds = {
+		["Spawn"] = true,
+	} :: { [string]: boolean },
+	CurrentWorld = "Spawn",
+
+	LastBotVerifyAttempt = 0,
 
 	Settings = {},
 	DailyRewards = {},

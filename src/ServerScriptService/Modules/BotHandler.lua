@@ -1,9 +1,8 @@
-local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local ServerStorage = game:GetService("ServerStorage")
 local HttpService = game:GetService("HttpService")
 local MessagingService = game:GetService("MessagingService")
 local RunService = game:GetService("RunService")
+local ServerScriptService = game:GetService("ServerScriptService")
 
 local config = {
 	BOT_URL = "https://clrbot.onrender.com",
@@ -19,8 +18,17 @@ local headers = {
 
 local framework = ReplicatedStorage:WaitForChild("Framework")
 local library = framework:WaitForChild("Library")
+local PlayerData = require(ServerScriptService.DataModules.PlayerData)
 local Globals = require(ReplicatedStorage.Framework.Globals)
 local petStats = require(library.PetStats)
+
+local CACHE_TTL = Globals.ExistRefreshTime -- seconds
+local CACHE_TOPIC = "PetExistCache"
+local existCache = {}
+local fetchInProgress = false
+
+local BotHandler = {}
+BotHandler.Private = {}
 
 local function PostRaw(endPoint, jsonBody)
 	local s, result = pcall(function()
@@ -83,7 +91,7 @@ end
 local function SyncPetStats()
 	local payload = {}
 	for petName, data in pairs(petStats) do
-		if data.Secret == true then
+		if data.Secret == true or data.Exclusive == true then
 			payload[petName] = {
 				isShiny = false,
 				imageId = tostring(data.ImageId or ""),
@@ -107,8 +115,6 @@ local function SyncPetStats()
 	end
 end
 
-task.spawn(SyncPetStats)
-
 local function HandleLinkCommand(player, token)
 	local result = Post("/confirm-link", {
 		token = token,
@@ -116,130 +122,16 @@ local function HandleLinkCommand(player, token)
 	})
 	if not result then
 		warn("[BotBridge] /confirm-link failed for " .. player.Name)
-		return
+		return false
 	end
 	if result.ok then
 		print(("[BotBridge] %s linked to Discord ID %s"):format(player.Name, tostring(result.discordId)))
+		return true
 	else
 		warn(("[BotBridge] Link failed for %s: %s"):format(player.Name, tostring(result.error)))
+		return false
 	end
 end
-
-Players.PlayerAdded:Connect(function(player)
-	player.Chatted:Connect(function(message)
-		local token = message:match("^/linkdiscord%s+(%S+)$")
-		if token then
-			task.spawn(HandleLinkCommand, player, token:upper())
-		end
-	end)
-end)
-
--- ── 3. Hatch BindableFunction ─────────────────────────────────────────────────
--- Usage (server script):
---   local changes = {
---       { petName = "Void Serpent", isShiny = false, imageId = "12345678", delta = 1 },
---   }
---   task.spawn(function()
---       ServerStorage.Hatch:Invoke(player.Name, HttpService:JSONEncode(changes))
---   end)
-
-local HatchBindable = Instance.new("BindableFunction")
-HatchBindable.Name = "Hatch"
-HatchBindable.Parent = ServerStorage
-HatchBindable.OnInvoke = function(playerName, changesJson)
-	local ok, changes = pcall(HttpService.JSONDecode, HttpService, changesJson)
-	if not ok or type(changes) ~= "table" then
-		warn("[BotBridge] Hatch: invalid changesJson — " .. tostring(changes))
-		return
-	end
-	local channelId = RunService:IsStudio() and config.TEST_CHANNEL or config.HATCH_CHANNEL
-	local bodyOk, body = pcall(HttpService.JSONEncode, HttpService, {
-		playerName = tostring(playerName),
-		channelId = channelId,
-		changes = changes,
-	})
-	if not bodyOk then
-		warn("[BotBridge] Hatch: JSONEncode failed — " .. tostring(body))
-		return
-	end
-	PostRaw("/hatch", body)
-end
-
--- ── 4. Craft BindableFunction ─────────────────────────────────────────────────
--- Usage (server script):
---   local changes = {
---       { petName = "Void Serpent", isShiny = false, delta = -8 },
---       { petName = "Void Serpent", isShiny = true,  delta = 1  },
---   }
---   task.spawn(function()
---       ServerStorage.Craft:Invoke(HttpService:JSONEncode(changes))
---   end)
-
-local CraftBindable = Instance.new("BindableFunction")
-CraftBindable.Name = "Craft"
-CraftBindable.Parent = ServerStorage
-CraftBindable.OnInvoke = function(changesJson)
-	local ok, changes = pcall(HttpService.JSONDecode, HttpService, changesJson)
-	if not ok or type(changes) ~= "table" then
-		warn("[BotBridge] Craft: invalid changesJson — " .. tostring(changes))
-		return
-	end
-	local bodyOk, body = pcall(HttpService.JSONEncode, HttpService, { changes = changes })
-	if not bodyOk then
-		warn("[BotBridge] Craft: JSONEncode failed — " .. tostring(body))
-		return
-	end
-	PostRaw("/craft", body)
-end
-
--- ── 5. Delete BindableFunction ────────────────────────────────────────────────
--- Usage (server script):
---   local changes = {
---       { petName = "Void Serpent", isShiny = false, delta = -1 },
---   }
---   task.spawn(function()
---       ServerStorage.Delete:Invoke(HttpService:JSONEncode(changes))
---   end)
-
-local DeleteBindable = Instance.new("BindableFunction")
-DeleteBindable.Name = "Delete"
-DeleteBindable.Parent = ServerStorage
-DeleteBindable.OnInvoke = function(changesJson)
-	local ok, changes = pcall(HttpService.JSONDecode, HttpService, changesJson)
-	if not ok or type(changes) ~= "table" then
-		warn("[BotBridge] Delete: invalid changesJson — " .. tostring(changes))
-		return
-	end
-	local bodyOk, body = pcall(HttpService.JSONEncode, HttpService, { changes = changes })
-	if not bodyOk then
-		warn("[BotBridge] Delete: JSONEncode failed — " .. tostring(body))
-		return
-	end
-	PostRaw("/delete", body)
-end
-
--- ── 6. GetPetExist RemoteFunction — globally cached via MessagingService ──────
---
--- How it works:
---   • Each server keeps a local in-memory cache of { value, fetchedAt } per pet.
---   • When a server's cache is cold or stale it fetches ALL secret pets from the
---     bot in one request, caches every result locally, then broadcasts the full
---     cache to every other server via MessagingService.
---   • New servers that start cold immediately receive a broadcast from whichever
---     server next hits its 10-minute refresh, but also do their own fetch on
---     first request so they're never blocked waiting for a broadcast.
---   • Net result: exactly 1 bot fetch per 10 minutes across the entire game,
---     regardless of how many servers or players are calling GetPetExist.
---
--- Usage (LocalScript):
---   local count      = ReplicatedStorage.GetPetExist:InvokeServer("Void Serpent", false)
---   local shinyCount = ReplicatedStorage.GetPetExist:InvokeServer("Void Serpent", true)
---   -- returns number or nil if pet not found / bot unreachable
-
-local CACHE_TTL = Globals.ExistRefreshTime -- seconds
-local CACHE_TOPIC = "PetExistCache"
-local existCache = {}
-local fetchInProgress = false
 
 local function FetchAllAndBroadcast()
 	if fetchInProgress then
@@ -280,28 +172,72 @@ local function FetchAllAndBroadcast()
 	end
 end
 
-MessagingService:SubscribeAsync(CACHE_TOPIC, function(message)
-	local ok, pets = pcall(HttpService.JSONDecode, HttpService, message.Data)
-	if not ok or type(pets) ~= "table" then
+-- Players.PlayerAdded:Connect(function(player)
+-- 	player.Chatted:Connect(function(message)
+-- 		local token = message:match("^/linkdiscord%s+(%S+)$")
+-- 		if token then
+-- 			task.spawn(HandleLinkCommand, player, token:upper())
+-- 		end
+-- 	end)
+-- end)
+
+-- ── 3. Hatch BindableFunction ─────────────────────────────────────────────────
+-- Usage (server script):
+--   local changes = {
+--       { petName = "Void Serpent", isShiny = false, imageId = "12345678", delta = 1 },
+--   }
+--   task.spawn(function()
+--       ServerStorage.Hatch:Invoke(player.Name, HttpService:JSONEncode(changes))
+--   end)
+
+function BotHandler.Private.Hatch(playerName, changesJson)
+	local ok, changes = pcall(HttpService.JSONDecode, HttpService, changesJson)
+	if not ok or type(changes) ~= "table" then
+		warn("[BotBridge] Hatch: invalid changesJson — " .. tostring(changes))
 		return
 	end
-	local now = os.clock()
-	for key, value in pairs(pets) do
-		existCache[key] = { value = value, fetchedAt = now }
+	local channelId = RunService:IsStudio() and config.TEST_CHANNEL or config.HATCH_CHANNEL
+	local bodyOk, body = pcall(HttpService.JSONEncode, HttpService, {
+		playerName = tostring(playerName),
+		channelId = channelId,
+		changes = changes,
+	})
+	if not bodyOk then
+		warn("[BotBridge] Hatch: JSONEncode failed — " .. tostring(body))
+		return
 	end
-end)
+	PostRaw("/hatch", body)
+end
 
-task.spawn(function()
-	while true do
-		task.wait(CACHE_TTL)
-		task.spawn(FetchAllAndBroadcast)
+function BotHandler.Private.Craft(changesJson)
+	local ok, changes = pcall(HttpService.JSONDecode, HttpService, changesJson)
+	if not ok or type(changes) ~= "table" then
+		warn("[BotBridge] Craft: invalid changesJson — " .. tostring(changes))
+		return
 	end
-end)
+	local bodyOk, body = pcall(HttpService.JSONEncode, HttpService, { changes = changes })
+	if not bodyOk then
+		warn("[BotBridge] Craft: JSONEncode failed — " .. tostring(body))
+		return
+	end
+	PostRaw("/craft", body)
+end
 
-local GetPetExist = Instance.new("RemoteFunction")
-GetPetExist.Name = "GetPetExist"
-GetPetExist.Parent = ReplicatedStorage
-GetPetExist.OnServerInvoke = function(_, petName, isShiny)
+function BotHandler.Private.Delete(changesJson)
+	local ok, changes = pcall(HttpService.JSONDecode, HttpService, changesJson)
+	if not ok or type(changes) ~= "table" then
+		warn("[BotBridge] Delete: invalid changesJson — " .. tostring(changes))
+		return
+	end
+	local bodyOk, body = pcall(HttpService.JSONEncode, HttpService, { changes = changes })
+	if not bodyOk then
+		warn("[BotBridge] Delete: JSONEncode failed — " .. tostring(body))
+		return
+	end
+	PostRaw("/delete", body)
+end
+
+function BotHandler.GetPetExist(_, petName, isShiny)
 	if typeof(petName) ~= "string" then
 		return nil
 	end
@@ -325,3 +261,43 @@ GetPetExist.OnServerInvoke = function(_, petName, isShiny)
 	end
 	return nil
 end
+
+function BotHandler.LinkPlayer(player: Player, code: string)
+	if code == "" then
+		return false
+	end
+	local profile = PlayerData.GetData(player)
+	if profile.LastBotVerifyAttempt + Globals.BotVerifyRequestCooldown > os.time() then
+		return (profile.LastBotVerifyAttempt + Globals.BotVerifyRequestCooldown - os.time())
+	end
+
+	profile.LastBotVerifyAttempt = os.time()
+
+	local success = HandleLinkCommand(player, code)
+
+	return success
+end
+
+function BotHandler.Initialize()
+	task.spawn(SyncPetStats)
+
+	MessagingService:SubscribeAsync(CACHE_TOPIC, function(message)
+		local ok, pets = pcall(HttpService.JSONDecode, HttpService, message.Data)
+		if not ok or type(pets) ~= "table" then
+			return
+		end
+		local now = os.clock()
+		for key, value in pairs(pets) do
+			existCache[key] = { value = value, fetchedAt = now }
+		end
+	end)
+
+	task.spawn(function()
+		while true do
+			task.wait(CACHE_TTL)
+			task.spawn(FetchAllAndBroadcast)
+		end
+	end)
+end
+
+return BotHandler

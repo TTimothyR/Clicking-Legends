@@ -394,9 +394,9 @@ local function LoadPetInfo(id: string)
 	petInfoHolder.FoundDate.Text = "Found on " .. date.day .. "/" .. date.month .. "/" .. (date.year - 2000)
 	petInfoHolder.Level.Text = "Level " .. petData.level
 	petInfoHolder.XP.Progress.Text = petData.xp .. " / " .. infMath.new(xpNeeded):GetSuffix(true) .. " XP"
-
-	local clicks = globals.GetPetClicks(petData)
-	local gems = globals.GetPetGems(petData)
+	local pets = dataSync.Get("Pets")
+	local clicks = globals.GetPetClicks(pets, petData)
+	local gems = globals.GetPetGems(pets, petData)
 
 	petInfoHolder.Stats.Clicks.Amount.Text = infMath.new(clicks):GetSuffix(true)
 	petInfoHolder.Stats.Gems.Amount.Text = infMath.new(gems):GetSuffix(true)
@@ -574,7 +574,7 @@ CreatePetClickConnection = function(clone, petData)
 	tooltipTbl.gems = true
 	tooltipTbl.ShowLevel = true
 	tooltipTbl.reference = petData.id
-	tooltipTbl.ShowExist = petStats[petData.petName].Secret
+	tooltipTbl.ShowExist = petStats[petData.petName].Secret or petStats[petData.petName].Exclusive or false
 	local tooltipConnections = Tooltip.SetupTooltip(clone, "PetTooltip", petData)
 	local clickCon = clone.MouseButton1Click:Connect(function()
 		if not db then

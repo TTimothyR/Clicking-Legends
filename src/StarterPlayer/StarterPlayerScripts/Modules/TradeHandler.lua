@@ -153,7 +153,7 @@ local function CreatePetButton(clone, holder, petData): (Frame, { [number]: RBXS
 	tooltipTbl.gems = true
 	tooltipTbl.ShowLevel = true
 	tooltipTbl.reference = petData.id
-	tooltipTbl.ShowExist = petStats[petData.petName].Secret
+	tooltipTbl.ShowExist = petStats[petData.petName].Secret or petStats[petData.petName].Exclusive or false
 	tooltipTbl.FromTrade = true
 	local tooltipConnections = Tooltip.SetupTooltip(clone.Click, "PetTooltip", petData)
 

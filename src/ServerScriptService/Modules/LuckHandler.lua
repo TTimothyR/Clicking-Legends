@@ -48,14 +48,19 @@ function LuckHandler.RollPet(player: Player, eggName: string)
 			luckPercentage += Globals.GetPotionBuffAmount(tier, "Lucky")
 		end
 	end
-
+	local count = 0
 	for _, data in ipairs(profile.Pets) do
 		if not data.equipped then
 			continue
 		end
 
+		if count >= Globals.MaximumExclusiveEnchants then
+			break
+		end
+
 		if data.enchant then
 			if string.find(data.enchant, "Lucky") then
+				count += 1
 				luckPercentage += Enchants[data.enchant].Buff
 			end
 		end

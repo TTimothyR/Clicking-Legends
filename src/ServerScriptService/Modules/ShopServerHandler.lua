@@ -1,6 +1,7 @@
 local ShopHandler = {}
 
 -- Services
+local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local players = game:GetService("Players")
 local mps = game:GetService("MarketplaceService")
@@ -11,7 +12,9 @@ local framework = rs:WaitForChild("Framework")
 local library = framework:WaitForChild("Library")
 
 -- Modules
+local BotHandler = require(script.Parent.BotHandler).Private
 local GenerateID = require(ReplicatedStorage.Framework.GenerateID)
+local ImageService = require(ReplicatedStorage.Framework.Library.ImageService)
 local shopStats = require(library.ShopStats)
 local network = require(framework.Network)
 local infMath = require(framework.InfiniteMath)
@@ -62,10 +65,23 @@ local callbacks = {
 	end,
 
 	["Pet"] = function(player: Player, pets)
+		local changes = {}
 		for _, data in pairs(pets) do
-			local _ = rewardHandler.ClaimPet(player, data.PetName, (data.PetName:find("Shiny ") ~= nil), data.Enchant)
+			local shiny = (data.PetName:find("Shiny ") ~= nil)
+			local _ = rewardHandler.ClaimPet(player, data.PetName, shiny, data.Enchant)
+			table.insert(changes, {
+				petName = data.PetName,
+				isShiny = shiny,
+				imageId = tostring(ImageService[data.PetName]:gsub("rbxassetid://", "")) or "",
+				chance = 100,
+				delta = 1,
+				showHatch = false,
+			})
 		end
 
+		task.spawn(function()
+			BotHandler.Hatch(player.Name, HttpService:JSONEncode(changes))
+		end)
 		local profile = playerData.GetData(player)
 		dataSync.SyncPlayer(player, profile)
 	end,

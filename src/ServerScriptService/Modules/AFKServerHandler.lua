@@ -5,12 +5,19 @@ local ServerScriptService = game:GetService("ServerScriptService")
 local TeleportService = game:GetService("TeleportService")
 
 local dataModules = ServerScriptService:WaitForChild("DataModules")
+local teleportPads = workspace:WaitForChild("TeleportPads")
 
 local playerData = require(dataModules.PlayerData)
 
 local function SetPlayerPosition(player: Player)
 	local profile = playerData.GetData(player)
 	if profile.SavedPlayerPosition == nil then
+		if profile.CurrentWorld ~= "Spawn" then
+			local character = player.Character
+			if character and character.Parent then
+				character:MoveTo(teleportPads[profile.CurrentWorld].Position)
+			end
+		end
 		return
 	end
 

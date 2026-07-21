@@ -20,6 +20,8 @@ return {
 
 	-- Common Egg
 	["Doggy"] = "rbxassetid://113590768710767",
+	["ExclusivePet1"] = "rbxassetid://113590768710767",
+	["ExclusivePet2"] = "rbxassetid://113590768710767",
 	["Kitty"] = "rbxassetid://100456194852605",
 	["Bunny"] = "rbxassetid://71106531109648",
 	["Bear"] = "rbxassetid://111700922885264",
@@ -161,6 +163,12 @@ return {
 	["Lucky_V"] = "rbxassetid://125209714303795",
 	["Rebirths_V"] = "rbxassetid://86541958861177",
 	["Speed_V"] = "rbxassetid://138703768114456",
+
+	-- Perks
+	["EggHatches"] = "rbxassetid://85826740360024",
+	["HatchSpeed"] = "rbxassetid://78101075441396",
+	["LuckPercentage"] = "rbxassetid://75719439496359",
+	["ClickMultiplier"] = "rbxassetid://130143670610388",
 
 	-- Upgrades
 	["Faster Walkspeed"] = "rbxassetid://90031078660862",

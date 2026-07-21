@@ -21,6 +21,7 @@ local main = settingsFrame:WaitForChild("Main") :: Frame
 local list = main:WaitForChild("List") :: Frame
 local settingsList = list:WaitForChild("ScrollingFrame") :: ScrollingFrame
 
+local Globals = require(ReplicatedStorage.Framework.Globals)
 local settingsConfig = require(library.SettingsConfig)
 local dataSync = require(script.Parent.DataSyncClient)
 local network = require(framework.Network)
@@ -36,6 +37,7 @@ local sliderMaximumXPosition = 1.0
 
 local toggleConnections = {}
 local sliderConnections = {}
+local textInputConnections = {}
 
 local function CreateSliderConnection(settingName, sliderFrame: Frame)
 	if not sliderConnections[settingName] then
@@ -139,6 +141,48 @@ local function CreateToggleClickConnection(settingName, toggleButton: ImageButto
 	end
 end
 
+local function CreateTextInputConnections(settingName, frame: Frame)
+	if not textInputConnections[settingName] then
+		textInputConnections[settingName] = {}
+		local entryBox = frame:FindFirstChild("EntryBox") :: Frame
+		local verifyButton = frame:FindFirstChild("VerifyButton") :: ImageButton
+		local textBox = entryBox:FindFirstChild("TextBox") :: TextBox
+
+		table.insert(
+			textInputConnections[settingName],
+			textBox.Focused:Connect(function()
+				textBox.Text = ""
+			end)
+		)
+		table.insert(
+			textInputConnections[settingName],
+			verifyButton.MouseButton1Click:Connect(function()
+				if not db then
+					db = true
+					task.delay(0.15, function()
+						db = false
+					end)
+
+					local returnInfo = network:InvokeServer("LinkPlayer", textBox.Text)
+					if type(returnInfo) == "number" then
+						textBox.Text = "On Cooldown: " .. Globals.FormatTime(returnInfo, true)
+					elseif type(returnInfo) == "boolean" then
+						if returnInfo then
+							textBox.Text = "Successfully linked!"
+						else
+							textBox.Text = "Something went wrong."
+						end
+					end
+
+					task.delay(3, function()
+						textBox.Text = ""
+					end)
+				end
+			end)
+		)
+	end
+end
+
 function SettingsHandler.LoadSettings()
 	local playerSettings = dataSync.Get("Settings")
 
@@ -170,6 +214,8 @@ function SettingsHandler.LoadSettings()
 			bar.Size = UDim2.fromScale(togglePosition, bar.Size.Y.Scale)
 
 			CreateSliderConnection(settingName, sliderFrame)
+		elseif config.Type == "TextInput" then
+			CreateTextInputConnections(settingName, settingFrame)
 		else
 			warn("Unknown setting type, possibly a typo.")
 		end

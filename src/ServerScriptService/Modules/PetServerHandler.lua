@@ -5,7 +5,6 @@ local HttpService = game:GetService("HttpService")
 local players = game:GetService("Players")
 local sss = game:GetService("ServerScriptService")
 local rs = game:GetService("ReplicatedStorage")
-local ServerStorage = game:GetService("ServerStorage")
 
 -- Variables
 local dataModules = sss:WaitForChild("DataModules")
@@ -13,6 +12,7 @@ local framework = rs:WaitForChild("Framework")
 local library = framework:WaitForChild("Library")
 
 -- Modules
+local BotHandler = require(script.Parent.BotHandler).Private
 local playerData = require(dataModules.PlayerData)
 local tblUtil = require(framework.TableUtility)
 local network = require(framework.Network)
@@ -20,9 +20,6 @@ local globals = require(framework.Globals)
 local generateID = require(framework.GenerateID)
 local petStats = require(library.PetStats)
 local dataSync = require(dataModules.DataSyncServer).Private
-
-local craftBind = ServerStorage:WaitForChild("Craft") :: BindableFunction
-local deleteBind = ServerStorage:WaitForChild("Delete") :: BindableFunction
 
 local function GetPetAmount(profile, petName: string)
 	local count = 0
@@ -196,13 +193,13 @@ function PetHandler.DeletePet(player: Player, id: string)
 	end
 	table.remove(pets, index)
 
-	if petStats[petData.petName].Secret == true then
+	if petStats[petData.petName].Secret == true or petStats[petData.petName].Exclusive == true then
 		local changes = {
 			{ petName = petData.petName, isShiny = petData.shiny, delta = -1 },
 		}
 
 		task.spawn(function()
-			deleteBind:Invoke(HttpService:JSONEncode(changes))
+			BotHandler.Delete(HttpService:JSONEncode(changes))
 		end)
 	end
 
@@ -253,7 +250,7 @@ function PetHandler.DeleteAllUnlocked(player: Player)
 		local index, petData = tblUtil.FindIndexWithId(pets, id)
 		table.remove(pets, index)
 
-		if petStats[petData.petName].Secret == true then
+		if petStats[petData.petName].Secret == true or petStats[petData.petName].Exclusive == true then
 			local found = false
 			for _, entry in ipairs(changes) do
 				if entry.petName == petData.petName and entry.isShiny == petData.shiny then
@@ -276,7 +273,7 @@ function PetHandler.DeleteAllUnlocked(player: Player)
 
 	if #changes > 0 then
 		task.spawn(function()
-			deleteBind:Invoke(HttpService:JSONEncode(changes))
+			BotHandler.Delete(HttpService:JSONEncode(changes))
 		end)
 	end
 
@@ -327,7 +324,7 @@ function PetHandler.DeleteSelection(player: Player, selection)
 		local index, petData = tblUtil.FindIndexWithId(pets, id)
 		table.remove(pets, index)
 
-		if petStats[petData.petName].Secret == true then
+		if petStats[petData.petName].Secret == true or petStats[petData.petName].Exclusive == true then
 			local found = false
 			for _, entry in ipairs(changes) do
 				if entry.petName == petData.petName and entry.isShiny == petData.shiny then
@@ -350,7 +347,7 @@ function PetHandler.DeleteSelection(player: Player, selection)
 
 	if #changes > 0 then
 		task.spawn(function()
-			deleteBind:Invoke(HttpService:JSONEncode(changes))
+			BotHandler.Delete(HttpService:JSONEncode(changes))
 		end)
 	end
 
@@ -454,9 +451,10 @@ function PetHandler.CraftAll(player: Player)
 			date = os.time(),
 			locked = false,
 			equipped = false,
+			enchant = data.PetData[1].enchant,
 		})
 
-		if petStats[petName].Secret == true then
+		if petStats[petName].Secret == true or petStats[petName].Exclusive == true then
 			table.insert(changes, { petName = petName, isShiny = false, delta = -data.Count * 8 })
 			table.insert(changes, { petName = petName, isShiny = true, delta = data.Count })
 		end
@@ -464,7 +462,7 @@ function PetHandler.CraftAll(player: Player)
 
 	if #changes > 0 then
 		task.spawn(function()
-			craftBind:Invoke(HttpService:JSONEncode(changes))
+			BotHandler.Craft(HttpService:JSONEncode(changes))
 		end)
 	end
 
@@ -495,12 +493,15 @@ function PetHandler.MakeShiny(player: Player, petName: string)
 	local idsToRemove = {}
 	local pets = profile.Pets
 
+	local enchant = ""
+
 	local count = 0
 	for _, petData in ipairs(pets) do
 		if count == 8 then
 			break
 		end
 		if petData.petName == petName and not petData.shiny and not petData.locked then
+			enchant = petData.enchant
 			table.insert(idsToRemove, petData.id)
 			count += 1
 			if petData.equipped then
@@ -532,15 +533,16 @@ function PetHandler.MakeShiny(player: Player, petName: string)
 		date = os.time(),
 		locked = false,
 		equipped = false,
+		enchant = enchant,
 	})
 
-	if petStats[petName].Secret == true then
+	if petStats[petName].Secret == true or petStats[petName].Exclusive == true then
 		local changes = {
 			{ petName = petName, isShiny = false, delta = -8 },
 			{ petName = petName, isShiny = true, delta = 1 },
 		}
 		task.spawn(function()
-			craftBind:Invoke(HttpService:JSONEncode(changes))
+			BotHandler.Craft(HttpService:JSONEncode(changes))
 		end)
 	end
 

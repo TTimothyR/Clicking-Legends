@@ -100,6 +100,7 @@ local function LoadShop()
 
 		clone.Inner.PassName.Text = gamepassName
 		clone.Inner.PassDescription.Text = data.Description
+		clone.Inner.UIGradient.Color = shopStats.Gamepasses[gamepassName].Gradient
 		clone.Inner:WaitForChild("Icon").Image = ImageService[gamepassName] or ImageService["Placeholder"]
 
 		gpConnections[gamepassName] = clone.Inner.Buttons.Buy.Click.MouseButton1Click:Connect(function()

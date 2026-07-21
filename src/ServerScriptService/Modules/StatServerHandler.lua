@@ -1,6 +1,7 @@
 local StatHandler = {}
 
 -- Services
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local players = game:GetService("Players")
 local sss = game:GetService("ServerScriptService")
 local rs = game:GetService("ReplicatedStorage")
@@ -12,6 +13,7 @@ local dataModules = sss:WaitForChild("DataModules")
 local framework = rs:WaitForChild("Framework")
 local library = framework:WaitForChild("Library")
 
+local Worlds = require(ReplicatedStorage.Framework.Library.Worlds)
 local GlobalEventsModule = require(library:WaitForChild("GlobalEventsModule"))
 
 local characterGroup = "CHAR"
@@ -49,7 +51,7 @@ local function GetPetClicks(pets)
 		if not petData.equipped then
 			continue
 		end
-		totalClicks += globals.GetPetClicks(petData)
+		totalClicks += globals.GetPetClicks(pets, petData)
 	end
 
 	return totalClicks
@@ -135,6 +137,8 @@ function StatHandler.Click(player: Player, fromAutoClick: boolean)
 	if ownedGamepasses["VIP"] then
 		increment *= 1.2
 	end
+
+	increment *= Worlds[profile.CurrentWorld].Boost
 
 	profile.Clicks = infMath.new(profile.Clicks + increment)
 	profile.TotalClicks = infMath.new(profile.TotalClicks + increment)

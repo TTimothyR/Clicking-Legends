@@ -33,7 +33,7 @@ return {
 
 	["Candy Egg"] = {
 		Price = { "Clicks", 1 },
-		World = "Spawn",
+		World = "Candy",
 		Limited = false,
 		LayoutOrder = 2,
 		Rewards = { { "Potion", "Lucky_I", 69 }, { "Potion", "Speed_III", 5 } },

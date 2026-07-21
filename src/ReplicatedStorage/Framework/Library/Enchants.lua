@@ -8,7 +8,7 @@ local Enchants = {
 	["Teamwork_👑"] = {
 		Name = "Teamwork_👑",
 		Rarity = "Exclusive",
-		Buff = 30,
+		Buff = 10,
 		ExpiresAfter = nil,
 	},
 }

@@ -355,4 +355,22 @@ return {
 		Secret = true,
 		EggUIBlacklist = true,
 	},
+	["ExclusivePet1"] = {
+		Rarity = "Legendary",
+		State = "Fly",
+		Clicks = 23e4,
+		GemMulti = 2300,
+		Secret = false,
+		Exclusive = true,
+		EggUIBlacklist = true,
+	},
+	["ExclusivePet2"] = {
+		Rarity = "Legendary",
+		State = "Fly",
+		Clicks = 23e4,
+		GemMulti = 2300,
+		Secret = false,
+		Exclusive = true,
+		EggUIBlacklist = true,
+	},
 }

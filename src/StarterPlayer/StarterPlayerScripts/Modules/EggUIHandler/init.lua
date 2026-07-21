@@ -67,14 +67,19 @@ local function CalculateLuckPercentage()
 			luckPercentage += globals.GetPotionBuffAmount(tier, "Lucky")
 		end
 	end
-
+	local count = 0
 	for _, data in ipairs(pets) do
 		if not data.equipped then
 			continue
 		end
 
+		if count >= globals.MaximumExclusiveEnchants then
+			break
+		end
+
 		if data.enchant then
 			if string.find(data.enchant, "Lucky") then
+				count += 1
 				luckPercentage += Enchants[data.enchant].Buff
 			end
 		end
