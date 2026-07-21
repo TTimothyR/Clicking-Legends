@@ -114,7 +114,7 @@ function PetHandler.EquipBest(player: Player)
 		profile.CurrentEquips += 1
 	end
 	for _, plr: Player in ipairs(players:GetPlayers()) do
-		network:FireClient(plr, "UpdatePets", player, table.clone(pets))
+		network:FireClient(plr, "UpdatePets", player, table.clone(profile.Pets))
 	end
 
 	dataSync.SyncPlayer(player, profile)
@@ -135,7 +135,7 @@ function PetHandler.UnequipAll(player: Player)
 	end
 
 	for _, plr: Player in ipairs(players:GetPlayers()) do
-		network:FireClient(plr, "UpdatePets", player, table.clone(pets))
+		network:FireClient(plr, "UpdatePets", player, table.clone(profile.Pets))
 	end
 
 	dataSync.SyncPlayer(player, profile)
@@ -157,12 +157,11 @@ function PetHandler.UnequipPet(player: Player, id: string)
 		return false
 	end
 
+	petData.equipped = false
+	profile.CurrentEquips -= 1
 	for _, plr: Player in ipairs(players:GetPlayers()) do
 		network:FireClient(plr, "UpdatePet", player, petData, false)
 	end
-
-	petData.equipped = false
-	profile.CurrentEquips -= 1
 
 	dataSync.SyncPlayer(player, profile)
 	return true
@@ -189,7 +188,11 @@ function PetHandler.DeletePet(player: Player, id: string)
 	end
 
 	if petData.equipped then
-		PetHandler.UnequipPet(player, id)
+		petData.equipped = false
+		profile.CurrentEquips -= 1
+		for _, plr: Player in ipairs(players:GetPlayers()) do
+			network:FireClient(plr, "UpdatePet", player, petData, false)
+		end
 	end
 	table.remove(pets, index)
 
@@ -235,7 +238,8 @@ function PetHandler.DeleteAllUnlocked(player: Player)
 			continue
 		end
 		if petData.equipped then
-			PetHandler.UnequipPet(player, petData.id)
+			petData.equipped = false
+			profile.CurrentEquips -= 1
 		end
 		table.insert(idsToRemove, petData.id)
 	end
@@ -307,12 +311,14 @@ function PetHandler.DeleteSelection(player: Player, selection)
 		end
 
 		if petData.equipped then
-			PetHandler.UnequipPet(player, id)
+			petData.equipped = false
+			profile.CurrentEquips -= 1
 		end
 		table.insert(idsToRemove, id)
 	end
+
 	for _, plr: Player in ipairs(players:GetPlayers()) do
-		network:FireClient(plr, "UpdatePets", player, table.clone(pets))
+		network:FireClient(plr, "UpdatePets", player, table.clone(profile.Pets))
 	end
 
 	local changes = {}
@@ -356,6 +362,120 @@ function PetHandler.DeleteSelection(player: Player, selection)
 	return true, idsToRemove
 end
 
+function PetHandler.CraftAll(player: Player)
+	local profile = playerData.GetData(player)
+	if not profile then
+		return false, nil
+	end
+	if profile.TradeBanned then
+		return false, nil
+	end
+	if profile.IsInTrade then
+		return false, nil
+	end
+
+	local normalPetCounts = {}
+
+	for _, petData in ipairs(profile.Pets) do
+		if petData.shiny or petData.locked then
+			continue
+		end
+		if not normalPetCounts[petData.petName] then
+			normalPetCounts[petData.petName] = { Count = 1, PetData = { petData } }
+		else
+			normalPetCounts[petData.petName].Count += 1
+			table.insert(normalPetCounts[petData.petName].PetData, petData)
+		end
+	end
+
+	local targetShinyPetCounts = {}
+
+	for petName, data in pairs(normalPetCounts) do
+		if data.Count < 8 then
+			continue
+		end
+
+		local shinyCount = math.floor(data.Count / 8)
+		targetShinyPetCounts[petName] = { Count = shinyCount, PetData = data.PetData }
+	end
+
+	for _, data in pairs(targetShinyPetCounts) do
+		local eligiblePets = #data.PetData
+		local extraAmount = eligiblePets - data.Count * 8
+
+		for i = extraAmount, 1, -1 do
+			table.remove(data.PetData, i)
+		end
+	end
+
+	local idsToRemove = {}
+
+	for _, data in pairs(targetShinyPetCounts) do
+		for _, petData in ipairs(data.PetData) do
+			table.insert(idsToRemove, petData.id)
+			if petData.equipped then
+				petData.equipped = false
+				profile.CurrentEquips -= 1
+			end
+		end
+	end
+	for _, plr: Player in ipairs(players:GetPlayers()) do
+		network:FireClient(plr, "UpdatePets", player, table.clone(profile.Pets))
+	end
+
+	local removeSet = {}
+
+	for _, id in ipairs(idsToRemove) do
+		removeSet[id] = true
+	end
+
+	local newPets = {}
+	for _, petData in ipairs(profile.Pets) do
+		if not removeSet[petData.id] then
+			table.insert(newPets, petData)
+		end
+	end
+	profile.Pets = newPets
+
+	local changes = {}
+
+	for petName, data in pairs(targetShinyPetCounts) do
+		if not profile.PetIndex["Shiny " .. petName] then
+			profile.PetIndex["Shiny " .. petName] = true
+		end
+
+		table.insert(profile.Pets, {
+			petName = petName,
+			fullName = "Shiny " .. petName,
+			shiny = true,
+			id = generateID.NewID(),
+			level = 1,
+			xp = 0,
+			date = os.time(),
+			locked = false,
+			equipped = false,
+		})
+
+		if petStats[petName].Secret == true then
+			table.insert(changes, { petName = petName, isShiny = false, delta = -data.Count * 8 })
+			table.insert(changes, { petName = petName, isShiny = true, delta = data.Count })
+		end
+	end
+
+	if #changes > 0 then
+		task.spawn(function()
+			craftBind:Invoke(HttpService:JSONEncode(changes))
+		end)
+	end
+
+	local dupes = globals.GetPetDuplicates(profile.Pets)
+	profile.TradeBanned = next(dupes) ~= nil
+
+	dataSync.SyncPlayer(player, profile)
+
+	return true, idsToRemove
+end
+
 function PetHandler.MakeShiny(player: Player, petName: string)
 	local profile = playerData.GetData(player)
 	if not profile then
@@ -384,7 +504,8 @@ function PetHandler.MakeShiny(player: Player, petName: string)
 			table.insert(idsToRemove, petData.id)
 			count += 1
 			if petData.equipped then
-				PetHandler.UnequipPet(player, petData.id)
+				petData.equipped = false
+				profile.CurrentEquips -= 1
 			end
 		end
 	end

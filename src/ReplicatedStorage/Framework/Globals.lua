@@ -149,6 +149,14 @@ function Globals.GetAnimatedGradients(
 		if child.Frame.Legendary.Enabled then
 			table.insert(gradientsToAnimate, child.Frame.Legendary)
 		end
+		if child.Glow:FindFirstChild("Shiny") then
+			if child.Glow.Shiny.Enabled then
+				table.insert(gradientsToAnimate, child.Glow.Shiny)
+			end
+			if child.Frame.Shiny.Enabled then
+				table.insert(gradientsToAnimate, child.Frame.Shiny)
+			end
+		end
 	end
 	for _, parent in ipairs(parents) do
 		for _, child in ipairs(parent:GetChildren()) do

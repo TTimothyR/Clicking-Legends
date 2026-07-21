@@ -33,6 +33,8 @@ local library = framework:WaitForChild("Library")
 local cpsNumber = script:WaitForChild("CPSNumber")
 local criticalEffects = script:WaitForChild("Critical")
 
+local trackerThread: thread? = nil
+
 local rng = Random.new()
 
 local statsLoaded = false
@@ -609,6 +611,9 @@ local function ClickByScreen(inputPosition)
 end
 
 local function StartCPSTrack()
+	if trackerThread then
+		task.cancel(trackerThread)
+	end
 	local currencyFrame = statsFrame.Clicks
 	local cpsText = currencyFrame.Background.CPS
 	cpsText.Text = "0/s"
@@ -628,36 +633,41 @@ local function StartCPSTrack()
 	local currentCPS = infMath.new(0)
 	local goalValue: number = 1
 
-	while true do
-		task.wait(updateTime)
-		if currentTween then
-			currentTween:Cancel()
+	trackerThread = task.spawn(function()
+		while true do
+			task.wait(updateTime)
+			if currentTween then
+				currentTween:Cancel()
+			end
+			if currentConnection then
+				currentConnection:Disconnect()
+			end
+
+			local currentClicks = dataSync.Get("Clicks")
+			if currentClicks then
+				local currentRaw = currentClicks
+				local currentTbl = infMath.new(currentRaw)
+
+				local cps = currentTbl - lastClickTable
+				if cps < infMath.new(0) then
+					cps = infMath.new(0)
+				end
+
+				local startValue = currentCPS
+				local delta = cps - startValue
+
+				cpsNumber.Value = 0
+				currentTween = ts:Create(cpsNumber, TweenInfo.new(0.3), { Value = goalValue })
+
+				currentConnection = cpsNumber.Changed:Connect(function(value)
+					currentCPS = startValue + (delta * value)
+					cpsText.Text = currentCPS:GetSuffix(true) .. "/s"
+				end)
+				currentTween:Play()
+				lastClickTable = currentTbl
+			end
 		end
-		if currentConnection then
-			currentConnection:Disconnect()
-		end
-
-		local currentClicks = dataSync.Get("Clicks")
-		if currentClicks then
-			local currentRaw = currentClicks
-			local currentTbl = infMath.new(currentRaw)
-
-			local cps = infMath.new(currentTbl - lastClickTable)
-
-			local startValue = currentCPS
-			local delta = infMath.new(cps - startValue)
-
-			cpsNumber.Value = 0
-			currentTween = ts:Create(cpsNumber, TweenInfo.new(0.3), { Value = goalValue })
-
-			currentConnection = cpsNumber.Changed:Connect(function(value)
-				currentCPS = infMath.new(startValue + (delta * value))
-				cpsText.Text = currentCPS:GetSuffix(true) .. "/s"
-			end)
-			currentTween:Play()
-			lastClickTable = currentTbl
-		end
-	end
+	end)
 end
 
 -- local function AutoClick()

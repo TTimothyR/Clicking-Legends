@@ -6,6 +6,7 @@ type InventoryConnections = { [string]: TemplateConnections }
 
 type TemplateConnections = {
 	ClickConnection: RBXScriptConnection?,
+	ShinyConnection: RBXScriptConnection?,
 	TooltipConnections: { [number]: RBXScriptConnection },
 }
 
@@ -92,6 +93,7 @@ local deleteAll = bulkButtons:WaitForChild("DeleteAll")
 local utilityButtons = main:WaitForChild("UtilityButtons")
 local utilButtonsHolder = utilityButtons:WaitForChild("Holder")
 local multiDeleteButton = utilButtonsHolder:WaitForChild("MultiDelete")
+local craftAllButton = utilButtonsHolder:WaitForChild("CraftAll")
 local inventory = main:WaitForChild("Inventory")
 local holder = inventory:WaitForChild("ScrollingFrame")
 local equippedTag = holder:WaitForChild("EquippedTag")
@@ -203,6 +205,9 @@ local function RemoveConnection(key: string, container: InventoryConnections)
 		if connections.ClickConnection and connections.ClickConnection.Connected then
 			connections.ClickConnection:Disconnect()
 		end
+		if connections.ShinyConnection and connections.ShinyConnection.Connected then
+			connections.ShinyConnection:Disconnect()
+		end
 
 		for _, connection: RBXScriptConnection in ipairs(connections.TooltipConnections) do
 			if connection and connection.Connected then
@@ -214,6 +219,7 @@ local function RemoveConnection(key: string, container: InventoryConnections)
 	end
 	container[key] = {
 		ClickConnection = nil,
+		ShinyConnection = nil,
 		TooltipConnections = {},
 	}
 end
@@ -601,8 +607,13 @@ CreatePetClickConnection = function(clone, petData)
 			end
 		end
 	end) :: RBXScriptConnection
+	local shinyCon = nil
+	if petData.shiny then
+		shinyCon = InterfaceUtility.CreateShinyEffect(clone)
+	end
 
 	petConnections[petData.id].ClickConnection = clickCon
+	petConnections[petData.id].ShinyConnection = shinyCon
 	petConnections[petData.id].TooltipConnections = tooltipConnections
 end
 
@@ -638,15 +649,31 @@ local function CreateEquippedPet(petData, template)
 		clone.Frame.PetName.Text = petData.petName
 	end
 	local rarity = petStats[petData.petName].Rarity
-	clone.Frame.BackgroundColor3 = globals.RarityColors[rarity]
-	if rarity == "Legendary" then
+
+	if petData.shiny then
 		clone.Glow.Visible = true
-		clone.Glow.Legendary.Enabled = true
-		clone.Frame.Legendary.Enabled = true
+		clone.Glow.Shiny.Enabled = true
+		clone.Frame.Shiny.Enabled = true
+		clone.Frame.Frame.Normal.Enabled = false
+		clone.Frame.Frame.Shiny.Enabled = true
+		clone.Frame.ImageLabel.ShinyEffect.Visible = true
 
 		if animationLoaded then
-			table.insert(gradientsToAnimate, clone.Glow.Legendary)
-			table.insert(gradientsToAnimate, clone.Frame.Legendary)
+			table.insert(gradientsToAnimate, clone.Glow.Shiny)
+			table.insert(gradientsToAnimate, clone.Frame.Shiny)
+		end
+	else
+		clone.Frame.BackgroundColor3 = globals.RarityColors[rarity]
+
+		if rarity == "Legendary" then
+			clone.Glow.Visible = true
+			clone.Glow.Legendary.Enabled = true
+			clone.Frame.Legendary.Enabled = true
+
+			if animationLoaded then
+				table.insert(gradientsToAnimate, clone.Glow.Legendary)
+				table.insert(gradientsToAnimate, clone.Frame.Legendary)
+			end
 		end
 	end
 
@@ -661,17 +688,33 @@ local function CreateNormalPet(petData)
 	CreateFullNameVariable(clone, petData)
 
 	local rarity = petStats[petData.petName].Rarity
-	clone.Frame.BackgroundColor3 = globals.RarityColors[rarity]
+	-- clone.Frame.BackgroundColor3 = globals.RarityColors[rarity]
 	clone.Frame.ImageLabel.Image = imageService[petData.fullName] or imageService["Placeholder"]
 	clone.Frame.ImageLabel.Level.Text = petData.level
-	if rarity == "Legendary" then
+	if petData.shiny then
 		clone.Glow.Visible = true
-		clone.Glow.Legendary.Enabled = true
-		clone.Frame.Legendary.Enabled = true
+		clone.Glow.Shiny.Enabled = true
+		clone.Frame.Shiny.Enabled = true
+		clone.Frame.Frame.Normal.Enabled = false
+		clone.Frame.Frame.Shiny.Enabled = true
+		clone.Frame.ImageLabel.ShinyEffect.Visible = true
 
 		if animationLoaded then
-			table.insert(gradientsToAnimate, clone.Glow.Legendary)
-			table.insert(gradientsToAnimate, clone.Frame.Legendary)
+			table.insert(gradientsToAnimate, clone.Glow.Shiny)
+			table.insert(gradientsToAnimate, clone.Frame.Shiny)
+		end
+	else
+		clone.Frame.BackgroundColor3 = globals.RarityColors[rarity]
+
+		if rarity == "Legendary" then
+			clone.Glow.Visible = true
+			clone.Glow.Legendary.Enabled = true
+			clone.Frame.Legendary.Enabled = true
+
+			if animationLoaded then
+				table.insert(gradientsToAnimate, clone.Glow.Legendary)
+				table.insert(gradientsToAnimate, clone.Frame.Legendary)
+			end
 		end
 	end
 
@@ -704,13 +747,27 @@ local function CreateSecretPet(petData)
 	end
 
 	clone.Glow.Visible = true
-	clone.Glow.Legendary.Enabled = true
-	clone.Frame.Legendary.Enabled = true
+	if petData.shiny then
+		clone.Glow.Shiny.Enabled = true
+		clone.Frame.Shiny.Enabled = true
+		clone.Frame.Frame.Normal.Enabled = false
+		clone.Frame.Frame.Shiny.Enabled = true
+		clone.Frame.ImageLabel.ShinyEffect.Visible = true
 
-	if animationLoaded then
-		table.insert(gradientsToAnimate, clone.Glow.Legendary)
-		table.insert(gradientsToAnimate, clone.Frame.Legendary)
+		if animationLoaded then
+			table.insert(gradientsToAnimate, clone.Glow.Shiny)
+			table.insert(gradientsToAnimate, clone.Frame.Shiny)
+		end
+	else
+		clone.Glow.Legendary.Enabled = true
+		clone.Frame.Legendary.Enabled = true
+
+		if animationLoaded then
+			table.insert(gradientsToAnimate, clone.Glow.Legendary)
+			table.insert(gradientsToAnimate, clone.Frame.Legendary)
+		end
 	end
+
 	CreatePetClickConnection(clone, petData)
 end
 
@@ -872,7 +929,7 @@ function InventoryHandler.LoadInventory()
 				ClearMultiDelete()
 			end
 		end)
-		multiDeleteButton.MouseButton1Click:Connect(function()
+		multiDeleteButton.Click.MouseButton1Click:Connect(function()
 			if not db then
 				db = true
 				task.delay(0.15, function()
@@ -890,6 +947,34 @@ function InventoryHandler.LoadInventory()
 
 					multiDeleteInfo.Info.Text = "0 Pets selected"
 				end
+			end
+		end)
+		craftAllButton.Click.MouseButton1Click:Connect(function()
+			if not db then
+				db = true
+				task.delay(0.15, function()
+					db = false
+				end)
+				warning.new(nil, "Are you sure you want to craft all unlocked pets shiny?", function()
+					menuHandler.handleOpenClose(inventoryFrame)
+					local success, deletedIds = network:InvokeServer("CraftAll")
+					if success then
+						for _, id in ipairs(deletedIds) do
+							local obj = holder:FindFirstChild(id, true)
+							if obj then
+								obj:Destroy()
+							end
+
+							if selectedPetID == id then
+								selectedPetID = nil
+								petInfoHolder.Visible = false
+							end
+						end
+					end
+				end, function()
+					menuHandler.handleOpenClose(inventoryFrame)
+				end, warningFrame)
+				menuHandler.handleOpenClose(warningFrame)
 			end
 		end)
 		equipBest.Click.MouseButton1Click:Connect(function()
@@ -932,7 +1017,10 @@ function InventoryHandler.LoadInventory()
 					if success then
 						-- InventoryHandler.LoadInventory();
 						for _, id in ipairs(deletedIds) do
-							holder:FindFirstChild(id, true):Destroy()
+							local obj = holder:FindFirstChild(id, true)
+							if obj then
+								obj:Destroy()
+							end
 							if selectedPetID == id then
 								selectedPetID = nil
 								petInfoHolder.Visible = false

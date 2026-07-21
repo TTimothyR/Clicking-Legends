@@ -112,12 +112,12 @@ local function SetupTemplate(ui)
 				item.Click.Icon.ImageColor3 = Color3.fromRGB(255, 255, 255)
 			end
 
-			local chance = globals.GetPetChance(luckPassOwned, luckPercentage, item.Name, ui.Name, false)
+			local chance = globals.GetPetChance(luckPassOwned, luckPercentage, item.Name, ui.Name, false) or 0
 
 			if not easyChance then
 				item.Click.Chance.Text = globals.FormatChance(chance) .. "%"
 			else
-				local calculatedChance = 100 / chance
+				local calculatedChance = (chance == 0) and 0 or 100 / chance
 				item.Click.Chance.Text = "1 in " .. globals.FormatNumber(calculatedChance)
 			end
 			clickConnection = item.Click.MouseButton1Click:Connect(function()
@@ -331,7 +331,7 @@ local function ConfigureEggUI(egg: Model)
 			continue
 		end
 		local petClone = petTemplate:Clone()
-		local chance = globals.GetPetChance(luckPassOwned, luckPercentage, petName, egg.Name, false)
+		local chance = globals.GetPetChance(luckPassOwned, luckPercentage, petName, egg.Name, false) or 0
 		local rarity = petStats[petName].Rarity
 
 		petClone.Parent = holder
@@ -342,7 +342,7 @@ local function ConfigureEggUI(egg: Model)
 		if not easyChance then
 			petClone.Click.Chance.Text = globals.FormatChance(chance) .. "%"
 		else
-			local calculatedChance = 100 / chance
+			local calculatedChance = (chance == 0) and 0 or 100 / chance
 			petClone.Click.Chance.Text = "1 in " .. globals.FormatNumber(calculatedChance)
 		end
 		petClone.Click.Chance.TextColor3 = globals.RarityColors[rarity]

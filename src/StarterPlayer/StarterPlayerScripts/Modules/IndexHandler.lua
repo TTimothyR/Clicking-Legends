@@ -16,6 +16,7 @@ local framework = rs:WaitForChild("Framework")
 local library = framework:WaitForChild("Library")
 
 local clickConnections = {}
+local animationConnections = {}
 local shinySelected: boolean = false
 local selectedEgg: string = nil
 
@@ -45,6 +46,7 @@ local claimButton = rewardFrame:WaitForChild("Claim") :: Frame
 
 -- Modules
 local InfiniteMath = require(ReplicatedStorage.Framework.InfiniteMath)
+local InterfaceUtility = require(ReplicatedStorage.Framework.InterfaceUtility)
 local ImageService = require(ReplicatedStorage.Framework.Library.ImageService)
 local globals = require(framework.Globals)
 local network = require(framework.Network)
@@ -110,6 +112,12 @@ local function LoadPets(index, eggName: string, shiny: boolean)
 			child:Destroy()
 		end
 	end
+	for _, connection in ipairs(animationConnections) do
+		if connection.Connected then
+			connection:Disconnect()
+		end
+	end
+	table.clear(animationConnections)
 
 	for pet, data in pairs(eggStats[eggName].Pets) do
 		local clone = petTemplate:Clone()
@@ -139,16 +147,27 @@ local function LoadPets(index, eggName: string, shiny: boolean)
 		newFrame.Frame.Chance.Text = chanceDisplay
 
 		local rarity = petStats[pet].Rarity
-		if rarity == "Legendary" then
-			newFrame.Frame.Chance.Legendary.Enabled = true
+
+		if shiny then
+			newFrame.Glow.Visible = true
+			newFrame.Glow.Shiny.Enabled = true
+			newFrame.Frame.Shiny.Enabled = true
+			newFrame.Frame.Frame.Normal.Enabled = false
+			newFrame.Frame.Frame.Shiny.Enabled = true
+			newFrame.Frame.Icon.ShinyEffect.Visible = true
+			newFrame.Frame.Chance.Shiny.Enabled = true
+
+			table.insert(animationConnections, InterfaceUtility.CreateShinyEffect(newFrame))
 		else
 			newFrame.Frame.Chance.TextColor3 = globals.RarityColors[rarity]
-		end
-
-		newFrame.Frame.BackgroundColor3 = globals.RarityColors[rarity]
-		if rarity == "Legendary" then
-			newFrame.Glow.Visible = true
-			newFrame.Frame.Legendary.Enabled = true
+			if rarity == "Legendary" then
+				newFrame.Frame.Chance.Legendary.Enabled = true
+				newFrame.Glow.Visible = true
+				newFrame.Glow.Legendary.Enabled = true
+				newFrame.Frame.Legendary.Enabled = true
+			else
+				newFrame.Frame.BackgroundColor3 = globals.RarityColors[rarity]
+			end
 		end
 
 		if not shiny then

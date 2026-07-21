@@ -1,6 +1,7 @@
 local interfaceUtility = {}
 
 -- Services
+local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local runService = game:GetService("RunService")
 local Globals = require(script.Parent.Globals)
@@ -76,6 +77,44 @@ function interfaceUtility.ShakeCamera(camera, duration, strength, speed)
 	--end
 
 	--camera.CFrame = start
+end
+
+function interfaceUtility.CreateShinyEffect(clone): RBXScriptConnection
+	local startPosition = UDim2.fromScale(-0.5 * 1.5, 0.5)
+	local endPosition = UDim2.fromScale(1.5 * 1.5, 0.5)
+
+	local state = "moving"
+	local duration = math.random(500, 900) / 1000
+	local waitTime = math.random(1500, 1900) / 1000
+	local elapsed = 0
+
+	local shinyEffect = clone.Frame:FindFirstChildOfClass("ImageLabel").ShinyEffect :: ImageLabel
+	shinyEffect.Position = startPosition
+
+	local connection = RunService.Heartbeat:Connect(function(elapsedSec: number)
+		elapsed += elapsedSec
+
+		if state == "moving" then
+			local alpha = math.clamp(elapsed / duration, 0, 1)
+
+			shinyEffect.Position = startPosition:Lerp(endPosition, alpha)
+
+			if alpha >= 1 then
+				elapsed = 0
+				waitTime = math.random(1500, 1900) / 1000
+				shinyEffect.Position = startPosition
+				state = "waiting"
+			end
+		elseif state == "waiting" then
+			if elapsed >= waitTime then
+				state = "moving"
+				elapsed = 0
+				duration = math.random(500, 900) / 1000
+				shinyEffect.Position = startPosition
+			end
+		end
+	end)
+	return connection
 end
 
 function interfaceUtility.CreateGradientAnimation(

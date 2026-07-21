@@ -54,6 +54,7 @@ function EggUnlockCutscene.UnlockEggCutscene(eggName: string)
 
 	IsSpinning = false
 	HeightValue:Destroy()
+	SpinAngle:Destroy()
 	conn:Disconnect()
 	EggUnlockCutscene.IsPlaying = false
 	eggModel:PivotTo(OGPivot)

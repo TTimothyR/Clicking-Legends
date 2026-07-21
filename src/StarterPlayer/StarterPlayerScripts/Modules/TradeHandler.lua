@@ -157,16 +157,40 @@ local function CreatePetButton(clone, holder, petData): (Frame, { [number]: RBXS
 	tooltipTbl.FromTrade = true
 	local tooltipConnections = Tooltip.SetupTooltip(clone.Click, "PetTooltip", petData)
 
+	if petStats[petData.petName].Secret then
+		clone.Click.Frame.SecretTag.Visible = true
+	end
+
 	local rarity = petStats[petData.petName].Rarity
-	clone.Click.Frame.BackgroundColor3 = globals.RarityColors[rarity]
-	if rarity == "Legendary" then
+	if petData.shiny then
 		clone.Click.Glow.Visible = true
-		clone.Click.Glow.Legendary.Enabled = true
-		clone.Click.Frame.Legendary.Enabled = true
+		clone.Click.Glow.Shiny.Enabled = true
+		clone.Click.Frame.Shiny.Enabled = true
+		clone.Click.Frame.Frame.Normal.Enabled = false
+		clone.Click.Frame.Frame.Shiny.Enabled = true
+		clone.Click.Frame.Icon.ShinyEffect.Visible = true
+
+		local shinyCon = InterfaceUtility.CreateShinyEffect(clone.Click)
+		clone:GetPropertyChangedSignal("Parent"):Once(function()
+			shinyCon:Disconnect()
+		end)
 
 		if animationLoaded then
-			table.insert(gradientsToAnimate, clone.Click.Glow.Legendary)
-			table.insert(gradientsToAnimate, clone.Click.Frame.Legendary)
+			table.insert(gradientsToAnimate, clone.Click.Glow.Shiny)
+			table.insert(gradientsToAnimate, clone.Click.Frame.Shiny)
+		end
+	else
+		clone.Click.Frame.BackgroundColor3 = globals.RarityColors[rarity]
+
+		if rarity == "Legendary" then
+			clone.Click.Glow.Visible = true
+			clone.Click.Glow.Legendary.Enabled = true
+			clone.Click.Frame.Legendary.Enabled = true
+
+			if animationLoaded then
+				table.insert(gradientsToAnimate, clone.Click.Glow.Legendary)
+				table.insert(gradientsToAnimate, clone.Click.Frame.Legendary)
+			end
 		end
 	end
 
@@ -387,7 +411,7 @@ function TradeHandler.TogglePet(me: Player, data, state)
 		if player == me then
 			local clone, tooltipConnections = CreatePetButton(offerTemplate:Clone(), meOffer.ScrollingFrame, data)
 			local clickCon
-			clickCon = clone.MouseButton1Click:Connect(function()
+			clickCon = clone.Click.MouseButton1Click:Connect(function()
 				if not db then
 					db = true
 					task.delay(0.15, function()
@@ -511,7 +535,7 @@ function TradeHandler.EnterTrade(_: Player, you: Player)
 		for _, petData in ipairs(inventory) do
 			local clone, tooltipConnections = CreatePetButton(petTemplate:Clone(), holder, petData)
 
-			local clickCon = clone.MouseButton1Click:Connect(function()
+			local clickCon = clone.Click.MouseButton1Click:Connect(function()
 				if not db then
 					db = true
 					task.delay(0.15, function()

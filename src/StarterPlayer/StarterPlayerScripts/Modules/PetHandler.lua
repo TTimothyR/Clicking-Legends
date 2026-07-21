@@ -272,10 +272,10 @@ end
 
 function PetHandler.UpdatePets(player: Player, pets)
 	for _, petData in ipairs(pets) do
-		if petData.equipped and not petsFolder:FindFirstChild(player.Name):FindFirstChild(petData.id) then
+		if petData.equipped then
 			PetHandler.UpdatePet(player, petData, true)
 		end
-		if not petData.equipped and petsFolder:FindFirstChild(player.Name):FindFirstChild(petData.id) then
+		if not petData.equipped then
 			PetHandler.UpdatePet(player, petData, false)
 		end
 	end

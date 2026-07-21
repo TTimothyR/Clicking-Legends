@@ -4,7 +4,7 @@ return {
 		["Max Rebirths"] = {
 			Description = "Unlocks the option to Rebirth depending on your amount of Clicks!",
 			GamepassID = 1895286808,
-			GiftingID = 3606316395,
+			GiftingID = 3610786979,
 			LayoutOrder = 21,
 		},
 		["x2 Luck"] = { --

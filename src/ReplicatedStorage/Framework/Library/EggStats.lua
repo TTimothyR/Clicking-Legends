@@ -7,11 +7,11 @@ return {
 		Rewards = { { "Potion", "Lucky_I", 69 }, { "Potion", "Speed_III", 5 } },
 		ShinyRewards = { { "Currency", "Gems", 67420 } },
 		Pets = {
-			["Doggy"] = { 45, 1 },
-			["Kitty"] = { 25, 2 },
+			["Doggy"] = { 50, 1 },
+			["Kitty"] = { 27.5, 2 },
 			["Bear"] = { 15, 3 },
-			["Bunny"] = { 10, 4 },
-			["Fox"] = { 5, 5 },
+			["Bunny"] = { 5, 4 },
+			["Fox"] = { 2.5, 5 },
 		},
 	},
 
