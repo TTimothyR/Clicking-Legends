@@ -69,14 +69,17 @@ local callbacks = {
 		for _, data in pairs(pets) do
 			local shiny = (data.PetName:find("Shiny ") ~= nil)
 			local _ = rewardHandler.ClaimPet(player, data.PetName, shiny, data.Enchant)
-			table.insert(changes, {
-				petName = data.PetName,
-				isShiny = shiny,
-				imageId = tostring(ImageService[data.PetName]:gsub("rbxassetid://", "")) or "",
-				chance = 100,
-				delta = 1,
-				showHatch = false,
-			})
+
+			task.spawn(function()
+				table.insert(changes, {
+					petName = data.PetName,
+					isShiny = shiny,
+					imageId = tostring(ImageService[data.PetName]:gsub("rbxassetid://", "")) or "",
+					chance = 100,
+					delta = 1,
+					showHatch = false,
+				})
+			end)
 		end
 
 		task.spawn(function()
@@ -85,12 +88,22 @@ local callbacks = {
 		local profile = playerData.GetData(player)
 		dataSync.SyncPlayer(player, profile)
 	end,
-	["Gem"] = function(player: Player, baseGems: number)
+	["Gem"] = function(player: Player, baseGems: number, additionalRewards)
 		local profile = playerData.GetData(player)
 		local toAdd = infMath.new(profile.Rebirths * baseGems)
 		profile.Gems = infMath.new(profile.Gems + toAdd)
 		local leaderstats = player:FindFirstChild("leaderstats") :: Folder
 		leaderstats.Gems.Value = profile.Gems:GetSuffix(true)
+
+		for _, reward in ipairs(additionalRewards) do
+			local rewardType = reward[1]
+
+			if rewardType == "Pet" then
+				local _ = rewardHandler.ClaimPet(player, reward[2], reward[3], "")
+			elseif rewardType == "Potion" then
+				rewardHandler.ClaimPotion(player, reward[2], reward[3])
+			end
+		end
 
 		dataSync.SyncPlayer(player, profile)
 	end,
@@ -168,18 +181,18 @@ local function ProductPurchaseHandler()
 			network:FireClient(player, "HideGreyFrame")
 			return Enum.ProductPurchaseDecision.PurchaseGranted
 		end
-
+		local productData = shopStats.DeveloperProducts[productName]
 		if string.match(productName, "Pet") and not string.match(productName, "Storage") then
 			local pets = {}
 			if string.match(productName, "Combi") then
 				table.insert(pets, shopStats.DeveloperProducts["Pet1"])
 				table.insert(pets, shopStats.DeveloperProducts["Pet2"])
 			else
-				table.insert(pets, shopStats.DeveloperProducts[productName])
+				table.insert(pets, productData)
 			end
 			callbacks["Pet"](player, pets)
 		elseif string.match(productName, "GemPack") then
-			callbacks["Gem"](player, shopStats.DeveloperProducts[productName].BaseGems)
+			callbacks["Gem"](player, productData.BaseGems, (productData.AdditionalRewards or {}))
 		elseif receiptInfo.ProductId == 3608435738 then
 			callbacks["RestockShop"](player)
 		else

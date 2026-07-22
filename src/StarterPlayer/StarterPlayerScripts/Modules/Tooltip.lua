@@ -30,6 +30,17 @@ local function DisconnectAll(connections)
 	table.clear(connections or {})
 end
 
+-- local function GetMouseUIPos()
+-- 	local MousePos = UserInputService:GetMouseLocation()
+-- 	local GuiInset = GuiService:GetGuiInset()
+-- 	local ViewportSize = Camera.ViewportSize
+
+-- 	local VisibleMouseY = MousePos.Y - GuiInset.Y
+-- 	local VisibleScreenHeight = ViewportSize.Y - GuiInset.Y
+
+-- 	return UDim2.fromScale(MousePos.X / ViewportSize.X, VisibleMouseY / VisibleScreenHeight)
+-- end
+
 local function GetMouseUIPos()
 	local MousePos = UserInputService:GetMouseLocation()
 	local GuiInset = GuiService:GetGuiInset()
@@ -37,8 +48,19 @@ local function GetMouseUIPos()
 
 	local VisibleMouseY = MousePos.Y - GuiInset.Y
 	local VisibleScreenHeight = ViewportSize.Y - GuiInset.Y
+	local VisibleScreenWidth = ViewportSize.X
 
-	return UDim2.fromScale(MousePos.X / ViewportSize.X, VisibleMouseY / VisibleScreenHeight)
+	local PosScale = UDim2.fromScale(MousePos.X / VisibleScreenWidth, VisibleMouseY / VisibleScreenHeight)
+
+	local TooltipScale = Background.AbsoluteSize / Vector2.new(VisibleScreenWidth, VisibleScreenHeight)
+
+	local OverflowX = (PosScale.X.Scale + 0.02 + TooltipScale.X) - 1
+	local OverflowY = (PosScale.Y.Scale + 0.02 + TooltipScale.Y) - 1
+
+	local CorrectedX = PosScale.X.Scale - math.max(OverflowX, 0)
+	local CorrectedY = PosScale.Y.Scale - math.max(OverflowY, 0)
+
+	return UDim2.fromScale(CorrectedX, CorrectedY)
 end
 
 local function SetBackgroundSize()
@@ -83,12 +105,12 @@ function Tooltip.SetupTooltip(Button: GuiButton, TooltipType: string, Data): { [
 		TooltipFrame.Name = Data.reference
 
 		SetDefaultVisibility()
+		Tooltips[TooltipType](TooltipFrame, Data, Data.FromShop, Data.FromTrade)
+		SetBackgroundSize()
+
 		local Pos = (GetMouseUIPos() + UDim2.fromScale(0.02, 0.02) + UDim2.new())
 		TooltipFrame.Position = Pos
 		TooltipFrame.Visible = true
-
-		Tooltips[TooltipType](TooltipFrame, Data, Data.FromShop, Data.FromTrade)
-		SetBackgroundSize()
 	end) :: RBXScriptConnection
 
 	local cleanedUp = false
@@ -115,9 +137,11 @@ function Tooltip.SetupTooltip(Button: GuiButton, TooltipType: string, Data): { [
 
 	local hoverConnection = RunService.Heartbeat:Connect(function(elapsedSec: number)
 		if isHovering then
+			Tooltips[TooltipType](TooltipFrame, Data, Data.FromShop, Data.FromTrade)
+			SetBackgroundSize()
+
 			local Pos = (GetMouseUIPos() + UDim2.fromScale(0.02, 0.02) + UDim2.new())
 			TooltipFrame.Position = Pos
-			Tooltips[TooltipType](TooltipFrame, Data, Data.FromShop, Data.FromTrade)
 
 			local legendaryGradient = TooltipFrame.Top.Info.Rarity.Legendary :: UIGradient
 			local secretGradient = TooltipFrame.Top.Info.Rarity.Secret :: UIGradient

@@ -27,11 +27,12 @@ local itemHolder = hud:WaitForChild("Items")
 local ImageService = require(ReplicatedStorage.Framework.Library.ImageService)
 local Items = require(ReplicatedStorage.Framework.Library.Items)
 local dataSync = require(script.Parent.DataSyncClient)
+local Tooltip = require(script.Parent.Tooltip)
 local globals = require(framework.Globals)
 
 local function UpdateDisplay(clone, endTime)
 	local remainingTime = endTime - os.time()
-	clone.Duration.Text = globals.FormatTime(remainingTime, true)
+	clone.Click.Duration.Text = globals.FormatTime(remainingTime, true)
 end
 
 local function StartTimer(clone, endTime, boostType)
@@ -51,14 +52,20 @@ local function CreateTemplate(boostType, tier, remainingDuration)
 	local rarity = Items.Potions[tier].Rarity
 
 	local clone = potionTemplate:Clone()
-	clone.Icon.Image = ImageService[boostType .. "_" .. tier]
-	clone.Duration.Text = globals.FormatTime(remainingDuration, true)
-	clone.Tier.Text = tier
-	clone.Tier.TextColor3 = globals.RarityColors[rarity]
+	clone.Click.Image = ImageService[boostType .. "_" .. tier]
+	clone.Click.Duration.Text = globals.FormatTime(remainingDuration, true)
+	clone.Click.Tier.Text = tier
+	clone.Click.Tier.TextColor3 = globals.RarityColors[rarity]
 
 	if rarity == "Legendary" then
-		clone.Tier.Legendary.Enabled = true
+		clone.Click.Tier.Legendary.Enabled = true
 	end
+
+	Tooltip.SetupTooltip(
+		clone.Click,
+		"Items",
+		{ itemName = boostType .. "_" .. tier, reference = boostType .. "_" .. tier .. "HUD", Potion = true }
+	)
 
 	clone.Name = boostType
 	clone.Parent = itemHolder
@@ -95,7 +102,7 @@ function ItemHandler.UpdateActivePotions()
 
 			if itemHolder:FindFirstChild(boostType) then
 				local clone = itemHolder:FindFirstChild(boostType)
-				if clone.Tier.Text == tier then
+				if clone.Click.Tier.Text == tier then
 					new = clone
 				else
 					clone:Destroy()

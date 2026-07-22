@@ -291,6 +291,10 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
 		table.insert(eggDestroyConnections, destroyConnection)
 	end
 
+	if secrets > 0 then
+		speed = 1
+	end
+
 	for _, data in ipairs(eggData) do
 		task.spawn(function()
 			modelUtil.AnimateScale(
@@ -407,7 +411,7 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
 
 	if legendaries > 0 or secrets > 0 then
 		task.wait(0.4 / speed)
-		local time = 0.15 * 10
+		local time = (0.15 * 10) / speed
 		modelUtil.ShakeModel(legendaryEggData, time, camera, 70)
 		task.wait(time)
 		camera.FieldOfView = 70
@@ -723,7 +727,7 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
 
 	local endTime = 1.85 / speed
 	if legendaries > 0 then
-		endTime = 2.25
+		endTime = 2.25 / speed
 	end
 	if secrets > 0 then
 		endTime = 3

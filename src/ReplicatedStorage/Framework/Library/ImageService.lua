@@ -7,7 +7,9 @@ return {
 	["Gems"] = "rbxassetid://76922093099038",
 	["Eggs"] = "rbxassetid://103327510554655",
 	["Rebirths"] = "rbxassetid://71299478410150",
-	["Playtime"] = "rbxassetid://138792197595367",
+	["Playtime"] = "rbxassetid://106471599903729",
+	["Unlock"] = "rbxassetid://127894038106695",
+	["Lock"] = "rbxassetid://130738595064691",
 
 	-- Egg Pictures
 	["Common Egg"] = "rbxassetid://82401551044643",

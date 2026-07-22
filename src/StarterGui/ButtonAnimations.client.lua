@@ -35,7 +35,7 @@ local playerGui = player:WaitForChild("PlayerGui")
 --	end
 --end
 
-local function animateButton(button: ImageButton)
+local function animateButton(button)
 	task.spawn(function()
 		local mouseEnter: RBXScriptConnection
 		local mouseLeave: RBXScriptConnection
@@ -79,8 +79,8 @@ local function animateButton(button: ImageButton)
 		end)
 		mouseDown = button.MouseButton1Down:Connect(function()
 			button:TweenSize(clickSize, Enum.EasingDirection.Out, Enum.EasingStyle.Quint, 0.2, true)
-			SoundHandler.PlaySound(Sounds.UIClick)
-			if button.Name == "Shop" then
+			if button.Parent.Name == "Shop" and button.Name ~= "Close" then
+				SoundHandler.PlaySound(Sounds.UIClick)
 				SoundHandler.PlaySound(Sounds.ShopOpen)
 			else
 				SoundHandler.PlaySound(Sounds.UIClick)

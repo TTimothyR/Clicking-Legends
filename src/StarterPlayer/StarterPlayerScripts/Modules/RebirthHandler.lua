@@ -193,8 +193,10 @@ local function CheckUnlimitedRebirthsOwned(newData)
 		if holder:FindFirstChild("1") then
 			holder:FindFirstChild("1").Inner.Locked.Visible = false
 
-			if unlimRebirthPurchaseCon.Connected then
-				unlimRebirthPurchaseCon:Disconnect()
+			if unlimRebirthPurchaseCon then
+				if unlimRebirthPurchaseCon.Connected then
+					unlimRebirthPurchaseCon:Disconnect()
+				end
 			end
 		end
 	end
@@ -273,6 +275,8 @@ function RebirthHandler.Initialize()
 
 		UpdateAutoRebirthButton(autoRebirthStatus)
 		LoadAutoRebirthLocked()
+
+		RebirthHandler.LoadRebirthButtons()
 	end)
 
 	dataSync.OnChanged("Clicks", function()

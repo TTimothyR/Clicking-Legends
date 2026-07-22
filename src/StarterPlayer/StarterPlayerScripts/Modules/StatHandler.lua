@@ -743,7 +743,13 @@ function ClickHandler.Initialize()
 			return
 		end
 		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-			ClickByScreen(input.Position)
+			if not db then
+				db = true
+				task.delay(debounceTime, function()
+					db = false
+				end)
+				ClickByScreen(input.Position)
+			end
 		end
 	end)
 

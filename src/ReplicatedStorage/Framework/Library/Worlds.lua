@@ -5,6 +5,6 @@ return {
 	},
 	["Candy"] = {
 		Boost = 2,
-		Requirement = 50_000,
+		Requirement = 1_000_000,
 	},
 }

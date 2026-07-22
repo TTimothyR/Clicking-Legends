@@ -110,34 +110,39 @@ return {
 		},
 		["Pet2"] = {
 			ProductID = 3609877424,
-			PetName = "ExclusivePet2",
+			PetName = "Shiny ExclusivePet2",
 			Enchant = Enchants["Lucky_👑"].Name,
 		},
 		["PetCombi"] = {
 			ProductID = 3609877566,
+			ExpireDate = 1787380373,
 		},
 		["RestockItemShop"] = {
 			ProductID = 3608435738,
 		},
 
-		["GemPack1"] = {
+		["GemPack4"] = {
 			BaseGems = 10000,
-			ProductID = 3609877024,
+			AdditionalRewards = {
+				{ "Pet", "Shiny Patriotic Wisp", true },
+				{ "Potion", "Lucky_V", 1 },
+			},
+			ProductID = 3609877228,
 			LayoutOrder = 51,
 		},
-		["GemPack2"] = {
+		["GemPack1"] = {
 			BaseGems = 500,
-			ProductID = 3609877103,
+			ProductID = 3609877024,
 			LayoutOrder = 52,
 		},
-		["GemPack3"] = {
+		["GemPack2"] = {
 			BaseGems = 1000,
-			ProductID = 3609877172,
+			ProductID = 3609877103,
 			LayoutOrder = 53,
 		},
-		["GemPack4"] = {
+		["GemPack3"] = {
 			BaseGems = 2500,
-			ProductID = 3609877228,
+			ProductID = 3609877172,
 			LayoutOrder = 54,
 		},
 	},

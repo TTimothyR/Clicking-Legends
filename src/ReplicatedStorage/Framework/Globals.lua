@@ -29,6 +29,7 @@ Globals.ShinyMulti = 1.5
 Globals.ShinyChance = 40
 Globals.GroupID = 891290039
 Globals.BaseHatchTime = 6
+Globals.SecretHatchTime = 17
 Globals.BestPotionTier = "V"
 Globals.DailyResetTime = 24 * 3600
 Globals.DailyClaimTreshold = 15 * 60
@@ -296,11 +297,11 @@ function Globals.GetMaxLevelGems(petData)
 		return 0
 	end
 	local stats = petStats[petData.petName]
-	if not stats.Gems then
+	if not stats.GemMulti then
 		return 0
 	end
 
-	local gems = stats.Gems
+	local gems = stats.GemMulti
 	local total = gems * (1 + (2 * (Globals.MaxLevel - 1)) / (Globals.MaxLevel - 1))
 	if petData.shiny then
 		total *= 1.5
@@ -316,7 +317,7 @@ function Globals.GetPetGems(pets, petData)
 		return 0
 	end
 	local stats = petStats[petData.petName]
-	if not stats.Gems then
+	if not stats.GemMulti then
 		return 0
 	end
 

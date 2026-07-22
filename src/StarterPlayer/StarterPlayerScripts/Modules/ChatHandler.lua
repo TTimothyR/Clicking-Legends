@@ -2,10 +2,11 @@ local ChatHandler = {}
 
 local tcs = game:GetService("TextChatService")
 
-local channel: TextChannel = tcs:WaitForChild("TextChannels").RBXGeneral
+local channels = tcs:WaitForChild("TextChannels")
+local hatchesChannel = channels:WaitForChild("Hatches") :: TextChannel
 
-function ChatHandler.ShowMessage(message: string)
-	channel:DisplaySystemMessage(message)
+function ChatHandler.ShowMessage(message, color)
+	hatchesChannel:DisplaySystemMessage(`<font color='{color}'>[Server]: {message}</font>`)
 end
 
 return ChatHandler

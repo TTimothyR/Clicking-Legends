@@ -153,9 +153,51 @@ local function LoadShop()
 		local clone
 		if string.match(productName, "Pet") then
 			if string.match(productName, "Combi") then
+				local pet1Info = shopStats.DeveloperProducts.Pet1
+				local pet2Info = shopStats.DeveloperProducts.Pet2
+
 				clone = exclusivePetFrame.Inner.Bundle
-				clone.Pets.Pet1.Image = ImageService[shopStats.DeveloperProducts.Pet1.PetName] or ImageService["Placeholder"]
-				clone.Pets.Pet2.Image = ImageService[shopStats.DeveloperProducts.Pet2.PetName] or ImageService["Placeholder"]
+				clone.Pets.Pet1.Image = ImageService[pet1Info.PetName] or ImageService["Placeholder"]
+				clone.Pets.Pet2.Image = ImageService[pet2Info.PetName] or ImageService["Placeholder"]
+
+				Tooltip.SetupTooltip(clone.Pets.Pet1.TooltipArea, "PetTooltip", {
+					petName = pet1Info.PetName:gsub("Shiny ", ""),
+					shiny = pet1Info.PetName:find("Shiny"),
+					clicks = Globals.GetPetClicks({
+						petName = pet1Info.PetName:gsub("Shiny ", ""),
+						shiny = pet1Info.PetName:find("Shiny"),
+						level = 1,
+					}),
+					gems = Globals.GetPetGems({
+						petName = pet1Info.PetName:gsub("Shiny ", ""),
+						shiny = pet1Info.PetName:find("Shiny"),
+						level = 1,
+					}),
+					level = 1,
+					enchant = pet1Info.Enchant,
+					reference = pet1Info.PetName .. "Shop",
+					FromShop = true,
+					ShowExist = true,
+				})
+				Tooltip.SetupTooltip(clone.Pets.Pet2.TooltipArea, "PetTooltip", {
+					petName = pet2Info.PetName:gsub("Shiny ", ""),
+					shiny = pet2Info.PetName:find("Shiny"),
+					clicks = Globals.GetPetClicks({
+						petName = pet2Info.PetName:gsub("Shiny ", ""),
+						shiny = pet2Info.PetName:find("Shiny"),
+						level = 1,
+					}),
+					gems = Globals.GetPetGems({
+						petName = pet2Info.PetName:gsub("Shiny ", ""),
+						shiny = pet2Info.PetName:find("Shiny"),
+						level = 1,
+					}),
+					level = 1,
+					enchant = pet2Info.Enchant,
+					reference = pet2Info.PetName .. "Shop",
+					FromShop = true,
+					ShowExist = true,
+				})
 
 				clone.Buy.Click.Discounted.Text = "" .. info.PriceInRobux
 			else
@@ -167,10 +209,10 @@ local function LoadShop()
 				local shiny = string.find(data.PetName, "Shiny") and true or false
 
 				Tooltip.SetupTooltip(clone.TooltipArea, "PetTooltip", {
-					petName = data.PetName,
+					petName = data.PetName:gsub("Shiny ", ""),
 					shiny = shiny,
-					clicks = Globals.GetPetClicks({ petName = data.PetName, shiny = shiny, level = 1 }),
-					gems = Globals.GetPetGems({ petName = data.PetName, shiny = shiny, level = 1 }),
+					clicks = Globals.GetPetClicks({ petName = data.PetName:gsub("Shiny ", ""), shiny = shiny, level = 1 }),
+					gems = Globals.GetPetGems({ petName = data.PetName:gsub("Shiny ", ""), shiny = shiny, level = 1 }),
 					level = 1,
 					enchant = data.Enchant,
 					reference = data.PetName .. "Shop",
@@ -179,14 +221,58 @@ local function LoadShop()
 				})
 			end
 		elseif string.match(productName, "Gem") then
-			clone = gemsTemplate:Clone()
-			clone.Parent = scrollingHolder
-			clone.Name = productName
-			clone.LayoutOrder = data.LayoutOrder
-			clone.Frame.Buy.PriceHolder.Title.Text = info.PriceInRobux
-			clone.Frame.Amount.Text = "+"
-				.. infMath.new(dataSync.Get("Rebirths") * shopStats.DeveloperProducts[productName].BaseGems):GetSuffix(true)
-			clone.Visible = true
+			if productName == "GemPack4" then
+				clone = scrollingHolder:FindFirstChild(productName).Frame
+				local rewardTemplate = clone.RewardTemplate :: Frame
+
+				for _, reward in ipairs(data.AdditionalRewards) do
+					local rewardClone = rewardTemplate:Clone() :: Frame
+					rewardClone.Parent = clone.Items
+					local rewardName = reward[2]
+					rewardClone.Click.Image = ImageService[rewardName] or ImageService["Placeholder"]
+
+					if reward[1] == "Potion" then
+						if reward[3] > 1 then
+							rewardClone.Amount.Visible = true
+							rewardClone.Amount.Text = "x" .. reward[3]
+						end
+
+						Tooltip.SetupTooltip(rewardClone.Click, "Items", {
+							itemName = reward[2],
+							reference = reward[2] .. "GemShop",
+							Potion = true,
+						})
+					elseif reward[1] == "Pet" then
+						Tooltip.SetupTooltip(rewardClone.Click, "PetTooltip", {
+							petName = reward[2]:gsub("Shiny ", ""),
+							shiny = reward[2]:find("Shiny"),
+							clicks = Globals.GetPetClicks({
+								petName = reward[2]:gsub("Shiny ", ""),
+								shiny = reward[2]:find("Shiny"),
+								level = 1,
+							}),
+							gems = Globals.GetPetGems({ petName = reward[2]:gsub("Shiny ", ""), shiny = reward[2]:find("Shiny"), level = 1 }),
+							level = 1,
+							enchant = "",
+							reference = reward[2] .. "GemShop",
+							FromShop = true,
+							ShowExist = false,
+						})
+					end
+					rewardClone.Visible = true
+				end
+
+				clone.Buy.PriceHolder.Price.Text = info.PriceInRobux
+				clone.Amount.Text = "+" .. infMath.new(dataSync.Get("Rebirths") * data.BaseGems):GetSuffix(true) .. " Gems"
+			else
+				clone = gemsTemplate:Clone()
+				clone.Parent = scrollingHolder
+				clone.Name = productName
+				clone.LayoutOrder = data.LayoutOrder
+				clone.Frame.Buy.PriceHolder.Title.Text = info.PriceInRobux
+				clone.Frame.Amount.Text = "+" .. infMath.new(dataSync.Get("Rebirths") * data.BaseGems):GetSuffix(true)
+				clone.Visible = true
+			end
 		end
 
 		local buyButton = clone:FindFirstChild("Buy", true)

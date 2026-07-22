@@ -16,6 +16,7 @@ local dataModules = sss:WaitForChild("DataModules")
 
 -- Modules
 local BotHandler = require(script.Parent.BotHandler).Private
+local LegendaryChatHandler = require(script.LegendaryChatHandler)
 local eggStats = require(library.EggStats)
 local petStats = require(library.PetStats)
 local playerData = require(dataModules.PlayerData)
@@ -47,7 +48,10 @@ local function GetRawChanceFromPetName(eggName: string, petName: string, shiny: 
 	return tbl[petName][1]
 end
 
-local function CalculateHatchTime(player: Player)
+local function CalculateHatchTime(player: Player, secret)
+	if secret then
+		return Globals.SecretHatchTime
+	end
 	local profile = playerData.GetData(player)
 
 	local ownedGamepsses = profile.OwnedGamepasses
@@ -162,7 +166,7 @@ function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
 	local UnlockedEggs = profile.UnlockedEggs
 	if not UnlockedEggs[eggName] then
 		EggHandler.ToggleAutoHatch(player, "", false)
-		warn("Player does not own egg", eggName)
+		-- warn("Player does not own egg", eggName)
 		return
 	end
 
@@ -175,6 +179,11 @@ function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
 
 	if profile.HatchDebounce then
 		print("Hatching on cooldown.")
+		return
+	end
+
+	if #profile.Pets + amount > profile.PetStorage then
+		EggHandler.ToggleAutoHatch(player, "", false)
 		return
 	end
 
@@ -217,6 +226,8 @@ function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
 	local petData = {}
 	local changes = {}
 
+	local secret = false
+
 	for _ = 1, amount do
 		local petName, shiny = luckHandler.RollPet(player, eggName)
 		local rawChance = GetRawChanceFromPetName(eggName, petName, shiny)
@@ -226,6 +237,7 @@ function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
 		end
 		local rarity = petStats[petName].Rarity
 		if petStats[petName].Secret then
+			secret = true
 			if shiny then
 				profile.ShinySecretsHatched += 1
 			else
@@ -268,6 +280,10 @@ function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
 				enchant = "",
 			})
 
+			if rarity == "Legendary" then
+				LegendaryChatHandler.SendLegendaryMessage(player, petName, eggName, shiny)
+			end
+
 			if petStats[petName].Secret then
 				local found = false
 				for _, entry in ipairs(changes) do
@@ -308,7 +324,7 @@ function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
 	uiLock.Value = true
 	dataSync.SyncPlayer(player, profile)
 	network:FireClient(player, "EggAnimation", eggName, amount, petData)
-	task.delay(CalculateHatchTime(player), function()
+	task.delay(CalculateHatchTime(player, secret), function()
 		ResetVariables(player, false)
 	end)
 end

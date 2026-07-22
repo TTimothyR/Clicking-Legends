@@ -97,7 +97,7 @@ local infoPopup = require(classes.InfoPopup)
 local dataSync = require(script.Parent.DataSyncClient)
 local Tooltip = require(script.Parent.Tooltip)
 
-local maximumTries = 7
+local maximumTries = 10
 
 local function UpdateTradeButton(color: string, text: string, button)
 	button.Frame.UIGradient.Color = globals.ButtonPresets[color].Gradient
@@ -112,10 +112,10 @@ local function CreatePlayerFrame(plr: Player)
 	repeat
 		profile = dataSync.GetOtherData(plr.UserId)
 		if not profile then
+			tries += 1
+			task.wait(1)
 			continue
 		end
-		tries += 1
-		task.wait(0.01)
 	until profile ~= nil or tries >= maximumTries
 
 	if not profile then
@@ -159,6 +159,10 @@ local function CreatePetButton(clone, holder, petData): (Frame, { [number]: RBXS
 
 	if petStats[petData.petName].Secret then
 		clone.Click.Frame.SecretTag.Visible = true
+	end
+
+	if petData.locked then
+		clone.Click.Frame.Locked.Visible = true
 	end
 
 	local rarity = petStats[petData.petName].Rarity
@@ -451,10 +455,10 @@ function TradeHandler.EnterTrade(_: Player, you: Player)
 	repeat
 		yourProfile = dataSync.GetOtherData(you.UserId)
 		if not yourProfile then
+			tries += 1
+			task.wait(0.25)
 			continue
 		end
-		tries += 1
-		task.wait(0.01)
 	until yourProfile ~= nil or tries >= maximumTries
 
 	if not yourProfile then
@@ -648,43 +652,45 @@ end
 function TradeHandler.UpdateTradeButtons()
 	for _, child in ipairs(playerHolder:GetChildren()) do
 		if child:IsA("Frame") then
-			local playerName: string = child.Name
-			local profile
-			local tries = 0
-			repeat
-				local tradePlayer = players:FindFirstChild(playerName)
-				if not tradePlayer then
-					continue
-				end
-				profile = dataSync.GetOtherData(players:FindFirstChild(playerName).UserId)
+			task.spawn(function()
+				local playerName: string = child.Name
+				local profile
+				local tries = 0
+				repeat
+					local tradePlayer = players:FindFirstChild(playerName)
+					if not tradePlayer then
+						continue
+					end
+					profile = dataSync.GetOtherData(players:FindFirstChild(playerName).UserId)
+					if not profile then
+						tries += 1
+						task.wait(0.5)
+						continue
+					end
+				until profile ~= nil or tries >= maximumTries
+
 				if not profile then
-					continue
+					return
 				end
-				tries += 1
-				task.wait(0.01)
-			until profile ~= nil or tries >= maximumTries
 
-			if not profile then
-				continue
-			end
-
-			if profile.TradeBanned then
-				continue
-			else
-				if not child.Visible then
-					child.Visible = true
+				if profile.TradeBanned then
+					return
+				else
+					if not child.Visible then
+						child.Visible = true
+					end
 				end
-			end
 
-			if profile.IsInTrade then
-				UpdateTradeButton("Red", "Busy", child.Inner.Trade)
-			elseif profile.HasTradingDisabled then
-				UpdateTradeButton("Purple", "Disabled", child.Inner.Trade)
-			elseif profile.TradeRequestFrom == player.Name then
-				UpdateTradeButton("Orange", "Pending", child.Inner.Trade)
-			else
-				UpdateTradeButton("Green", "Send", child.Inner.Trade)
-			end
+				if profile.IsInTrade then
+					UpdateTradeButton("Red", "Busy", child.Inner.Trade)
+				elseif profile.HasTradingDisabled then
+					UpdateTradeButton("Purple", "Disabled", child.Inner.Trade)
+				elseif profile.TradeRequestFrom == player.Name then
+					UpdateTradeButton("Orange", "Pending", child.Inner.Trade)
+				else
+					UpdateTradeButton("Green", "Send", child.Inner.Trade)
+				end
+			end)
 		end
 	end
 end
@@ -746,27 +752,29 @@ end
 local function LoadPlayerList()
 	for _, plr: Player in ipairs(players:GetPlayers()) do
 		if playerHolder:FindFirstChild(plr.Name) then
-			local profile
-			local tries = 0
-			repeat
-				profile = dataSync.GetOtherData(plr.UserId)
+			task.spawn(function()
+				local profile
+				local tries = 0
+				repeat
+					profile = dataSync.GetOtherData(plr.UserId)
+					if not profile then
+						tries += 1
+						task.wait(0.5)
+						continue
+					end
+				until profile ~= nil or tries >= maximumTries
+
 				if not profile then
-					continue
+					return
 				end
-				tries += 1
-				task.wait(0.01)
-			until profile ~= nil or tries >= maximumTries
 
-			if not profile then
-				continue
+				local tradeBanned = profile.TradeBanned
+				playerHolder:FindFirstChild(plr.Name).Visible = not tradeBanned
+			end)
+		else
+			if plr ~= player then
+				CreatePlayerFrame(plr)
 			end
-
-			local tradeBanned = profile.TradeBanned
-			playerHolder:FindFirstChild(plr.Name).Visible = not tradeBanned
-			continue
-		end
-		if plr ~= player then
-			CreatePlayerFrame(plr)
 		end
 	end
 	for _, child: Instance in ipairs(playerHolder:GetChildren()) do
@@ -802,6 +810,8 @@ local function LoadPlayerList()
 			end
 		end) :: RBXScriptConnection
 	end
+
+	TradeHandler.UpdateTradeButtons()
 end
 
 function TradeHandler.Initialize()

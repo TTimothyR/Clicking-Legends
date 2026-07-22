@@ -398,6 +398,12 @@ local function LoadPetInfo(id: string)
 	local clicks = globals.GetPetClicks(pets, petData)
 	local gems = globals.GetPetGems(pets, petData)
 
+	if petData.locked then
+		petInfoHolder.Lock.Image = imageService["Lock"]
+	else
+		petInfoHolder.Lock.Image = imageService["Unlock"]
+	end
+
 	petInfoHolder.Stats.Clicks.Amount.Text = infMath.new(clicks):GetSuffix(true)
 	petInfoHolder.Stats.Gems.Amount.Text = infMath.new(gems):GetSuffix(true)
 
@@ -496,6 +502,11 @@ local function LoadPetInfo(id: string)
 				return
 			end
 			-- TODO: Make sure the lock button gets updated after the toggle
+			if newState then
+				petInfoHolder.Lock.Image = imageService["Lock"]
+			else
+				petInfoHolder.Lock.Image = imageService["Unlock"]
+			end
 			petData.locked = newState
 			-- LoadPetInfo(id);
 			local petClone = holder:FindFirstChild(id, true)
@@ -1433,22 +1444,22 @@ function InventoryHandler.NewItem(data)
 	--potionImage.Visible = true
 
 	local rarity = data.rarity
-	clone.Frame.BackgroundColor3 = globals.RarityColors[rarity]
-	clone.Frame.Frame.Icon.Image = potionImage
+	clone.Click.Frame.BackgroundColor3 = globals.RarityColors[rarity]
+	clone.Click.Frame.Frame.Icon.Image = potionImage
 
 	if potionTier == "V" then
-		clone.Frame.Frame.Icon.Size = UDim2.fromScale(0.95, 0.95)
-		clone.Frame.Frame.Icon.Position = UDim2.fromScale(0.5, 0.5)
+		clone.Click.Frame.Frame.Icon.Size = UDim2.fromScale(0.95, 0.95)
+		clone.Click.Frame.Frame.Icon.Position = UDim2.fromScale(0.5, 0.5)
 	end
 
 	if rarity == "Legendary" then
-		clone.Glow.Visible = true
-		clone.Frame.Legendary.Enabled = true
+		clone.Click.Glow.Visible = true
+		clone.Click.Frame.Legendary.Enabled = true
 	end
 
 	clone.Name = data.potionName
-	clone.Frame.PotionName.Text = data.buff .. " " .. data.tier
-	clone.Frame.Amount.Text = "x" .. data.amount
+	clone.Click.Frame.PotionName.Text = data.buff .. " " .. data.tier
+	clone.Click.Frame.Amount.Text = "x" .. data.amount
 
 	clone.Parent = frames.NewItems
 
@@ -1472,7 +1483,7 @@ function InventoryHandler.NewItem(data)
 		Conn = nil
 
 		for _ = 1, 3 do
-			InterfaceUtility.PlayWhiteOutAnim(clone.Template, clone.Anims, 0.5, 1.3)
+			InterfaceUtility.PlayWhiteOutAnim(clone.Click.Template, clone.Click.Anims, 0.5, 1.3)
 			task.wait(0.55)
 		end
 

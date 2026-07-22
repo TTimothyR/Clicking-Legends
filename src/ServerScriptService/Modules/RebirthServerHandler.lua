@@ -24,7 +24,7 @@ local function GetPetGems(pets)
 		if not petData.equipped then
 			continue
 		end
-		totalGems += globals.GetPetGems(petData)
+		totalGems += globals.GetPetGems(pets, petData)
 	end
 	return totalGems
 end

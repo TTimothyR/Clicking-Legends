@@ -176,7 +176,7 @@ function AFKHandler.Initialize()
 				end
 
 				if (currentTime - timeSinceLastAction) >= rejoinThreshold * 60 then
-					network:FireServer("TPPlayer")
+					network:FireServer("TPPlayer", true)
 				end
 				if (currentTime - timeSinceLastAction) >= AFKThreshold and not afk then
 					afk = true

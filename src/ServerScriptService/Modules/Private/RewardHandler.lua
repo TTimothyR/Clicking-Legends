@@ -24,7 +24,6 @@ function RewardHandler.ClaimPet(player: Player, fullName: string, shiny: boolean
 	local profile = playerData.GetData(player)
 
 	local petName: string = shiny and string.gsub(fullName, "Shiny ", "") or fullName
-
 	if not petModels:FindFirstChild(fullName) then
 		return false, "SERVER - Invalid pet name, unable to claim prize."
 	end

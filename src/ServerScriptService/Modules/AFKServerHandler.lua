@@ -102,9 +102,9 @@ function AFKHandler.StopAFK(player: Player)
 	}
 end
 
-function AFKHandler.TPPlayer(player: Player)
+function AFKHandler.TPPlayer(player: Player, afk: boolean)
 	local tpParameters = Instance.new("TeleportOptions")
-	tpParameters:SetTeleportData({ isAFK = true })
+	tpParameters:SetTeleportData({ isAFK = afk })
 
 	local success, error = pcall(function()
 		TeleportService:TeleportAsync(game.PlaceId, { player }, tpParameters)

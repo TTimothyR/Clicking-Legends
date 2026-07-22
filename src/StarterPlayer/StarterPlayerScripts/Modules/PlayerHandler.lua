@@ -2,6 +2,8 @@ local db = false
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local StarterGui = game:GetService("StarterGui")
 local Upgrades = require(ReplicatedStorage.Framework.Library.Upgrades)
 local Network = require(ReplicatedStorage.Framework.Network)
 local DataSyncClient = require(script.Parent.DataSyncClient)
@@ -59,6 +61,10 @@ local function WalkspeedHandle(character: Model)
 		return
 	end
 
+	humanoid.Died:Once(function()
+		Network:FireServer("TPPlayer", false)
+	end)
+
 	local upgrades = DataSyncClient.Get("UpgradeLevels")
 	local walkspeedLevel = upgrades["Faster Walkspeed"]
 
@@ -84,6 +90,20 @@ function PlayerHandler.Initialize()
 			if new["Faster Walkspeed"] ~= old["Faster Walkspeed"] then
 				WalkspeedHandle(player.Character)
 			end
+		end
+	end)
+
+	task.spawn(function()
+		while true do
+			local success, _ = pcall(function()
+				StarterGui:SetCore("ResetButtonCallback", false)
+			end)
+
+			if success then
+				break
+			end
+
+			RunService.RenderStepped:Wait()
 		end
 	end)
 end

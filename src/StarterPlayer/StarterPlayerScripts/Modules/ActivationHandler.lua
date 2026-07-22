@@ -28,6 +28,8 @@ local teleportActivations: { [Part]: Part } = {}
 
 local visibleFrame = nil
 local isTeleporting = false
+local activeTriggers = {}
+local triggerAddedSignal = Instance.new("BindableEvent")
 
 local function StarterToPlayer(starterInstance)
 	local names = {}
@@ -49,17 +51,62 @@ local function StarterToPlayer(starterInstance)
 	return target
 end
 
+local function GetObjectValueAsync(objectValue: ObjectValue): Instance?
+	local target = objectValue.Value
+	if not target then
+		local startTime = os.clock()
+
+		while not objectValue.Value and (os.clock() - startTime) < 5 do
+			task.wait(0.1)
+		end
+		target = objectValue.Value
+	end
+	return target
+end
+
+local function RegisterUIActivator(uiActivator: Model)
+	local targetFrameValue = uiActivator:WaitForChild("TargetFrame", 5) :: ObjectValue?
+	local triggerPart = uiActivator:WaitForChild("Trigger", 5) :: Part?
+
+	if not targetFrameValue or not triggerPart then
+		return
+	end
+
+	local targetFrame = GetObjectValueAsync(targetFrameValue)
+	if targetFrame then
+		local playerFrame = StarterToPlayer(targetFrame)
+		if playerFrame then
+			uiActivations[triggerPart] = playerFrame
+			table.insert(activeTriggers, triggerPart)
+			triggerAddedSignal:Fire()
+		end
+	end
+end
+
+local function RegisterTeleportActivator(teleportActivator: Model)
+	local targetPartValue = teleportActivator:WaitForChild("TargetPart", 5) :: ObjectValue?
+	local triggerPart = teleportActivator:WaitForChild("Trigger", 5) :: Part?
+
+	if not targetPartValue or not triggerPart then
+		return
+	end
+
+	local targetPart = GetObjectValueAsync(targetPartValue)
+	if targetPart then
+		teleportActivations[triggerPart] = targetPart :: Part
+		table.insert(activeTriggers, triggerPart)
+		triggerAddedSignal:Fire()
+	end
+end
+
 local function OnCharacterAdded(character: Model)
 	local raycastParams = RaycastParams.new()
 	raycastParams.FilterType = Enum.RaycastFilterType.Include
-	local includeTable = {}
-	for part, _ in pairs(uiActivations) do
-		table.insert(includeTable, part)
-	end
-	for part, _ in pairs(teleportActivations) do
-		table.insert(includeTable, part)
-	end
-	raycastParams.FilterDescendantsInstances = includeTable
+	raycastParams.FilterDescendantsInstances = activeTriggers
+
+	local triggerAddedConnection = triggerAddedSignal.Event:Connect(function()
+		raycastParams.FilterDescendantsInstances = activeTriggers
+	end) :: RBXScriptConnection
 
 	local humanoid = character:WaitForChild("Humanoid") :: Humanoid
 
@@ -90,9 +137,14 @@ local function OnCharacterAdded(character: Model)
 					isTeleporting = true
 					local worldName = result.Instance.Parent.Name
 					local ownedWorlds = DataSyncClient.Get("OwnedWorlds")
-					if not ownedWorlds[worldName] then
-						local clicks = DataSyncClient.Get("Clicks")
+					local clicks = DataSyncClient.Get("Clicks")
 
+					if not ownedWorlds or not clicks then
+						isTeleporting = false
+						return
+					end
+
+					if not ownedWorlds[worldName] then
 						if clicks < InfiniteMath.new(Worlds[worldName].Requirement) then
 							InfoPopup.new(nil, "You do not have enough Clicks to purchase this world.", function()
 								MenuHandler.handleOpenClose(infoFrame)
@@ -136,6 +188,7 @@ local function OnCharacterAdded(character: Model)
 
 	humanoid.Died:Once(function()
 		connection:Disconnect()
+		triggerAddedConnection:Disconnect()
 
 		if visibleFrame then
 			task.spawn(MenuHandler.handleOpenClose, visibleFrame)
@@ -150,15 +203,32 @@ function ActivationHandler.Initialize()
 	end
 
 	for _, uiActivator: Model in ipairs(uiActivators:GetChildren()) do
-		local targetFrame: ObjectValue = uiActivator:FindFirstChild("TargetFrame") :: ObjectValue
-		local triggerPart = uiActivator:FindFirstChild("Trigger") :: Part
-		uiActivations[triggerPart] = StarterToPlayer(targetFrame.Value)
+		task.spawn(RegisterUIActivator, uiActivator)
 	end
+	uiActivators.ChildAdded:Connect(function(child: Instance)
+		if child:IsA("Model") then
+			RegisterUIActivator(child)
+		end
+	end)
 	for _, teleportActivator: Model in ipairs(teleportActivators:GetChildren()) do
-		local targetPart: ObjectValue = teleportActivator:FindFirstChild("TargetPart") :: ObjectValue
-		local triggerPart = teleportActivator:FindFirstChild("Trigger") :: Part
-		teleportActivations[triggerPart] = targetPart.Value :: Part
+		task.spawn(RegisterTeleportActivator, teleportActivator)
 	end
+	teleportActivators.ChildAdded:Connect(function(child: Instance)
+		if child:IsA("Model") then
+			RegisterTeleportActivator(child)
+		end
+	end)
+
+	-- for _, uiActivator: Model in ipairs(uiActivators:GetChildren()) do
+	-- 	local targetFrame: ObjectValue = uiActivator:FindFirstChild("TargetFrame") :: ObjectValue
+	-- 	local triggerPart = uiActivator:FindFirstChild("Trigger") :: Part
+	-- 	uiActivations[triggerPart] = StarterToPlayer(targetFrame.Value)
+	-- end
+	-- for _, teleportActivator: Model in ipairs(teleportActivators:GetChildren()) do
+	-- 	local targetPart: ObjectValue = teleportActivator:FindFirstChild("TargetPart") :: ObjectValue
+	-- 	local triggerPart = teleportActivator:FindFirstChild("Trigger") :: Part
+	-- 	teleportActivations[triggerPart] = targetPart.Value :: Part
+	-- end
 	if player.Character then
 		OnCharacterAdded(player.Character)
 	end

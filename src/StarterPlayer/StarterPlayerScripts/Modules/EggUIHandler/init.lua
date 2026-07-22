@@ -189,7 +189,7 @@ end
 local function GetClosestEgg()
 	repeat
 		task.wait()
-	until #adornees == #eggHolder:GetChildren()
+	until #adornees == #eggs:GetChildren()
 
 	runService.Heartbeat:Connect(function(_)
 		local char = player.Character

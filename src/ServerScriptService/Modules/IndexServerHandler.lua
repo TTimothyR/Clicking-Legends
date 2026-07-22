@@ -14,6 +14,9 @@ local eggStats = require(library.EggStats)
 local rewardHandler = require(script.Parent.Private.RewardHandler)
 
 function IndexHandler.ClaimIndexReward(player: Player, eggName: string, shiny: boolean): boolean
+	if not eggStats[eggName] then
+		return false
+	end
 	local profile = playerData.GetData(player)
 	local claimedEggs = profile.ClaimedEggs
 	local petIndex = profile.PetIndex

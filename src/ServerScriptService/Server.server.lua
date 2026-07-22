@@ -1,6 +1,7 @@
 local players = game:GetService("Players")
 local PhysicsService = game:GetService("PhysicsService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TextChatService = game:GetService("TextChatService")
 local Globals = require(ReplicatedStorage.Framework.Globals)
 
 local function SetGroup(character)
@@ -15,21 +16,6 @@ local function SetGroup(character)
 		end
 	end)
 end
-
-for _, plr: Player in pairs(players:GetPlayers()) do
-	local equip: Folder = Instance.new("Folder")
-	equip.Parent = workspace.EquippedPets
-	equip.Name = plr.Name
-	plr.CharacterAdded:Connect(SetGroup)
-end
-
-players.PlayerAdded:Connect(function(plr: Player)
-	local equip: Folder = Instance.new("Folder")
-	equip.Parent = workspace.EquippedPets
-	equip.Name = plr.Name
-
-	plr.CharacterAdded:Connect(SetGroup)
-end)
 
 players.PlayerRemoving:Connect(function(plr: Player)
 	if workspace.EquippedPets:FindFirstChild(plr.Name) then
@@ -46,3 +32,39 @@ end
 PhysicsService:CollisionGroupSetCollidable(Globals.CharacterGroup, Globals.DebrisGroup, false)
 PhysicsService:CollisionGroupSetCollidable(Globals.CharacterGroup, Globals.CharacterGroup, false)
 PhysicsService:CollisionGroupSetCollidable(Globals.DebrisGroup, Globals.DebrisGroup, false)
+
+local hatchesChannel = Instance.new("TextChannel")
+hatchesChannel.Name = "Hatches"
+hatchesChannel.Parent = TextChatService:WaitForChild("TextChannels")
+
+hatchesChannel.ShouldDeliverCallback = function(message, _)
+	if message.TextSource == nil then
+		return true
+	end
+	return false
+end
+
+local function OnPlayerAdded(plr)
+	task.spawn(function()
+		task.wait(1.5)
+		local success, err = pcall(function()
+			hatchesChannel:AddUserAsync(plr.UserId)
+		end)
+		if not success then
+			warn("Failed to add player to hatches channel", tostring(err))
+		end
+	end)
+
+	local equip: Folder = Instance.new("Folder")
+	equip.Parent = workspace.EquippedPets
+	equip.Name = plr.Name
+	plr.CharacterAdded:Connect(SetGroup)
+end
+
+for _, plr: Player in pairs(players:GetPlayers()) do
+	OnPlayerAdded(plr)
+end
+
+players.PlayerAdded:Connect(function(plr: Player)
+	OnPlayerAdded(plr)
+end)
