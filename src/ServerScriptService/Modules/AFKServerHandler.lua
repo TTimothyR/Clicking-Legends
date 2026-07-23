@@ -11,9 +11,10 @@ local playerData = require(dataModules.PlayerData)
 
 local function SetPlayerPosition(player: Player)
 	local profile = playerData.GetData(player)
+	print(profile.SavedPlayerPosition, profile.CurrentWorld)
 	if profile.SavedPlayerPosition == nil then
 		if profile.CurrentWorld ~= "Spawn" then
-			local character = player.Character
+			local character = player.Character or player.CharacterAdded:Wait()
 			if character and character.Parent then
 				character:MoveTo(teleportPads[profile.CurrentWorld].Position)
 			end
@@ -22,13 +23,13 @@ local function SetPlayerPosition(player: Player)
 	end
 
 	local pos = profile.SavedPlayerPosition
-	local character = player.Character
+	local character = player.Character or player.CharacterAdded:Wait()
 	if character and character.Parent then
 		character:PivotTo(CFrame.new(Vector3.new(pos[1], pos[2], pos[3])))
-	else
-		player.CharacterAdded:Once(function(char: Model)
-			char:PivotTo(CFrame.new(Vector3.new(pos[1], pos[2], pos[3])))
-		end)
+		-- else
+		-- 	player.CharacterAdded:Once(function(char: Model)
+		-- 		char:PivotTo(CFrame.new(Vector3.new(pos[1], pos[2], pos[3])))
+		-- 	end)
 	end
 end
 

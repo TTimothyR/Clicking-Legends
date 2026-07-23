@@ -11,6 +11,7 @@ local holder = Debug.Holder
 
 local Globals = require(ReplicatedStorage.Framework.Globals)
 local Enchants = require(ReplicatedStorage.Framework.Library.Enchants)
+local GlobalEventsModule = require(ReplicatedStorage.Framework.Library.GlobalEventsModule)
 local Upgrades = require(ReplicatedStorage.Framework.Library.Upgrades)
 local DataSyncClient = require(script.Parent.DataSyncClient)
 
@@ -80,6 +81,9 @@ local statFrames = {
 			local gamepass = ownedGamepasses["x2 Luck"] and true or false
 			if gamepass then
 				baseLuckPercentage *= 2
+			end
+			if GlobalEventsModule.IsActive("LuckEvent") == true then
+				baseLuckPercentage *= GlobalEventsModule.GetMulti("LuckEvent")
 			end
 			return baseLuckPercentage
 		end,

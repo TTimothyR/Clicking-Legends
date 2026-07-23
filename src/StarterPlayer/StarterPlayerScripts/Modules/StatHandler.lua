@@ -117,39 +117,44 @@ local function CriticalHitEffect()
 	if not root then
 		return
 	end
-	for _, child: Instance in ipairs(root:GetChildren()) do
-		if child:IsA("ParticleEmitter") and child.Name ~= "Cuts" then
-			child:Emit(50)
+	local lowDetail = dataSync.Get("Settings").LowDetail
+	if not lowDetail then
+		for _, child: Instance in ipairs(root:GetChildren()) do
+			if child:IsA("ParticleEmitter") and child.Name ~= "Cuts" then
+				child:Emit(50)
+			end
 		end
 	end
 
 	SoundHandler.PlaySound(Sounds.Critical)
 
-	for _ = 1, 10 do
-		task.spawn(function()
-			local clone = criticalModel:Clone()
+	if not lowDetail then
+		for _ = 1, 10 do
+			task.spawn(function()
+				local clone = criticalModel:Clone()
 
-			if not clone.PrimaryPart then
-				clone:Destroy()
-			end
+				if not clone.PrimaryPart then
+					clone:Destroy()
+				end
 
-			clone:PivotTo(root.CFrame * CFrame.new(0, 2, 0))
-			clone.Parent = workspace
-			local force = 15
-			local xForce = rng:NextNumber(-force, force)
-			local zForce = rng:NextNumber(-force, force)
-			local yForce = rng:NextNumber(30, 60)
+				clone:PivotTo(root.CFrame * CFrame.new(0, 2, 0))
+				clone.Parent = workspace
+				local force = 15
+				local xForce = rng:NextNumber(-force, force)
+				local zForce = rng:NextNumber(-force, force)
+				local yForce = rng:NextNumber(30, 60)
 
-			local jumpVector = Vector3.new(xForce, yForce, zForce)
+				local jumpVector = Vector3.new(xForce, yForce, zForce)
 
-			clone.PrimaryPart:ApplyImpulse(jumpVector * clone.PrimaryPart.AssemblyMass)
+				clone.PrimaryPart:ApplyImpulse(jumpVector * clone.PrimaryPart.AssemblyMass)
 
-			local randomRot = Vector3.new(rng:NextNumber(-10, 10), rng:NextNumber(-10, 10), rng:NextNumber(-10, 10))
+				local randomRot = Vector3.new(rng:NextNumber(-10, 10), rng:NextNumber(-10, 10), rng:NextNumber(-10, 10))
 
-			clone.PrimaryPart:ApplyAngularImpulse(randomRot * clone.PrimaryPart.AssemblyMass)
+				clone.PrimaryPart:ApplyAngularImpulse(randomRot * clone.PrimaryPart.AssemblyMass)
 
-			debris:AddItem(clone, 2)
-		end)
+				debris:AddItem(clone, 2)
+			end)
+		end
 	end
 end
 
@@ -548,6 +553,8 @@ local function PlayClickEFX()
 		return
 	end
 
+	local lowDetail = dataSync.Get("Settings").LowDetail
+
 	local effect = script.ClickEfx:Clone()
 	local cuts = script.Cuts:Clone()
 	effect.Enabled = false
@@ -556,8 +563,10 @@ local function PlayClickEFX()
 	cuts.Parent = humanoidRootPart
 	debris:AddItem(effect, 0.5)
 	debris:AddItem(cuts, 0.5)
-	effect:Emit(math.random(2, 5))
-	cuts:Emit(5)
+	if not lowDetail then
+		effect:Emit(math.random(2, 5))
+		cuts:Emit(5)
+	end
 	task.wait(0.1)
 end
 
@@ -720,7 +729,7 @@ local function LoadAutoClickerUnlock()
 end
 
 function ClickHandler.Initialize()
-	if not game.Loaded then
+	if not game:IsLoaded() then
 		game.Loaded:Wait()
 	end
 
@@ -804,6 +813,8 @@ function ClickHandler.Initialize()
 	dataSync.OnChanged("UpgradeLevels", function(new, old)
 		if new["Auto Clicker"] == 1 then
 			toggleButton.Locked.Visible = false
+		else
+			toggleButton.Locked.Visible = true
 		end
 		if new and old then
 			if new["Faster Auto Click"] and old["Faster Auto Click"] then

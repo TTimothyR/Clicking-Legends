@@ -165,6 +165,8 @@ local function CreatePetButton(clone, holder, petData): (Frame, { [number]: RBXS
 		clone.Click.Frame.Locked.Visible = true
 	end
 
+	clone.Click.Frame.Icon.Level.Text = petData.level
+
 	local rarity = petStats[petData.petName].Rarity
 	if petData.shiny then
 		clone.Click.Glow.Visible = true

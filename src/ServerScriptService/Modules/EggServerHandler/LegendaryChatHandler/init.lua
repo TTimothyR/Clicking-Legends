@@ -34,7 +34,7 @@ function LegendaryChatHandler.SendLegendaryMessage(player, petName, eggName, shi
 	local chance = Globals.GetRawPetChance(petName, eggName)
 	local petData = PetStats[petName]
 	local color = GetPetColor(chance, shiny, petData.Secret)
-
+	local baseChance = chance
 	if shiny then
 		chance /= Globals.ShinyChance
 	end
@@ -47,7 +47,7 @@ function LegendaryChatHandler.SendLegendaryMessage(player, petName, eggName, shi
 		message = normalFormat:format(player.Name, petName, chance)
 	end
 
-	Network:FireAllClients("ShowMessage", message, color)
+	Network:FireAllClients("ShowMessage", message, color, (baseChance >= 0.02))
 end
 
 return LegendaryChatHandler

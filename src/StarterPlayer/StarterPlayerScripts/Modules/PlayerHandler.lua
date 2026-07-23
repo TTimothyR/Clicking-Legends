@@ -10,7 +10,7 @@ local DataSyncClient = require(script.Parent.DataSyncClient)
 
 local player = Players.LocalPlayer
 
-local baseSpeed = 16
+local baseSpeed = 25
 
 local PlayerHandler = {}
 
@@ -68,13 +68,30 @@ local function WalkspeedHandle(character: Model)
 	local upgrades = DataSyncClient.Get("UpgradeLevels")
 	local walkspeedLevel = upgrades["Faster Walkspeed"]
 
-	humanoid.WalkSpeed = baseSpeed + (Upgrades["Faster Walkspeed"].Increment * walkspeedLevel)
+	if walkspeedLevel == nil then
+		humanoid.WalkSpeed = baseSpeed
+	else
+		humanoid.WalkSpeed = baseSpeed + (Upgrades["Faster Walkspeed"].Increment * walkspeedLevel)
+	end
 end
 
 function PlayerHandler.Initialize()
 	DataSyncClient.OnReady(function()
 		Network:FireServer("ClientReady")
 		ConnectButtons()
+
+		local lowDetail = DataSyncClient.Get("Settings").LowDetail
+		if lowDetail then
+			task.spawn(function()
+				for _, child in ipairs(game:GetDescendants()) do
+					if child:IsA("ParticleEmitter") then
+						child.Enabled = false
+					elseif child:IsA("Part") or child:IsA("MeshPart") then
+						child.CastShadow = false
+					end
+				end
+			end)
+		end
 
 		if player.Character then
 			WalkspeedHandle(player.Character)
@@ -83,6 +100,20 @@ function PlayerHandler.Initialize()
 		player.CharacterAdded:Connect(function(character: Model)
 			WalkspeedHandle(character)
 		end)
+	end)
+
+	DataSyncClient.OnChanged("Settings", function(new, _)
+		if new.LowDetail == true then
+			task.spawn(function()
+				for _, child in ipairs(game:GetDescendants()) do
+					if child:IsA("ParticleEmitter") then
+						child.Enabled = false
+					elseif child:IsA("Part") or child:IsA("MeshPart") then
+						child.CastShadow = false
+					end
+				end
+			end)
+		end
 	end)
 
 	DataSyncClient.OnChanged("UpgradeLevels", function(new, old)

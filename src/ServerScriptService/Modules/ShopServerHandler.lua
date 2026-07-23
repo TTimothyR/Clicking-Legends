@@ -3,6 +3,7 @@ local ShopHandler = {}
 -- Services
 local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerScriptService = game:GetService("ServerScriptService")
 local players = game:GetService("Players")
 local mps = game:GetService("MarketplaceService")
 local rs = game:GetService("ReplicatedStorage")
@@ -13,6 +14,7 @@ local library = framework:WaitForChild("Library")
 
 -- Modules
 local BotHandler = require(script.Parent.BotHandler).Private
+local LogHandler = require(ServerScriptService.Modules.Private.LogHandler)
 local GenerateID = require(ReplicatedStorage.Framework.GenerateID)
 local ImageService = require(ReplicatedStorage.Framework.Library.ImageService)
 local shopStats = require(library.ShopStats)
@@ -138,8 +140,17 @@ local function GamepassPurchaseHandler()
 			return
 		end
 
+		local _, info = pcall(function()
+			return mps:GetProductInfoAsync(gamePassId, Enum.InfoType.GamePass)
+		end)
+
+		LogHandler.LogPurchase(player, gpName, "Gamepass", info and info.PriceInRobux)
+
 		local profile = playerData.GetData(player)
 		profile.OwnedGamepasses[gpName] = true
+		profile.IsFreeToPlay = false
+
+		profile.TotalRobuxSpent += info.PriceInRobux
 
 		dataSync.SyncPlayer(player, profile)
 
@@ -181,6 +192,13 @@ local function ProductPurchaseHandler()
 			network:FireClient(player, "HideGreyFrame")
 			return Enum.ProductPurchaseDecision.PurchaseGranted
 		end
+		local _, info = pcall(function()
+			return mps:GetProductInfoAsync(receiptInfo.ProductId, Enum.InfoType.Product)
+		end)
+		LogHandler.LogPurchase(player, productName, "DeveloperProduct", info and info.PriceInRobux)
+		local profile = playerData.GetData(player)
+		profile.TotalRobuxSpent += info.PriceInRobux
+
 		local productData = shopStats.DeveloperProducts[productName]
 		if string.match(productName, "Pet") and not string.match(productName, "Storage") then
 			local pets = {}
@@ -251,6 +269,7 @@ function ShopHandler.UseGamepass(player: Player, id: string, gamepassName: strin
 
 	ownedGamepasses[gamepassName] = true
 	gifts[id] = nil
+	profile.IsFreeToPlay = false
 
 	if callbacks[gamepassName] then
 		callbacks[gamepassName](player)

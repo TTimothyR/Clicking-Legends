@@ -118,18 +118,21 @@ local function StartBoostController()
 	end)
 end
 
-function ItemHandler.UsePotion(player: Player, potionName: string, all: boolean)
+function ItemHandler.UsePotion(player: Player, potionName: string, amount: number, all: boolean)
 	local profile = playerData.GetData(player)
 	local playerItems = profile.Items
 	local potions = playerItems.Potions
 	local activePotions = profile.ActivePotions
 
 	if not potions[potionName] then
-		return
+		return 0
 	end
 
-	local amount = all and potions[potionName] or 1
-	potions[potionName] -= amount
+	local definitiveAmount = all and potions[potionName] or amount
+	if definitiveAmount > potions[potionName] then
+		definitiveAmount = potions[potionName]
+	end
+	potions[potionName] -= definitiveAmount
 	if potions[potionName] == 0 then
 		potions[potionName] = nil
 	end
@@ -137,7 +140,7 @@ function ItemHandler.UsePotion(player: Player, potionName: string, all: boolean)
 	local nameSplit = string.split(potionName, "_")
 	local buff, tier = nameSplit[1], nameSplit[2]
 
-	local duration = items.Potions[tier].Duration * amount
+	local duration = items.Potions[tier].Duration * definitiveAmount
 	local endTime = os.time() + duration
 
 	if not activePotions[buff] then
@@ -202,6 +205,8 @@ function ItemHandler.UsePotion(player: Player, potionName: string, all: boolean)
 
 	dataSync.SyncPlayer(player, profile)
 	network:FireClient(player, "UpdateActivePotions")
+
+	return potions[potionName] or 0
 end
 
 function ItemHandler.Initialize()

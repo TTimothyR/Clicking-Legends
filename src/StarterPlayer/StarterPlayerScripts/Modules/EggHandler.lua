@@ -177,6 +177,7 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
 	local speed = 1
 	local ownedGamepsses = dataSync.Get("OwnedGamepasses")
 	local upgradeLevels = dataSync.Get("UpgradeLevels")
+	local lowDetail = dataSync.Get("Settings").LowDetail
 
 	local skipEasyLegendary = dataSync.Get("Settings").SkipEasyLegendaries
 
@@ -578,7 +579,9 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
 			go.Completed:Wait()
 			soundHandler.PlaySound(sounds.Click)
 			camera.CFrame *= CFrame.Angles(startAngle / cursorAmount, 0, 0)
-			splat:Emit(50)
+			if not lowDetail then
+				splat:Emit(50)
+			end
 			modelUtil.AnimateScale(newEggModel:GetScale(), newEggModel:GetScale() + 0.05, TweenInfo.new(waitTime), newEggModel)
 			waitTime /= 1.04
 			model:Destroy()
@@ -591,18 +594,20 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
 		eggConnection:Disconnect()
 	end
 
-	for _, data in ipairs(eggData) do
-		runService.Heartbeat:Wait()
-		if legendaries > 0 or secrets > 0 then
-			for _, particle: ParticleEmitter in ipairs(data.egg.PrimaryPart.Particle:GetChildren()) do
-				if particle.Name == "Confetti" then
-					particle:Emit(40)
-				else
-					particle:Emit(17)
+	if not lowDetail then
+		for _, data in ipairs(eggData) do
+			runService.Heartbeat:Wait()
+			if legendaries > 0 or secrets > 0 then
+				for _, particle: ParticleEmitter in ipairs(data.egg.PrimaryPart.Particle:GetChildren()) do
+					if particle.Name == "Confetti" then
+						particle:Emit(40)
+					else
+						particle:Emit(17)
+					end
 				end
 			end
+			data.egg.PrimaryPart.Particle.Smoke:Emit(17)
 		end
-		data.egg.PrimaryPart.Particle.Smoke:Emit(17)
 	end
 
 	local petData = {}

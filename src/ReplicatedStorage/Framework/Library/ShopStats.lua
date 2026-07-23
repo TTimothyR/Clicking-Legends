@@ -115,7 +115,7 @@ return {
 		},
 		["PetCombi"] = {
 			ProductID = 3609877566,
-			ExpireDate = 1787380373,
+			ExpireDate = 1787475995,
 		},
 		["RestockItemShop"] = {
 			ProductID = 3608435738,

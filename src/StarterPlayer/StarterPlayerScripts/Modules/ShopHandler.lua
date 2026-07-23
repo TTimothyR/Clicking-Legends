@@ -3,6 +3,7 @@ local db = false
 
 -- Services
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local players = game:GetService("Players")
 local rs = game:GetService("ReplicatedStorage")
 local mps = game:GetService("MarketplaceService")
@@ -299,6 +300,19 @@ local function LoadShop()
 				end
 			end)
 		end
+	end
+	if shopStats.DeveloperProducts.PetCombi.ExpireDate < os.time() then
+		scrollingHolder.ExclusivePets.Visible = false
+	else
+		RunService.Heartbeat:Connect(function(_)
+			scrollingHolder.ExclusivePets.Inner.Timer.Text =
+				Globals.FormatTime(shopStats.DeveloperProducts.PetCombi.ExpireDate - os.time(), false)
+
+			if shopStats.DeveloperProducts.PetCombi.ExpireDate < os.time() then
+				scrollingHolder.ExclusivePets.Visible = false
+			end
+			task.wait(1)
+		end)
 	end
 
 	UpdateGamepasses(dataSync.Get("OwnedGamepasses"))

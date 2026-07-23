@@ -34,7 +34,7 @@ local amplitude = 1
 local frequency = 4
 local rotationAngle = 15
 
-local function CalculateYOffset(model, rayDistance)
+local function CalculateYOffset(model, rayDistance, toIgnore)
 	local lowestOffset = math.huge
 
 	for _, part in ipairs(model:GetDescendants()) do
@@ -48,7 +48,7 @@ local function CalculateYOffset(model, rayDistance)
 
 	local params = RaycastParams.new()
 	params.FilterType = Enum.RaycastFilterType.Exclude
-	params.FilterDescendantsInstances = { petsFolder, eggOpenFolder }
+	params.FilterDescendantsInstances = { toIgnore }
 
 	local resultDown: RaycastResult = workspace:Raycast(
 		model.PrimaryPart.Position - Vector3.new(0, lowestOffset, 0),
@@ -151,6 +151,14 @@ local function handlePets(folder: Folder)
 			return
 		end
 
+		local charactersToIgnore = { petsFolder, eggOpenFolder }
+
+		for _, ignorePlayer in ipairs(players:GetPlayers()) do
+			if ignorePlayer.Character then
+				table.insert(charactersToIgnore, ignorePlayer.Character)
+			end
+		end
+
 		for i, v in ipairs(folder:GetChildren()) do
 			local state
 			if string.find(v.Name, "Shiny") then
@@ -181,7 +189,7 @@ local function handlePets(folder: Folder)
 
 			if isMoving then
 				if state == "Walk" then
-					local surfaceOffset = CalculateYOffset(v, 1000)
+					local surfaceOffset = CalculateYOffset(v, 1000, charactersToIgnore)
 					local slope = 2 * math.cos(10 * tValues[v])
 					local tilt = slope * rotationAngle
 					targetPosition = Vector3.new(posX, surfaceOffset, posZ)
@@ -192,7 +200,7 @@ local function handlePets(folder: Folder)
 					tValues[v] += dt
 				else
 					local yOffset = amplitude * math.sin(frequency * tValues[v])
-					local surfaceOffset = CalculateYOffset(v, 1000) + 2
+					local surfaceOffset = CalculateYOffset(v, 1000, charactersToIgnore) + 2
 					local slope = math.cos(frequency * tValues[v])
 					local tilt = slope * rotationAngle
 					targetPosition = Vector3.new(posX, yOffset + surfaceOffset, posZ)
@@ -204,7 +212,7 @@ local function handlePets(folder: Folder)
 				end
 			else
 				if state == "Walk" then
-					local surfaceOffset = CalculateYOffset(v, 1000)
+					local surfaceOffset = CalculateYOffset(v, 1000, charactersToIgnore)
 					targetPosition = Vector3.new(posX, surfaceOffset, posZ)
 					local lookAtCFrame = CFrame.lookAt(
 						targetPosition,
@@ -213,7 +221,7 @@ local function handlePets(folder: Folder)
 					v:PivotTo(currentCframe:Lerp(lookAtCFrame, math.clamp(5 * dt, 0, 1)))
 				else
 					local yOffset = amplitude * math.sin(frequency * tValues[v])
-					local surfaceOffset = CalculateYOffset(v, 1000) + 2
+					local surfaceOffset = CalculateYOffset(v, 1000, charactersToIgnore) + 2
 					local slope = math.cos(frequency * tValues[v])
 					local tilt = slope * rotationAngle
 					targetPosition = Vector3.new(posX, yOffset + surfaceOffset, posZ)
@@ -240,10 +248,7 @@ local function handlePets(folder: Folder)
 end
 
 local function LoadPets(player: Player)
-	local character = workspace:FindFirstChild(player.Name)
-	if not character then
-		return
-	end
+	local _ = player.Character or player.CharacterAdded:Wait()
 	-- local profile = dataSync.GetOtherData(player.UserId);
 	local pets = nil
 	repeat
@@ -252,7 +257,8 @@ local function LoadPets(player: Player)
 		else
 			local profile = dataSync.GetOtherData(player.UserId)
 			if not profile then
-				break
+				task.wait(0.25)
+				continue
 			end
 			pets = profile.Pets
 		end
@@ -282,10 +288,7 @@ function PetHandler.UpdatePets(player: Player, pets)
 end
 
 function PetHandler.UpdatePet(player, petData, equip: boolean)
-	local character = workspace:FindFirstChild(player.Name)
-	if not character then
-		return
-	end
+	local _ = player.Character or player.CharacterAdded:Wait()
 
 	equippedPetsData[player.Name] = equippedPetsData[player.Name] or {}
 
@@ -316,14 +319,23 @@ function PetHandler.Initialize()
 		hideAllPets = playerSettings.HideAll
 		hideOtherPets = playerSettings.HideOthers
 
-		for _, folder: Folder in ipairs(petsFolder:GetChildren()) do
-			LoadPets(players:FindFirstChild(folder.Name))
-			task.delay(0.2, handlePets, folder)
+		for _, player in ipairs(players:GetPlayers()) do
+			task.spawn(function()
+				local folder = petsFolder:WaitForChild(player.Name)
+				LoadPets(player)
+				task.delay(0.2, handlePets, folder)
+			end)
 		end
 	end)
 	players.PlayerAdded:Connect(function(player)
-		LoadPets(player)
-		task.delay(0.2, handlePets, petsFolder:WaitForChild(player.Name))
+		task.spawn(function()
+			local folder = petsFolder:WaitForChild(player.Name)
+			LoadPets(player)
+			task.delay(0.2, handlePets, folder)
+		end)
+	end)
+	players.PlayerRemoving:Connect(function(player)
+		equippedPetsData[player.Name] = nil
 	end)
 end
 

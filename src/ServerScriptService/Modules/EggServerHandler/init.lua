@@ -281,7 +281,10 @@ function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
 			})
 
 			if rarity == "Legendary" then
-				LegendaryChatHandler.SendLegendaryMessage(player, petName, eggName, shiny)
+				local waitTime = secret and Globals.SecretHatchTime or Globals.BaseHatchTime
+				task.delay(waitTime, function()
+					LegendaryChatHandler.SendLegendaryMessage(player, petName, eggName, shiny)
+				end)
 			end
 
 			if petStats[petName].Secret then

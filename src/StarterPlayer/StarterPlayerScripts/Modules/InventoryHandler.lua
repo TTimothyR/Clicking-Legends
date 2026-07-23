@@ -344,7 +344,7 @@ local function LoadItemInfo(itemName: string)
 		local itemInfoButtons = itemInfoHolder.Buttons
 
 		local useCon: RBXScriptConnection
-		local useAllCon: RBXScriptConnection
+		local use5Con: RBXScriptConnection
 
 		useCon = itemInfoButtons.Use.Click.MouseButton1Click:Connect(function()
 			if not db then
@@ -352,21 +352,29 @@ local function LoadItemInfo(itemName: string)
 				task.delay(0.15, function()
 					db = false
 				end)
-				network:FireServer("UsePotion", itemName, false)
+				local newAmount = network:InvokeServer("UsePotion", itemName, 1, false)
+				if newAmount == 0 then
+					selectedItemName = nil
+					itemInfoHolder.Visible = false
+				end
 			end
 		end)
-		useAllCon = itemInfoButtons.UseAll.Click.MouseButton1Click:Connect(function()
+		use5Con = itemInfoButtons.Use5.Click.MouseButton1Click:Connect(function()
 			if not db then
 				db = true
 				task.delay(0.15, function()
 					db = false
 				end)
-				network:FireServer("UsePotion", itemName, true)
+				local newAmount = network:InvokeServer("UsePotion", itemName, 5, false)
+				if newAmount == 0 then
+					selectedItemName = nil
+					itemInfoHolder.Visible = false
+				end
 			end
 		end)
 
 		table.insert(itemInfoConnections, useCon)
-		table.insert(itemInfoConnections, useAllCon)
+		table.insert(itemInfoConnections, use5Con)
 	end
 
 	itemInfoHolder.Visible = true

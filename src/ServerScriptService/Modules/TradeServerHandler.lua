@@ -2,6 +2,7 @@ local TradeHandler = {}
 
 -- Services
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerScriptService = game:GetService("ServerScriptService")
 local players = game:GetService("Players")
 local rs = game:GetService("ReplicatedStorage")
 local sss = game:GetService("ServerScriptService")
@@ -17,6 +18,8 @@ local pendingRequests = {}
 local isPrivateServer = false
 
 -- Modules
+local DupeDetector = require(ServerScriptService.Modules.Private.DupeDetector)
+local LogHandler = require(ServerScriptService.Modules.Private.LogHandler)
 local Globals = require(ReplicatedStorage.Framework.Globals)
 local network = require(framework.Network)
 local generateID = require(framework.GenerateID)
@@ -33,23 +36,51 @@ local maximumItemsInTrade = 8
 local function CheckTradeBan(player: Player, profile)
 	local petDupes = Globals.GetPetDuplicates(profile.Pets)
 	if next(petDupes) == nil then
-		print("Player does not have duplicate pets")
 		profile.TradeBanned = false
 	else
-		print("Player has duplicate pets")
+		local duplicateIds = {}
+		for id, _ in pairs(petDupes) do
+			table.insert(duplicateIds, id)
+		end
+		LogHandler.LogDupe({ player }, duplicateIds, "Inventory")
 		profile.TradeBanned = true
+
+		print("hola")
+
+		local s, err = pcall(function()
+			players:BanAsync({
+				UserIds = { player.UserId },
+				Duration = -1,
+				DisplayReason = "You have been permanently banned from this experience for having duplicate pets in your inventory. In case you believe this is a mistake, appeal in the community server.",
+				PrivateReason = "Had a duplicate pet in their inventory.",
+				ExcludeAltAccounts = false,
+				ApplyToUniverse = true,
+			})
+		end)
+		if not s then
+			warn("Failed to ban user", err)
+			warn("Ban this person:", player.UserId)
+		end
 	end
 
 	local giftDupes = Globals.GetGiftDuplicates(profile.Gifts)
 	if next(giftDupes) ~= nil then
-		players:BanAsync({
-			UserIds = { player.UserId },
-			Duration = -1,
-			DisplayReason = "You have been permanently banned from this experience for having duplicate gamepasses in your inventory. In case you believe this is a mistake, appeal in the community server.",
-			PrivateReason = "Had a duplicate gamepass in their inventory.",
-			ExcludeAltAccounts = false,
-			ApplyToUniverse = true,
-		})
+		local s, err = pcall(function()
+			profile.TradeBanned = true
+
+			players:BanAsync({
+				UserIds = { player.UserId },
+				Duration = -1,
+				DisplayReason = "You have been permanently banned from this experience for having duplicate gamepasses in your inventory. In case you believe this is a mistake, appeal in the community server.",
+				PrivateReason = "Had a duplicate gamepass in their inventory.",
+				ExcludeAltAccounts = false,
+				ApplyToUniverse = true,
+			})
+		end)
+		if not s then
+			warn("Failed to ban user", err)
+			warn("Ban this person:", player.UserId)
+		end
 	end
 end
 
@@ -157,8 +188,12 @@ local function CompleteTrade(tradeID: string)
 	CheckTradeBan(player1, profile1)
 	CheckTradeBan(player2, profile2)
 
+	task.spawn(DupeDetector.ScanServer)
+
 	dataSync.SyncPlayer(player1, profile1)
 	dataSync.SyncPlayer(player2, profile2)
+
+	LogHandler.LogTrade(player1, player2, { Pets = petsTo2, Gifts = giftsTo2 }, { Pets = petsTo1, Gifts = giftsTo1 })
 
 	for _, playerName in ipairs(playerNames) do
 		local plr: Player = players:FindFirstChild(playerName)

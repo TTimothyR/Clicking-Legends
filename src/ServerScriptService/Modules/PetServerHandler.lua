@@ -21,6 +21,23 @@ local generateID = require(framework.GenerateID)
 local petStats = require(library.PetStats)
 local dataSync = require(dataModules.DataSyncServer).Private
 
+local function Ban(player)
+	local s, err = pcall(function()
+		players:BanAsync({
+			UserIds = { player.UserId },
+			Duration = -1,
+			DisplayReason = "You have been permanently banned from this experience for having duplicate pets in your inventory. In case you believe this is a mistake, appeal in the community server.",
+			PrivateReason = "Had a duplicate pet in their inventory.",
+			ExcludeAltAccounts = false,
+			ApplyToUniverse = true,
+		})
+	end)
+	if not s then
+		warn("Failed to ban user", err)
+		warn("Ban this person:", player.UserId)
+	end
+end
+
 local function GetPetAmount(profile, petName: string)
 	local count = 0
 	for _, petData in ipairs(profile.Pets) do
@@ -206,6 +223,10 @@ function PetHandler.DeletePet(player: Player, id: string)
 	local dupes = globals.GetPetDuplicates(profile.Pets)
 	profile.TradeBanned = next(dupes) ~= nil
 
+	if next(dupes) ~= nil then
+		Ban(player)
+	end
+
 	dataSync.SyncPlayer(player, profile)
 
 	return true
@@ -279,6 +300,9 @@ function PetHandler.DeleteAllUnlocked(player: Player)
 
 	local dupes = globals.GetPetDuplicates(profile.Pets)
 	profile.TradeBanned = next(dupes) ~= nil
+	if next(dupes) ~= nil then
+		Ban(player)
+	end
 
 	dataSync.SyncPlayer(player, profile)
 
@@ -353,6 +377,9 @@ function PetHandler.DeleteSelection(player: Player, selection)
 
 	local dupes = globals.GetPetDuplicates(profile.Pets)
 	profile.TradeBanned = next(dupes) ~= nil
+	if next(dupes) ~= nil then
+		Ban(player)
+	end
 
 	dataSync.SyncPlayer(player, profile)
 
@@ -468,6 +495,9 @@ function PetHandler.CraftAll(player: Player)
 
 	local dupes = globals.GetPetDuplicates(profile.Pets)
 	profile.TradeBanned = next(dupes) ~= nil
+	if next(dupes) ~= nil then
+		Ban(player)
+	end
 
 	dataSync.SyncPlayer(player, profile)
 
@@ -548,6 +578,9 @@ function PetHandler.MakeShiny(player: Player, petName: string)
 
 	local dupes = globals.GetPetDuplicates(profile.Pets)
 	profile.TradeBanned = next(dupes) ~= nil
+	if next(dupes) ~= nil then
+		Ban(player)
+	end
 
 	dataSync.SyncPlayer(player, profile)
 

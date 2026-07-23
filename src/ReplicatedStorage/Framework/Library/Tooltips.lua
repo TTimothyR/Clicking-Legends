@@ -38,6 +38,11 @@ local Tooltips = {
 		local Rarity = (PetStats[Data.petName].Rarity or "Common")
 		local PetData = FromTrade and Data or PetUtility.GetPetData(Data.id)
 
+		TopFrame.Normal.Enabled = not Data.shiny
+		TopFrame.NormalBottom.Visible = not Data.shiny
+		TopFrame.Shiny.Enabled = Data.shiny
+		TopFrame.ShinyBottom.Visible = Data.shiny
+
 		TopFrame.Info.Title.Text = Data.petName
 		TopFrame.Icon.Image = ImageService[Image] or ImageService["Placeholder"]
 		TopFrame.Info.Rarity.Text = Rarity
@@ -68,7 +73,7 @@ local Tooltips = {
 				existCache[fullName] = { count = count, fetchTime = os.time() }
 			end
 
-			LabelsFrame.ExistHolder.Amount.Text = `{count} Exist`
+			LabelsFrame.ExistHolder.Amount.Text = `{Globals.FormatNumber(count)} Exist`
 			LabelsFrame.ExistHolder.Visible = true
 		else
 			LabelsFrame.ExistHolder.Visible = false
