@@ -36,6 +36,14 @@ local function ClearOldItems()
 	end
 end
 
+local function UpdateRestockButton(color: string, text: string, button)
+	button.Frame.UIGradient.Color = Globals.ButtonPresets[color].Gradient
+	button.Frame.UIStroke.Color = Globals.ButtonPresets[color].StrokeColor
+	button.Frame.Remaining.UIStroke.Color = Globals.ButtonPresets[color].StrokeColor
+	button.Frame.TextLabel.UIStroke.Color = Globals.ButtonPresets[color].StrokeColor
+	button.Frame.TextLabel.Text = text
+end
+
 function ItemShops.DisplayShop(shopName: string)
 	ClearOldItems()
 	if not ItemShopModule.Shops[shopName] then
@@ -43,6 +51,7 @@ function ItemShops.DisplayShop(shopName: string)
 	end
 	local ItemShopsData = DataSyncClient.Get("ItemShops")
 	local DailyShopRerolls = DataSyncClient.Get("DailyShopRerolls")
+	local nextDailyReroll = DataSyncClient.Get("NextDailyReroll")
 	local ShopInData = ItemShopsData[shopName]
 	if not ShopInData then
 		return
@@ -57,6 +66,10 @@ function ItemShops.DisplayShop(shopName: string)
 
 	ItemShopFrame.Title.Text = _Info.Name
 	Main.FreeRerolls.Frame.Remaining.Text = `{DailyShopRerolls} Remaining`
+	local text = (DailyShopRerolls > 0) and "Free Reroll" or Globals.FormatTime(nextDailyReroll - os.time(), false)
+	local color = (DailyShopRerolls > 0) and "Green" or "Red"
+
+	UpdateRestockButton(color, text, Main.FreeRerolls)
 
 	for item, stock in pairs(ShopInData.Items) do
 		local Template = script.DropTemplate:Clone()
@@ -78,7 +91,7 @@ function ItemShops.DisplayShop(shopName: string)
 		CostFrame.Amount.Text = InfiniteMath.new(DropData[3]):GetSuffix(true)
 		CostFrame.Icon.Image = ImageService[_Info.Currency]
 
-		BuyButton.MouseButton1Down:Connect(function()
+		BuyButton.MouseButton1Click:Connect(function()
 			Network:FireServer("BuyShopItem", shopName, item)
 		end)
 
@@ -92,12 +105,20 @@ end
 
 function ItemShops.Initialize()
 	DataSyncClient.OnChanged("ItemShops", function(_, _)
+		if CurrentShop then
+			ItemShops.DisplayShop(CurrentShop)
+		end
 		--ItemShops.DisplayShop("TestShop")
 	end)
-	Main.InstantRestock.MouseButton1Down:Connect(function()
+	DataSyncClient.OnChanged("DailyShopRerolls", function(_, _)
+		if CurrentShop then
+			ItemShops.DisplayShop(CurrentShop)
+		end
+	end)
+	Main.InstantRestock.MouseButton1Click:Connect(function()
 		MarketplaceService:PromptProductPurchase(Player, ShopStats.DeveloperProducts.RestockItemShop.ProductID)
 	end)
-	Main.FreeRerolls.MouseButton1Down:Connect(function()
+	Main.FreeRerolls.MouseButton1Click:Connect(function()
 		local _ = Network:InvokeServer("UseDailyRestock")
 	end)
 
@@ -107,9 +128,16 @@ function ItemShops.Initialize()
 				continue
 			end
 			local ItemShopsData = DataSyncClient.Get("ItemShops")
+			local nextDailyReroll = DataSyncClient.Get("NextDailyReroll")
+			local DailyShopRerolls = DataSyncClient.Get("DailyShopRerolls")
+
 			local ShopInData = ItemShopsData[CurrentShop]
 			if not ShopInData then
 				continue
+			end
+
+			if DailyShopRerolls == 0 then
+				UpdateRestockButton("Red", Globals.FormatTime(nextDailyReroll - os.time(), false), Main.FreeRerolls)
 			end
 
 			Main.Restock.TextLabel.Text = `Restocks in: {Globals.FormatTime(ShopInData.NextRestock - os.time(), true)}`

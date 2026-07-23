@@ -17,6 +17,8 @@ Shared.DEFAULT_PLAYER_DATA = {
 	TotalGems = infMath.new(0),
 	Rebirths = infMath.new(1),
 	Eggs = 0,
+	RebirthTokens = 0,
+	TotalRebirthTokens = 0,
 
 	LuckPercentage = 0,
 	EggHatches = 3,
@@ -69,6 +71,9 @@ Shared.DEFAULT_PLAYER_DATA = {
 	OwnedGamepasses = {},
 	RedeemedCodes = {},
 	UnlockedEggs = {},
+
+	Chests = {},
+
 	ItemShops = {},
 	DailyShopRerolls = 3,
 	NextDailyReroll = os.time(),

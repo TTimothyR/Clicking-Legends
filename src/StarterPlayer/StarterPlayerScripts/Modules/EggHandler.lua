@@ -61,6 +61,14 @@ local upgrades = require(library.Upgrades)
 local dir, style, animTime = Enum.EasingDirection.Out, Enum.EasingStyle.Sine, 0.3
 local closedFrame = nil
 
+local function HideShadows(model: Model)
+	for _, child in ipairs(model:GetDescendants()) do
+		if child:IsA("Part") or child:IsA("MeshPart") then
+			child.CastShadow = false
+		end
+	end
+end
+
 local function CalculatePositions(amount: number)
 	local eggDataList = {}
 	local eggSpacing = 3.75
@@ -208,6 +216,7 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
 
 	for i = 1, amount do
 		local egg: Model = eggModels:FindFirstChild(eggName):Clone()
+		HideShadows(egg)
 		local attach = Instance.new("Attachment")
 		attach.Parent = egg.PrimaryPart
 		attach.Name = "Particle"
@@ -636,6 +645,7 @@ function EggHandler.EggAnimation(eggName: string, amount: number, petsData)
 		end
 
 		local pet: Model = petModels:FindFirstChild(petName):Clone()
+		HideShadows(pet)
 		pet.Parent = eggOpens
 
 		local petPos = Instance.new("CFrameValue")

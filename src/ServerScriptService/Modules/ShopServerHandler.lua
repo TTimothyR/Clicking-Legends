@@ -233,12 +233,12 @@ local function EnsureGamepassOwnership(player: Player)
 		if ownedPasses[gpName] then
 			continue
 		end
-		if mps:UserOwnsGamePassAsync(player.UserId, data.GamepassID) or player.UserId == 4528900607 then
-			ownedPasses[gpName] = true
-			if callbacks[gpName] then
-				callbacks[gpName](player)
-			end
+		-- if mps:UserOwnsGamePassAsync(player.UserId, data.GamepassID) or player.UserId == 4528900607 then
+		ownedPasses[gpName] = true
+		if callbacks[gpName] then
+			callbacks[gpName](player)
 		end
+		-- end
 	end
 
 	dataSync.SyncPlayer(player, profile)

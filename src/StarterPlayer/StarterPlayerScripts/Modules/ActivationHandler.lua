@@ -7,14 +7,17 @@ local StarterGui = game:GetService("StarterGui")
 local InfoPopup = require(ReplicatedStorage.Classes.InfoPopup)
 local WarningPopup = require(ReplicatedStorage.Classes.WarningPopup)
 local InfiniteMath = require(ReplicatedStorage.Framework.InfiniteMath)
+local ItemShopModule = require(ReplicatedStorage.Framework.Library.ItemShopModule)
 local Worlds = require(ReplicatedStorage.Framework.Library.Worlds)
 local Network = require(ReplicatedStorage.Framework.Network)
 local DataSyncClient = require(script.Parent.DataSyncClient)
+local ItemShops = require(script.Parent.ItemShops)
 local MenuHandler = require(script.Parent.MenuHandler)
 
 local activators = workspace:WaitForChild("Activations")
 local uiActivators = activators:WaitForChild("UIActivators")
 local teleportActivators = activators:WaitForChild("TeleportActivators")
+local claimActivators = activators:WaitForChild("ClaimActivators")
 
 local player = Players.LocalPlayer
 local playerGui = player.PlayerGui :: PlayerGui
@@ -22,9 +25,11 @@ local playerGui = player.PlayerGui :: PlayerGui
 local frames = playerGui:WaitForChild("Frames")
 local warningFrame = frames:WaitForChild("Warning") :: Frame
 local infoFrame = frames:WaitForChild("Info") :: Frame
+local itemShopFrame = frames:WaitForChild("ItemShop") :: Frame
 
 local uiActivations: { [Part]: GuiObject } = {}
 local teleportActivations: { [Part]: Part } = {}
+local claimActivations: { [Part]: ModuleScript } = {}
 
 local visibleFrame = nil
 local isTeleporting = false
@@ -64,6 +69,22 @@ local function GetObjectValueAsync(objectValue: ObjectValue): Instance?
 	return target
 end
 
+local function RegisterClaimActivator(claimActivator: Model)
+	local targetModuleValue = claimActivator:WaitForChild("TargetModule", 5) :: ObjectValue?
+	local triggerPart = claimActivator:WaitForChild("Trigger", 5) :: Part?
+
+	if not targetModuleValue or not triggerPart then
+		return
+	end
+
+	local targetModule = GetObjectValueAsync(targetModuleValue)
+	if targetModule then
+		claimActivations[triggerPart] = targetModule :: ModuleScript
+		table.insert(activeTriggers, triggerPart)
+		triggerAddedSignal:Fire()
+	end
+end
+
 local function RegisterUIActivator(uiActivator: Model)
 	local targetFrameValue = uiActivator:WaitForChild("TargetFrame", 5) :: ObjectValue?
 	local triggerPart = uiActivator:WaitForChild("Trigger", 5) :: Part?
@@ -99,6 +120,74 @@ local function RegisterTeleportActivator(teleportActivator: Model)
 	end
 end
 
+local function UIActivatorTriggered(result)
+	if visibleFrame ~= uiActivations[result.Instance] then
+		if ItemShopModule.Shops[result.Instance.Parent.Name] then
+			visibleFrame = itemShopFrame
+			ItemShops.DisplayShop(result.Instance.Parent.Name)
+		else
+			visibleFrame = uiActivations[result.Instance]
+			MenuHandler.handleOpenClose(uiActivations[result.Instance])
+		end
+	end
+end
+
+local function TeleportActivatorTriggered(result)
+	if not isTeleporting then
+		isTeleporting = true
+		local worldName = result.Instance.Parent.Name
+		local ownedWorlds = DataSyncClient.Get("OwnedWorlds")
+		local clicks = DataSyncClient.Get("Clicks")
+
+		if not ownedWorlds or not clicks then
+			isTeleporting = false
+			return
+		end
+
+		if not ownedWorlds[worldName] then
+			if clicks < InfiniteMath.new(Worlds[worldName].Requirement) then
+				InfoPopup.new(nil, "You do not have enough Clicks to purchase this world.", function()
+					MenuHandler.handleOpenClose(infoFrame)
+				end, infoFrame)
+				MenuHandler.handleOpenClose(infoFrame)
+				visibleFrame = infoFrame
+				infoFrame:GetPropertyChangedSignal("Visible"):Once(function()
+					isTeleporting = false
+				end)
+			else
+				WarningPopup.new(
+					nil,
+					`Do you want to buy {result.Instance.Parent.Name} world for {InfiniteMath.new(Worlds[worldName].Requirement)
+						:GetSuffix(true)} Clicks?`,
+					function()
+						MenuHandler.handleOpenClose(warningFrame)
+						local success = Network:InvokeServer("BuyWorld", worldName)
+						if success then
+							Network:FireServer("Teleport", worldName)
+						end
+					end,
+					function()
+						MenuHandler.handleOpenClose(warningFrame)
+					end,
+					warningFrame
+				)
+				MenuHandler.handleOpenClose(warningFrame)
+				visibleFrame = warningFrame
+				warningFrame:GetPropertyChangedSignal("Visible"):Once(function()
+					isTeleporting = false
+				end)
+			end
+		else
+			Network:FireServer("Teleport", worldName)
+			isTeleporting = false
+		end
+	end
+end
+
+local function ClaimActivatorTriggered(result)
+	print(result.Instance.Parent.Name)
+end
+
 local function OnCharacterAdded(character: Model)
 	local raycastParams = RaycastParams.new()
 	raycastParams.FilterType = Enum.RaycastFilterType.Include
@@ -128,60 +217,11 @@ local function OnCharacterAdded(character: Model)
 			end
 		else
 			if uiActivations[result.Instance] then
-				if visibleFrame ~= uiActivations[result.Instance] then
-					visibleFrame = uiActivations[result.Instance]
-					MenuHandler.handleOpenClose(uiActivations[result.Instance])
-				end
+				UIActivatorTriggered(result)
 			elseif teleportActivations[result.Instance] then
-				if not isTeleporting then
-					isTeleporting = true
-					local worldName = result.Instance.Parent.Name
-					local ownedWorlds = DataSyncClient.Get("OwnedWorlds")
-					local clicks = DataSyncClient.Get("Clicks")
-
-					if not ownedWorlds or not clicks then
-						isTeleporting = false
-						return
-					end
-
-					if not ownedWorlds[worldName] then
-						if clicks < InfiniteMath.new(Worlds[worldName].Requirement) then
-							InfoPopup.new(nil, "You do not have enough Clicks to purchase this world.", function()
-								MenuHandler.handleOpenClose(infoFrame)
-							end, infoFrame)
-							MenuHandler.handleOpenClose(infoFrame)
-							visibleFrame = infoFrame
-							infoFrame:GetPropertyChangedSignal("Visible"):Once(function()
-								isTeleporting = false
-							end)
-						else
-							WarningPopup.new(
-								nil,
-								`Do you want to buy {result.Instance.Parent.Name} world for {InfiniteMath.new(Worlds[worldName].Requirement)
-									:GetSuffix(true)} Clicks?`,
-								function()
-									MenuHandler.handleOpenClose(warningFrame)
-									local success = Network:InvokeServer("BuyWorld", worldName)
-									if success then
-										Network:FireServer("Teleport", worldName)
-									end
-								end,
-								function()
-									MenuHandler.handleOpenClose(warningFrame)
-								end,
-								warningFrame
-							)
-							MenuHandler.handleOpenClose(warningFrame)
-							visibleFrame = warningFrame
-							warningFrame:GetPropertyChangedSignal("Visible"):Once(function()
-								isTeleporting = false
-							end)
-						end
-					else
-						Network:FireServer("Teleport", worldName)
-						isTeleporting = false
-					end
-				end
+				TeleportActivatorTriggered(result)
+			elseif claimActivations[result.Instance] then
+				ClaimActivatorTriggered(result)
 			end
 		end
 	end)
@@ -201,6 +241,15 @@ function ActivationHandler.Initialize()
 	if not game:IsLoaded() then
 		game.Loaded:Wait()
 	end
+
+	for _, claimActivator in ipairs(claimActivators:GetChildren()) do
+		task.spawn(RegisterClaimActivator, claimActivator)
+	end
+	claimActivators.ChildAdded:Connect(function(child: Instance)
+		if child:IsA("Model") then
+			RegisterClaimActivator(child)
+		end
+	end)
 
 	for _, uiActivator: Model in ipairs(uiActivators:GetChildren()) do
 		task.spawn(RegisterUIActivator, uiActivator)

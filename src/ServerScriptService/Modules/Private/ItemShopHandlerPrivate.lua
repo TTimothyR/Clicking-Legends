@@ -37,7 +37,7 @@ function ItemShopHandlerPrivate.ChooseShopItems(ShopName: string)
 				Item = GetRandomItem(ModifiedPool)
 			until not ItemTbl[Item]
 		end
-		ItemTbl[Item] = math.random(1, 5)
+		ItemTbl[Item] = ItemPool[Item][4]
 	end
 
 	return ItemTbl
@@ -74,6 +74,8 @@ function ItemShopHandlerPrivate.RestockShop(plr: Player, ShopName: string, IsFor
 	_ShopData.Items = NewItems
 	_ShopData.NextRestock = (os.time() + _Info.RestockTime)
 	DataSyncServer.SyncPlayer(plr, Profile)
+
+	-- Network:FireClient(plr, "DisplayShop", ShopName)
 end
 
 return ItemShopHandlerPrivate

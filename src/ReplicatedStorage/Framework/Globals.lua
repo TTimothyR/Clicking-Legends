@@ -439,6 +439,9 @@ function Globals.FormatTime(seconds, letterRepresentation: boolean)
 end
 
 function Globals.FormatNumber(number)
+	if type(number) ~= "number" then
+		return "nil"
+	end
 	local s = tostring(math.floor(number))
 	local result = ""
 	local count = 0

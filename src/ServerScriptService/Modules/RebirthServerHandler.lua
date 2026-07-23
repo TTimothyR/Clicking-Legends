@@ -80,6 +80,11 @@ function RebirthHandler.AttemptRebirth(player: Player, rebirthIndex: number)
 		local upgradeLevels = profile.UpgradeLevels
 		gemsPerRebirth *= 1 + upgradeLevels["More Gems"] * (upgrades["More Gems"].Increment / 100)
 
+		if rebirthIndex == #profile.OwnedRebirthButtons then
+			profile.RebirthTokens += 1
+			profile.TotalRebirthTokens += 1
+		end
+
 		profile.Clicks = infMath.new(0)
 		-- player:SetAttribute('Clicks', http:JSONEncode(profile.Clicks));
 		local leaderstats = player:FindFirstChild("leaderstats") :: Folder

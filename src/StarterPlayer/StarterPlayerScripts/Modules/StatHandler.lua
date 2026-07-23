@@ -429,10 +429,20 @@ local function UpdateStatDisplay(currencyStr: string, newValue)
 	if data.activeConnection then
 		data.activeConnection:Disconnect()
 	end
-	data.currentAnimValue = infMath.new(data.currentValue)
+	if currencyStr == "RebirthTokens" then
+		data.currentAnimValue = data.currentValue
+	else
+		data.currentAnimValue = infMath.new(data.currentValue)
+	end
 
 	local startValue = data.currentValue
-	local delta = infMath.new(newValue - startValue)
+	local delta
+
+	if currencyStr == "RebirthTokens" then
+		delta = newValue - startValue
+	else
+		delta = infMath.new(newValue - startValue)
+	end
 
 	if currencyStr == "Gems" then
 		task.spawn(ClickHandler.PopUp, delta, currencyStr)
@@ -453,8 +463,13 @@ local function UpdateStatDisplay(currencyStr: string, newValue)
 	data.tweenNumber.Value = 0
 	data.activeTween = ts:Create(data.tweenNumber, TweenInfo.new(0.3), { Value = goalValue })
 	data.activeConnection = data.tweenNumber.Changed:Connect(function(value)
-		data.currentAnimValue = infMath.new(startValue + (delta * value))
-		currencyFrame.Background.Amount.Text = data.currentAnimValue:GetSuffix(true)
+		if currencyStr == "RebirthTokens" then
+			data.currentAnimValue = startValue + (delta * value)
+			currencyFrame.Background.Amount.Text = globals.FormatNumber(data.currentAnimValue)
+		else
+			data.currentAnimValue = infMath.new(startValue + (delta * value))
+			currencyFrame.Background.Amount.Text = data.currentAnimValue:GetSuffix(true)
+		end
 	end)
 	data.activeTween:Play()
 	data.currentValue = newValue
@@ -713,13 +728,23 @@ local function LoadStatDisplay(currency, value)
 	numValue.Name = currency
 	numValue.Value = 0
 
-	animationData[currency] = {
-		currentValue = infMath.new(value),
-		currentAnimValue = infMath.new(0),
-		activeTween = ts:Create(numValue, TweenInfo.new(0), { Value = 0 }),
-		activeConnection = nil,
-		tweenNumber = numValue,
-	}
+	if currency == "RebirthTokens" then
+		animationData[currency] = {
+			currentValue = value,
+			currentAnimValue = 0,
+			activeTween = ts:Create(numValue, TweenInfo.new(0), { Value = 0 }),
+			activeConnection = nil,
+			tweenNumber = numValue,
+		}
+	else
+		animationData[currency] = {
+			currentValue = infMath.new(value),
+			currentAnimValue = infMath.new(0),
+			activeTween = ts:Create(numValue, TweenInfo.new(0), { Value = 0 }),
+			activeConnection = nil,
+			tweenNumber = numValue,
+		}
+	end
 end
 
 local function LoadAutoClickerUnlock()
@@ -742,7 +767,6 @@ function ClickHandler.Initialize()
 	end
 
 	task.spawn(AnimateShine)
-	task.spawn(StartCPSTrack)
 	-- task.spawn(AutoClick);
 
 	SetupCharacter(plr.Character)
@@ -785,11 +809,15 @@ function ClickHandler.Initialize()
 	dataSync.OnReady(function()
 		local targetClicks = dataSync.Get("Clicks")
 		local targetGems = dataSync.Get("Gems")
+		local targetRebirthTokens = dataSync.Get("RebirthTokens")
 		task.spawn(UpdateStatDisplay, "Clicks", targetClicks)
 		task.spawn(UpdateStatDisplay, "Gems", targetGems)
+		task.spawn(UpdateStatDisplay, "RebirthTokens", targetRebirthTokens)
 		task.spawn(LoadStatDisplay, "Clicks", targetClicks)
 		task.spawn(LoadStatDisplay, "Gems", targetGems)
+		task.spawn(LoadStatDisplay, "RebirthTokens", targetRebirthTokens)
 		task.spawn(LoadAutoClickerUnlock)
+		task.spawn(StartCPSTrack)
 
 		autoClickStatus = dataSync.Get("AutoClickerStatus")
 		UpdateAutoClickButton(autoClickStatus)
@@ -803,6 +831,9 @@ function ClickHandler.Initialize()
 
 	dataSync.OnChanged("Gems", function(newValue, _)
 		task.spawn(UpdateStatDisplay, "Gems", newValue)
+	end)
+	dataSync.OnChanged("RebirthTokens", function(newValue, _)
+		task.spawn(UpdateStatDisplay, "RebirthTokens", newValue)
 	end)
 
 	dataSync.OnChanged("AutoClickerStatus", function(new)

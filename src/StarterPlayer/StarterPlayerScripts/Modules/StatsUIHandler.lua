@@ -38,6 +38,11 @@ local function InitializeStats()
 	ChangeStat(infMath.new(profile.TotalClicks):GetSuffix(true), "Total Clicks: ", scrollingHolder.TotalClicks.Title)
 	ChangeStat(infMath.new(profile.TotalGems):GetSuffix(true), "Total Gems: ", scrollingHolder.TotalGems.Title)
 	ChangeStat(infMath.new(profile.Rebirths):GetSuffix(true), "Total Rebirths: ", scrollingHolder.TotalRebirths.Title)
+	ChangeStat(
+		infMath.new(profile.TotalRebirthTokens):GetSuffix(true),
+		"Total Rebirth Tokens: ",
+		scrollingHolder.TotalRebirthTokens.Title
+	)
 
 	ChangeStat(globals.FormatNumber(profile.RarestHatch), "Rarest Hatch: 1/", scrollingHolder.RarestHatch.Title)
 	ChangeStat(profile.SecretsHatched, "Secrets Hatched: ", scrollingHolder.SecretsHatched.Title)
@@ -79,6 +84,9 @@ function StatsUIHandler.Initialize()
 
 	dataSync.OnChanged("Rebirths", function(newValue, _)
 		ChangeStat(infMath.new(newValue):GetSuffix(true), "Total Rebirths: ", scrollingHolder.TotalRebirths.Title)
+	end)
+	dataSync.OnChanged("TotalRebirthTokens", function(newValue, _)
+		ChangeStat(infMath.new(newValue):GetSuffix(true), "Total Rebirth Tokens: ", scrollingHolder.TotalRebirthTokens.Title)
 	end)
 
 	dataSync.OnChanged("RarestHatch", function(newValue, _)

@@ -1,7 +1,7 @@
 return {
-	Name = "Test Shop",
-	Currency = "Gems",
-	RestockTime = 60,
+	Name = "Item Shop",
+	Currency = "RebirthTokens",
+	RestockTime = 3600 * 2,
 	ItemPool = {
 		--[itemName] = {itemType, weight, price, amount}
 		["Lucky_I"] = { "Potions", 50, 250, 5 },
