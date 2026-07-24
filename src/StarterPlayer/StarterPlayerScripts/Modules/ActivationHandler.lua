@@ -32,6 +32,7 @@ local teleportActivations: { [Part]: Part } = {}
 local claimActivations: { [Part]: ModuleScript } = {}
 
 local visibleFrame = nil
+local onClaimPad = false
 local isTeleporting = false
 local activeTriggers = {}
 local triggerAddedSignal = Instance.new("BindableEvent")
@@ -185,7 +186,12 @@ local function TeleportActivatorTriggered(result)
 end
 
 local function ClaimActivatorTriggered(result)
-	print(result.Instance.Parent.Name)
+	if not onClaimPad then
+		onClaimPad = true
+
+		local claimModule = require(claimActivations[result.Instance])
+		claimModule[result.Instance.Parent.Name].ClaimCallback(player)
+	end
 end
 
 local function OnCharacterAdded(character: Model)
@@ -211,6 +217,7 @@ local function OnCharacterAdded(character: Model)
 
 		local result = workspace:Raycast(humanoidRoot.Position, Vector3.new(0, -20, 0), raycastParams)
 		if not result then
+			onClaimPad = false
 			if visibleFrame then
 				task.spawn(MenuHandler.handleOpenClose, visibleFrame)
 				visibleFrame = nil
@@ -226,7 +233,7 @@ local function OnCharacterAdded(character: Model)
 		end
 	end)
 
-	humanoid.Died:Once(function()
+	humanoid.Died:Connect(function()
 		connection:Disconnect()
 		triggerAddedConnection:Disconnect()
 

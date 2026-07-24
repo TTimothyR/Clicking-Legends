@@ -72,6 +72,9 @@ Shared.DEFAULT_PLAYER_DATA = {
 	RedeemedCodes = {},
 	UnlockedEggs = {},
 
+	TutorialFinished = false,
+	TutorialProgress = { Step = 1, Progress = 0 },
+
 	Chests = {},
 
 	ItemShops = {},

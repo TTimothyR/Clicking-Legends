@@ -2,6 +2,7 @@ local RebirthHandler = {}
 local db = false
 
 -- Services
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local players = game:GetService("Players")
 local rs = game:GetService("ReplicatedStorage")
 local mps = game:GetService("MarketplaceService")
@@ -10,6 +11,7 @@ local Assets = rs:WaitForChild("Assets")
 
 local Sounds = Assets:WaitForChild("Sounds")
 
+local TutorialSteps = require(ReplicatedStorage.Framework.Library.TutorialSteps)
 local SoundHandler = require("./SoundHandler")
 local StatHandler = require("./StatHandler")
 
@@ -32,6 +34,10 @@ local unlimRebirthPurchaseCon: RBXScriptConnection = nil
 
 -- UI
 local playerGui = player:WaitForChild("PlayerGui")
+local hud = playerGui:WaitForChild("HUD")
+local left = hud:WaitForChild("Left")
+local buttons = left:WaitForChild("Buttons")
+local rebirthButton = buttons:WaitForChild("Rebirth") :: Frame
 local frames = playerGui:WaitForChild("Frames")
 local rebirthFrame = frames:WaitForChild("Rebirths")
 local main = rebirthFrame:WaitForChild("Main")
@@ -93,6 +99,17 @@ local function UpdateButtons(fromSignal: boolean)
 	local ownedGamepasses = dataSync.Get("OwnedGamepasses")
 	local ownedRebirthButtons = dataSync.Get("OwnedRebirthButtons")
 
+	local tutorialProgress = nil
+	local currentStep = nil
+	local stepId = nil
+
+	local tutorialFinished = dataSync.Get("TutorialFinished")
+	if not tutorialFinished then
+		tutorialProgress = dataSync.Get("TutorialProgress")
+		currentStep = tutorialProgress.Step
+		stepId = TutorialSteps[currentStep].ID
+	end
+
 	if autoRebirthSelect then
 		for index, _ in ipairs(rebirthStats) do
 			local clone = holder:FindFirstChild(index)
@@ -132,6 +149,14 @@ local function UpdateButtons(fromSignal: boolean)
 							end
 						end)
 					end
+				end
+
+				if not tutorialFinished then
+					if stepId == "Rebirth" and index == 2 then
+						clone.Inner.TutorialCircle.Visible = true
+					end
+				else
+					clone.Inner.TutorialCircle.Visible = false
 				end
 
 				local word = (rebirths == 1) and "Rebirth" or "Rebirths"
@@ -276,7 +301,32 @@ function RebirthHandler.Initialize()
 		UpdateAutoRebirthButton(autoRebirthStatus)
 		LoadAutoRebirthLocked()
 
+		local tutorialFinished = dataSync.Get("TutorialFinished")
+		if not tutorialFinished then
+			local tutorialProgress = dataSync.Get("TutorialProgress")
+			local currentStep = tutorialProgress.Step
+			local id = TutorialSteps[currentStep].ID
+
+			if id == "Rebirth" then
+				rebirthButton.TutorialCircle.Visible = true
+			end
+		end
+
 		RebirthHandler.LoadRebirthButtons()
+	end)
+
+	dataSync.OnChanged("TutorialProgress", function(new, _)
+		local tutorialFinished = dataSync.Get("TutorialFinished")
+		if not tutorialFinished then
+			local currentStep = new.Step
+			local id = TutorialSteps[currentStep].ID
+
+			if id ~= "Rebirth" then
+				rebirthButton.TutorialCircle.Visible = false
+			else
+				rebirthButton.TutorialCircle.Visible = true
+			end
+		end
 	end)
 
 	dataSync.OnChanged("Clicks", function()

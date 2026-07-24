@@ -11,6 +11,7 @@ type TemplateConnections = {
 }
 
 -- Services
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local players = game:GetService("Players")
 local rs = game:GetService("ReplicatedStorage")
@@ -22,6 +23,7 @@ local Sounds = Assets:WaitForChild("Sounds")
 
 local Framework = rs:WaitForChild("Framework")
 
+local PlaytimeRewards = require(ReplicatedStorage.Framework.Library.PlaytimeRewards)
 local InterfaceUtility = require(Framework:WaitForChild("InterfaceUtility"))
 
 local SoundHandler = require("./SoundHandler")
@@ -111,6 +113,7 @@ local itemInventoryFrame = main:WaitForChild("ItemInventory")
 local itemHolder = itemInventoryFrame:WaitForChild("ScrollingFrame")
 
 local potionTemplate = templates:WaitForChild("PotionTemplate")
+local rewardTemplate = templates:WaitForChild("RewardTemplate")
 local categoryTag = templates:WaitForChild("CategoryTag")
 
 local itemInfo = main:WaitForChild("ItemInfo")
@@ -1144,7 +1147,7 @@ function InventoryHandler.LoadInventory()
 		local imageLabel = imageHolder:FindFirstChild("ImageLabel") :: ImageLabel?
 		if dupes[petData.id] then
 			imageLabel.ImageColor3 = Color3.fromRGB(255, 0, 0)
-		else
+		elseif not multiDeleteActive then
 			imageLabel.ImageColor3 = Color3.fromRGB(255, 255, 255)
 		end
 	end
@@ -1442,32 +1445,39 @@ function InventoryHandler.NewItem(data)
 		return
 	end
 
-	local clone = potionTemplate:Clone()
-	local potionTier = data.tier
-	--local potionImage = potionTemplates:WaitForChild(data.tier):Clone()
-	local potionImage = (imageService[data.potionName] or "")
-	--potionImage.Liquid.ImageColor3 = color
+	local clone = rewardTemplate:Clone()
+	local image = imageService[data.itemName] or imageService["Placeholder"]
+	local rarity = PlaytimeRewards.GetItemRarity[data.type](data.itemName)
 
-	--potionImage.Parent = clone.Frame
-	--potionImage.Visible = true
+	clone.Frame.BackgroundColor3 = globals.RarityColors[rarity]
+	clone.Frame.Frame.Icon.Image = image
 
-	local rarity = data.rarity
-	clone.Click.Frame.BackgroundColor3 = globals.RarityColors[rarity]
-	clone.Click.Frame.Frame.Icon.Image = potionImage
+	if data.type == "Pets" then
+		local shiny = string.find(data.itemName, "Shiny")
+		if shiny then
+			clone.Frame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+			clone.Glow.Visible = true
+			clone.Glow.Shiny.Enabled = true
+			clone.Frame.Shiny.Enabled = true
+			clone.Frame.Frame.Normal.Enabled = false
+			clone.Frame.Frame.Shiny.Enabled = true
+		elseif rarity == "Legendary" then
+			clone.Glow.Visible = true
+			clone.Frame.Legendary.Enabled = true
+			clone.Glow.Legendary.Enabled = true
+		end
 
-	if potionTier == "V" then
-		clone.Click.Frame.Frame.Icon.Size = UDim2.fromScale(0.95, 0.95)
-		clone.Click.Frame.Frame.Icon.Position = UDim2.fromScale(0.5, 0.5)
+		clone.Frame.Amount.Visible = false
+		clone.Frame.ItemName.Visible = false
+	elseif data.type == "Potions" then
+		clone.Frame.Amount.Text = "x" .. data.amount
+		local nameSplit = string.split(data.itemName, "_")
+		local buff, tier = nameSplit[1], nameSplit[2]
+
+		clone.Frame.ItemName.Text = buff .. " " .. tier
 	end
 
-	if rarity == "Legendary" then
-		clone.Click.Glow.Visible = true
-		clone.Click.Frame.Legendary.Enabled = true
-	end
-
-	clone.Name = data.potionName
-	clone.Click.Frame.PotionName.Text = data.buff .. " " .. data.tier
-	clone.Click.Frame.Amount.Text = "x" .. data.amount
+	clone.Name = data.itemName
 
 	clone.Parent = frames.NewItems
 
@@ -1491,7 +1501,7 @@ function InventoryHandler.NewItem(data)
 		Conn = nil
 
 		for _ = 1, 3 do
-			InterfaceUtility.PlayWhiteOutAnim(clone.Click.Template, clone.Click.Anims, 0.5, 1.3)
+			InterfaceUtility.PlayWhiteOutAnim(clone.Template, clone.Anims, 0.5, 1.3)
 			task.wait(0.55)
 		end
 

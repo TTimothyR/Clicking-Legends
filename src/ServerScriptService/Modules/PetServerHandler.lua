@@ -117,7 +117,10 @@ function PetHandler.EquipBest(player: Player)
 	end
 
 	table.sort(statTable, function(a, b)
-		return a.Clicks > b.Clicks
+		if a.Clicks ~= b.Clicks then
+			return a.Clicks > b.Clicks
+		end
+		return a.petData.level > b.petData.level
 	end)
 	for i = 1, profile.PetEquips do
 		if not statTable[i] then

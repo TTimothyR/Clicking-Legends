@@ -4,6 +4,7 @@ local DataSyncServer = require(ServerScriptService.DataModules.DataSyncServer).P
 local InfiniteMath = require(ReplicatedStorage.Framework.InfiniteMath)
 local PlayerData = require(ServerScriptService.DataModules.PlayerData)
 local Worlds = require(ReplicatedStorage.Framework.Library.Worlds)
+local Network = require(ReplicatedStorage.Framework.Network)
 
 local teleportPads = workspace:WaitForChild("TeleportPads")
 
@@ -57,6 +58,7 @@ function WorldHandler.Teleport(player: Player, worldName)
 
 	-- Blackout UI
 	player.Character:MoveTo(teleportPads[worldName].Position)
+	Network:FireAllClients("TeleportPetsToPlayer", player)
 	-- Fade Blackout UI
 
 	DataSyncServer.SyncPlayer(player, profile)

@@ -2,6 +2,7 @@ local ClickHandler = {}
 local db: boolean = false
 
 -- Services
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local players = game:GetService("Players")
 local ts = game:GetService("TweenService")
 local rs = game:GetService("ReplicatedStorage")
@@ -15,6 +16,7 @@ local Sounds = Assets:WaitForChild("Sounds")
 
 local Framework = rs:WaitForChild("Framework")
 
+local TutorialSteps = require(ReplicatedStorage.Framework.Library.TutorialSteps)
 local InterfaceUtility = require(Framework:WaitForChild("InterfaceUtility"))
 
 local SoundHandler = require("./SoundHandler")
@@ -819,10 +821,35 @@ function ClickHandler.Initialize()
 		task.spawn(LoadAutoClickerUnlock)
 		task.spawn(StartCPSTrack)
 
+		local tutorialFinished = dataSync.Get("TutorialFinished")
+		if not tutorialFinished then
+			local tutorialProgress = dataSync.Get("TutorialProgress")
+			local currentStep = tutorialProgress.Step
+			local id = TutorialSteps[currentStep].ID
+
+			if id == "Clicks_1" then
+				hud.Clicks_1.Visible = true
+			end
+		end
+
 		autoClickStatus = dataSync.Get("AutoClickerStatus")
 		UpdateAutoClickButton(autoClickStatus)
 
 		statsLoaded = true
+	end)
+
+	dataSync.OnChanged("TutorialProgress", function(new, _)
+		local tutorialFinished = dataSync.Get("TutorialFinished")
+		if not tutorialFinished then
+			local currentStep = new.Step
+			local id = TutorialSteps[currentStep].ID
+
+			if id ~= "Clicks_1" then
+				hud.Clicks_1.Visible = false
+			else
+				hud.Clicks_1.Visible = true
+			end
+		end
 	end)
 
 	dataSync.OnChanged("Clicks", function(newValue, _)

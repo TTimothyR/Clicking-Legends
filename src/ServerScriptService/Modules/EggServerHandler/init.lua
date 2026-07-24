@@ -24,9 +24,11 @@ local infMath = require(framework.InfiniteMath)
 local generateID = require(framework.GenerateID)
 local network = require(framework.Network)
 local luckHandler = require(script.Parent.LuckHandler)
+local TutorialServerHandler = require(script.Parent.TutorialServerHandler)
 local dataSync = require(dataModules.DataSyncServer).Private
 local Globals = require(ReplicatedStorage.Framework.Globals)
 local ImageService = require(ReplicatedStorage.Framework.Library.ImageService)
+local TutorialSteps = require(ReplicatedStorage.Framework.Library.TutorialSteps)
 local Upgrades = require(ReplicatedStorage.Framework.Library.Upgrades)
 local Network = require(Framework:WaitForChild("Network"))
 
@@ -123,15 +125,15 @@ end
 
 function EggHandler.UnlockEgg(plr: Player, eggName: string)
 	if type(eggName) ~= "string" then
-		return
+		return false
 	end
 	local profile = playerData.GetData(plr)
 	if not profile then
-		return
+		return false
 	end
 
 	if profile.UnlockedEggs[eggName] then
-		return
+		return false
 	end
 
 	local clicks = infMath.new(profile.Clicks)
@@ -145,7 +147,10 @@ function EggHandler.UnlockEgg(plr: Player, eggName: string)
 			EggHandler.OpenEgg(plr, eggName, 1)
 			dataSync.SyncPlayer(plr, profile)
 		end)
+		return true
 	end
+
+	return false
 end
 
 function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
@@ -219,6 +224,13 @@ function EggHandler.OpenEgg(player: Player, eggName: string, amount: number)
 
 	profile.Eggs += amount
 	leaderstats.Eggs.Value = profile.Eggs
+
+	if not profile.TutorialFinished then
+		local currentStep = profile.TutorialProgress.Step
+		if currentStep == 2 then
+			TutorialServerHandler.Advance(player, TutorialSteps[currentStep].ID, 1)
+		end
+	end
 
 	-- player:SetAttribute('Clicks', http:JSONEncode(profile.Clicks));
 	-- player:SetAttribute('Eggs', http:JSONEncode(profile.Eggs));

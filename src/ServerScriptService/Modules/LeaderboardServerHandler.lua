@@ -242,7 +242,13 @@ local function CreateNameTag(player: Player)
 
 	local clone = nameTagTemplate:Clone()
 	clone.Parent = head
-	clone.Holder.PlayerName.Text = player.Name
+
+	if profile.OwnedGamepasses["VIP"] then
+		clone.Holder.PlayerName.TextColor3 = Color3.fromRGB(255, 220, 46)
+		clone.Holder.PlayerName.Text = "👑 " .. player.Name .. " 👑"
+	else
+		clone.Holder.PlayerName.Text = player.Name
+	end
 
 	UpdatePositionClones(player)
 end

@@ -1,14 +1,31 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
+local Globals = require(ReplicatedStorage.Framework.Globals)
 local PlayerData = require(ServerScriptService.DataModules.PlayerData)
 local RewardHandler = require(ServerScriptService.Modules.Private.RewardHandler)
 local Chests = require(ReplicatedStorage.Framework.Library.Chests)
 local GetRandomItem = require(ReplicatedStorage.Framework.Shared.GetRandomItem)
 local ChestHandler = {}
 
+local function ValidateDistance(player: Player, part)
+	local maxDistance = 15
+
+	local character = player.Character
+	local distance = (character.HumanoidRootPart.Position - part.Position).Magnitude
+	return distance <= maxDistance
+end
+
 function ChestHandler.ClaimChest(player: Player, chestName: string)
 	if not Chests[chestName] then
+		return
+	end
+
+	if not workspace.Activations.ClaimActivators[chestName] then
+		return
+	end
+
+	if not ValidateDistance(player, workspace.Activations.ClaimActivators[chestName].Trigger) then
 		return
 	end
 
@@ -19,6 +36,10 @@ function ChestHandler.ClaimChest(player: Player, chestName: string)
 
 	if chestName == "VIPChest" then
 		if not profile.OwnedGamepasses["VIP"] then
+			return
+		end
+	elseif chestName == "GroupChest" then
+		if not player:IsInGroupAsync(Globals.GroupID) then
 			return
 		end
 	end

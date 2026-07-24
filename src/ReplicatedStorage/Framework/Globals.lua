@@ -191,12 +191,29 @@ function Globals.SortPets(petA, petB)
 		return rarityOrderA > rarityOrderB
 	end
 
-	local petAClicks = petStatsA.Clicks
-	local petBClicks = petStatsB.Clicks
+	if petA.shiny ~= petB.shiny then
+		local shinyA = petA.shiny and 1 or 0
+		local shinyB = petB.shiny and 1 or 0
+		return shinyA > shinyB
+	end
+
+	local petAClicks = Globals.GetPetClicks({}, petA)
+	local petBClicks = Globals.GetPetClicks({}, petB)
 
 	if petAClicks ~= petBClicks then
 		return petAClicks > petBClicks
 	end
+
+	-- if petA.petName ~= petB.petName then
+	-- 	return petA.petName > petB.petName
+	-- end
+
+	-- local petAClicks = petStatsA.Clicks
+	-- local petBClicks = petStatsB.Clicks
+
+	-- if petAClicks ~= petBClicks then
+	-- 	return petAClicks > petBClicks
+	-- end
 
 	return petA.petName > petB.petName
 end
@@ -477,6 +494,10 @@ function Globals.FormatChance(chance: number): string
 	formatted = string.gsub(formatted, "%.$", "")
 
 	return formatted
+end
+
+function Globals.FormatCount(value: number): string
+	return tostring(math.round(value))
 end
 
 function Globals.GetCycle(secondsPerCycle)

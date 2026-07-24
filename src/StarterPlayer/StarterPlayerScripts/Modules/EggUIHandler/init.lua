@@ -320,12 +320,16 @@ local function ConfigureEggUI(egg: Model)
 			if closeEgg ~= "" then
 				if UnlockedEggs[closeEgg] then
 					network:FireServer("OpenEgg", closeEgg, 1)
+					if unlockConnection.Connected then
+						unlockConnection:Disconnect()
+					end
 				else
-					network:FireServer("UnlockEgg", closeEgg)
-				end
-
-				if unlockConnection.Connected then
-					unlockConnection:Disconnect()
+					local success = network:InvokeServer("UnlockEgg", closeEgg)
+					if success then
+						if unlockConnection.Connected then
+							unlockConnection:Disconnect()
+						end
+					end
 				end
 			end
 		end
@@ -442,9 +446,16 @@ local function LoadEggModels()
 			continue
 		end
 
-		local Decor = EggInFolder.Decor :: Model
-		local DarkGrey, LightGrey = Decor.DarkGrey :: Model, Decor.LightGrey :: Model
-		local EggHolder: Part = LightGrey:WaitForChild("EggHolder")
+		local Decor = EggInFolder:WaitForChild("Decor") :: Model
+		local DarkGrey, LightGrey = Decor:WaitForChild("DarkGrey") :: Model, Decor:WaitForChild("LightGrey") :: Model
+		if not LightGrey then
+			warn(`Light grey of {Egg.Name} is {LightGrey}`)
+		end
+		local EggHolder: Part = LightGrey:WaitForChild("EggHolder", 5)
+
+		if not EggHolder then
+			warn(`Egg holder of {Egg.Name} is {EggHolder}`)
+		end
 
 		local EggModel: Model
 		if not EggInFolder:FindFirstChild(EggName) then
@@ -491,6 +502,8 @@ function EggUIHandler.Initialize()
 	end
 
 	dataSync.OnReady(function()
+		-- UnlockedEggs = dataSync.Get("UnlockedEggs") or {}
+		LoadEggModels()
 		for _, egg in ipairs(eggs:GetChildren()) do
 			ConfigureEggUI(egg)
 		end
@@ -524,7 +537,7 @@ function EggUIHandler.Initialize()
 					if UnlockedEggs[egg] then
 						network:FireServer("OpenEgg", egg, 1)
 					else
-						network:FireServer("UnlockEgg", egg)
+						network:InvokeServer("UnlockEgg", egg)
 					end
 				end
 			elseif input.KeyCode == Enum.KeyCode.R then
@@ -533,7 +546,7 @@ function EggUIHandler.Initialize()
 					if UnlockedEggs[egg] then
 						network:FireServer("OpenEgg", egg, dataSync.Get("EggHatches"))
 					else
-						network:FireServer("UnlockEgg", egg)
+						network:InvokeServer("UnlockEgg", egg)
 					end
 				end
 			elseif input.KeyCode == Enum.KeyCode.T then

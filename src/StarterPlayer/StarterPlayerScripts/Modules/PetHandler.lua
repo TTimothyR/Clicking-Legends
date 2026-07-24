@@ -1,6 +1,7 @@
 local PetHandler = {}
 
 -- Services
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local players = game:GetService("Players")
 local workspace = game:GetService("Workspace")
 local rs = game:GetService("ReplicatedStorage")
@@ -26,6 +27,7 @@ local hideOtherPets = false
 local equippedPetsData = {}
 
 -- Modules
+local Globals = require(ReplicatedStorage.Framework.Globals)
 local petStats = require(library.PetStats)
 local dataSync = require(script.Parent.DataSyncClient)
 
@@ -100,6 +102,33 @@ local function SpawnPetModel(player: Player, petData)
 	petName.Parent = model
 	petName.Name = "PetName"
 	petName.Value = petData.petName
+
+	local cframe, size = model:GetBoundingBox()
+
+	local tagPart = Instance.new("Part") :: Part
+	tagPart.Anchored = true
+	tagPart.CanCollide = false
+	tagPart.Transparency = 1
+	tagPart.CFrame = cframe
+	tagPart.Size = size
+	tagPart.Parent = model
+
+	local rarity = petStats[petData.petName].Rarity
+
+	local tag = script.PetTag:Clone() :: BillboardGui
+	tag.FullName.Text = petData.fullName
+	if petData.shiny then
+		tag.FullName.TextColor3 = Color3.fromRGB(255, 255, 255)
+		tag.FullName.Shiny.Enabled = true
+	else
+		tag.FullName.TextColor3 = Globals.RarityColors[rarity]
+
+		if rarity == "Legendary" then
+			tag.FullName.Legendary.Enabled = true
+		end
+	end
+	tag.StudsOffsetWorldSpace = Vector3.new(0, size.Y / 2, 0)
+	tag.Parent = tagPart
 
 	if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
 		local char = player.Character
@@ -273,6 +302,22 @@ local function LoadPets(player: Player)
 				PetHandler.UpdatePet(player, data, true)
 			end
 		end
+	end
+end
+
+function PetHandler.TeleportPetsToPlayer(targetPlayer: Player)
+	if not targetPlayer then
+		return
+	end
+
+	local character = targetPlayer.Character or targetPlayer.CharacterAdded:Wait()
+
+	local rootPart = character:WaitForChild("HumanoidRootPart") :: Part
+
+	local playerFolder = petsFolder:FindFirstChild(targetPlayer.Name)
+
+	for _, petModel: Model in ipairs(playerFolder:GetChildren()) do
+		petModel:PivotTo(rootPart.CFrame)
 	end
 end
 

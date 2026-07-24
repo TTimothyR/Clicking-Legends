@@ -126,11 +126,12 @@ end
 
 local function OnRejoin()
 	local joinInfo = TeleportService:GetLocalPlayerTeleportData()
+	local savedPlayerPosition = dataSync.Get("SavedPlayerPosition")
 
-	if joinInfo and joinInfo.isAFK then
+	if (joinInfo and joinInfo.isAFK) or savedPlayerPosition ~= nil then
 		afk = true
-	else
-		network:FireServer("ResetAFKReport")
+		-- else
+		-- 	network:FireServer("ResetAFKReport")
 	end
 end
 

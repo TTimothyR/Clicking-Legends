@@ -7,7 +7,6 @@ local Library = Framework:WaitForChild("Library")
 
 local ItemShopModule = require(Library:WaitForChild("ItemShopModule"))
 local Network = require(Framework:WaitForChild("Network"))
-local Items = require(Library:WaitForChild("Items"))
 
 local ItemShopHandlerPrivate = require("./Private/ItemShopHandlerPrivate")
 local DataSyncServer = require("../DataModules/DataSyncServer").Private
@@ -15,8 +14,24 @@ local PlayerData = require("../DataModules/PlayerData")
 
 local ItemShopHandler = {}
 
+local function ValidateDistance(player: Player, part)
+	local maxDistance = 15
+
+	local character = player.Character
+	local distance = (character.HumanoidRootPart.Position - part.Position).Magnitude
+	return distance <= maxDistance
+end
+
 function ItemShopHandler.BuyShopItem(plr: Player, ShopName: string, Item: string)
 	if type(ShopName) ~= "string" and type(Item) ~= "string" then
+		return
+	end
+
+	if not workspace.Activations.UIActivators[ShopName] then
+		return
+	end
+
+	if not ValidateDistance(plr, workspace.Activations.UIActivators[ShopName].Trigger) then
 		return
 	end
 
@@ -52,15 +67,10 @@ function ItemShopHandler.BuyShopItem(plr: Player, ShopName: string, Item: string
 		DataSyncServer.SyncPlayer(plr, profile)
 
 		if Type == "Potions" then
-			local nameSplit = string.split(Item, "_")
-			local buff, tier = nameSplit[1], nameSplit[2]
-
 			Network:FireClient(plr, "NewItem", {
-				potionName = Item,
-				tier = tier,
-				buff = buff,
+				itemName = Item,
 				amount = 1,
-				rarity = (Items.Potions[tier].Rarity or "Common"),
+				type = "Potions",
 			})
 		end
 	end

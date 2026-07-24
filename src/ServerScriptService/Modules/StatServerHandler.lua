@@ -13,6 +13,7 @@ local dataModules = sss:WaitForChild("DataModules")
 local framework = rs:WaitForChild("Framework")
 local library = framework:WaitForChild("Library")
 
+local TutorialSteps = require(ReplicatedStorage.Framework.Library.TutorialSteps)
 local Worlds = require(ReplicatedStorage.Framework.Library.Worlds)
 local GlobalEventsModule = require(library:WaitForChild("GlobalEventsModule"))
 
@@ -29,6 +30,7 @@ local infMath = require(framework.InfiniteMath)
 local network = require(framework.Network)
 local globals = require(framework.Globals)
 local petHandler = require(script.Parent.PetServerHandler)
+local TutorialServerHandler = require(script.Parent.TutorialServerHandler)
 local dataSync = require(dataModules.DataSyncServer).Private
 local upgrades = require(library.Upgrades)
 
@@ -126,10 +128,6 @@ function StatHandler.Click(player: Player, fromAutoClick: boolean)
 		end
 	end
 
-	if fromAutoClick then
-		network:FireClient(player, "PopUp", increment, "Clicks", critical)
-	end
-
 	local ownedGamepasses = profile.OwnedGamepasses
 	if ownedGamepasses["x2 Clicks"] then
 		increment *= 2
@@ -139,6 +137,17 @@ function StatHandler.Click(player: Player, fromAutoClick: boolean)
 	end
 
 	increment *= Worlds[profile.CurrentWorld].Boost
+
+	if not profile.TutorialFinished then
+		local currentStep = profile.TutorialProgress.Step
+		if currentStep == 1 or currentStep == 3 then
+			TutorialServerHandler.Advance(player, TutorialSteps[currentStep].ID, increment:Reverse())
+		end
+	end
+
+	if fromAutoClick then
+		network:FireClient(player, "PopUp", increment, "Clicks", critical)
+	end
 
 	profile.Clicks = infMath.new(profile.Clicks + increment)
 	profile.TotalClicks = infMath.new(profile.TotalClicks + increment)

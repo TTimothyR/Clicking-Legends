@@ -19,17 +19,17 @@ local function ConnectButtons()
 		if child:IsA("Model") then
 			local lbModel: Model = child :: Model
 
-			local listHolder = lbModel:FindFirstChild("ListHolder") :: Part
-			local surfaceGui = listHolder:FindFirstChild("GlobalLBGui") :: SurfaceGui
+			local listHolder = lbModel:WaitForChild("ListHolder") :: Part
+			local surfaceGui = listHolder:WaitForChild("GlobalLBGui") :: SurfaceGui
 
-			local buttons = surfaceGui:FindFirstChild("Buttons") :: Frame
-			local freeButton = buttons:FindFirstChild("F2PButton") :: TextButton | ImageButton
-			local paidButton = buttons:FindFirstChild("P2WButton") :: TextButton | ImageButton
+			local buttons = surfaceGui:WaitForChild("Buttons") :: Frame
+			local freeButton = buttons:WaitForChild("F2PButton") :: TextButton | ImageButton
+			local paidButton = buttons:WaitForChild("P2WButton") :: TextButton | ImageButton
 
-			local freeHolder = surfaceGui:FindFirstChild("F2PHolder") :: ScrollingFrame
-			local paidHolder = surfaceGui:FindFirstChild("P2WHolder") :: ScrollingFrame
+			local freeHolder = surfaceGui:WaitForChild("F2PHolder") :: ScrollingFrame
+			local paidHolder = surfaceGui:WaitForChild("P2WHolder") :: ScrollingFrame
 
-			freeButton.MouseButton1Click:Connect(function()
+			freeButton.Click.MouseButton1Click:Connect(function()
 				if not db then
 					db = true
 					task.delay(0.15, function()
@@ -40,7 +40,7 @@ local function ConnectButtons()
 					paidHolder.Visible = false
 				end
 			end)
-			paidButton.MouseButton1Click:Connect(function()
+			paidButton.Click.MouseButton1Click:Connect(function()
 				if not db then
 					db = true
 					task.delay(0.15, function()
@@ -61,7 +61,7 @@ local function WalkspeedHandle(character: Model)
 		return
 	end
 
-	humanoid.Died:Once(function()
+	humanoid.Died:Connect(function()
 		Network:FireServer("TPPlayer", false)
 	end)
 

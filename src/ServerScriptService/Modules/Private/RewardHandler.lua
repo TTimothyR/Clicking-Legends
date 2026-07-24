@@ -13,7 +13,6 @@ local petModels = assets:WaitForChild("PetModels")
 local framework = rs:WaitForChild("Framework")
 
 -- Modules
-local Items = require(ReplicatedStorage.Framework.Library.Items)
 local Network = require(ReplicatedStorage.Framework.Network)
 local DataSyncServer = require(ServerScriptService.DataModules.DataSyncServer).Private
 local playerData = require(dataModules.PlayerData)
@@ -52,6 +51,12 @@ function RewardHandler.ClaimPet(player: Player, fullName: string, shiny: boolean
 		enchant = enchant,
 	})
 
+	Network:FireClient(player, "NewItem", {
+		itemName = fullName,
+		amount = 1,
+		type = "Pets",
+	})
+
 	return true
 end
 
@@ -60,9 +65,6 @@ function RewardHandler.ClaimPotion(player: Player, potionName: string, amount: n
 	local playerItems = profile.Items
 	local potions = playerItems.Potions
 
-	local nameSplit = string.split(potionName, "_")
-	local buff, tier = nameSplit[1], nameSplit[2]
-
 	if not potions[potionName] then
 		potions[potionName] = amount
 	else
@@ -70,11 +72,9 @@ function RewardHandler.ClaimPotion(player: Player, potionName: string, amount: n
 	end
 
 	Network:FireClient(player, "NewItem", {
-		potionName = potionName,
-		tier = tier,
-		buff = buff,
+		itemName = potionName,
 		amount = amount,
-		rarity = (Items.Potions[tier].Rarity or "Common"),
+		type = "Potions",
 	})
 
 	DataSyncServer.SyncPlayer(player, profile)

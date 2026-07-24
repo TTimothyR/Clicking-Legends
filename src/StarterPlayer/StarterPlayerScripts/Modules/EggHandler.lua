@@ -154,8 +154,8 @@ end
 
 local function HideUI()
 	left:TweenPosition(UDim2.fromScale(-0.25, 0.162), dir, style, animTime)
-	autoClicker:TweenPosition(UDim2.fromScale(0.218, 1), dir, style, animTime)
-	clickButton:TweenPosition(UDim2.fromScale(0.517, 1.2), dir, style, animTime)
+	autoClicker:TweenPosition(UDim2.fromScale(0.323, 1.2), dir, style, animTime)
+	clickButton:TweenPosition(UDim2.fromScale(0.5, 1.2), dir, style, animTime)
 	boost:TweenPosition(UDim2.fromScale(0.292, -0.3), dir, style, animTime)
 	popUps.Visible = false
 
@@ -169,8 +169,8 @@ end
 
 local function UnHideUI()
 	left:TweenPosition(UDim2.fromScale(0.006, 0.162), dir, style, animTime)
-	autoClicker:TweenPosition(UDim2.fromScale(0.218, 0.891), dir, style, animTime)
-	clickButton:TweenPosition(UDim2.fromScale(0.517, 0.91), dir, style, animTime)
+	autoClicker:TweenPosition(UDim2.fromScale(0.323, 0.911), dir, style, animTime)
+	clickButton:TweenPosition(UDim2.fromScale(0.5, 0.91), dir, style, animTime)
 	boost:TweenPosition(UDim2.fromScale(0.292, 0.013), dir, style, animTime)
 	popUps.Visible = true
 	if closedFrame then

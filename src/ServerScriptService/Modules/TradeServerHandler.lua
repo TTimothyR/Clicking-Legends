@@ -45,8 +45,6 @@ local function CheckTradeBan(player: Player, profile)
 		LogHandler.LogDupe({ player }, duplicateIds, "Inventory")
 		profile.TradeBanned = true
 
-		print("hola")
-
 		local s, err = pcall(function()
 			players:BanAsync({
 				UserIds = { player.UserId },

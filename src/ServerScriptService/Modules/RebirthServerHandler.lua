@@ -1,6 +1,7 @@
 local RebirthHandler = {}
 
 -- Services
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local sss = game:GetService("ServerScriptService")
 local rs = game:GetService("ReplicatedStorage")
 
@@ -10,6 +11,8 @@ local framework = rs:WaitForChild("Framework")
 local library = framework:WaitForChild("Library")
 
 -- Modules
+local TutorialSteps = require(ReplicatedStorage.Framework.Library.TutorialSteps)
+local TutorialServerHandler = require(script.Parent.TutorialServerHandler)
 local playerData = require(dataModules.PlayerData)
 local rebirthStats = require(library.RebirthStats)
 local infMath = require(framework.InfiniteMath)
@@ -51,6 +54,11 @@ function RebirthHandler.AttemptRebirth(player: Player, rebirthIndex: number)
 
 		rebirthAmount = infMath.new(clicks / (globals.RebirthBasePrice * rebirths))
 		rebirthAmount = infMath.floor(rebirthAmount)
+
+		if rebirthAmount >= rebirthStats[#profile.OwnedRebirthButtons] then
+			profile.RebirthTokens += 1
+			profile.TotalRebirthTokens += 1
+		end
 	end
 	if rebirthAmount == infMath.new(0) then
 		return
@@ -62,6 +70,12 @@ function RebirthHandler.AttemptRebirth(player: Player, rebirthIndex: number)
 	local gemsPerRebirth = petGems < 1 and 10 or 10 * petGems
 
 	if clicks >= price then
+		if not profile.TutorialFinished then
+			local currentStep = profile.TutorialProgress.Step
+			if currentStep == 4 then
+				TutorialServerHandler.Advance(player, TutorialSteps[currentStep].ID, 1)
+			end
+		end
 		local activePotions = profile.ActivePotions
 		if activePotions["Rebirths"] then
 			local tier, data = next(activePotions["Rebirths"].Active)
@@ -79,7 +93,6 @@ function RebirthHandler.AttemptRebirth(player: Player, rebirthIndex: number)
 
 		local upgradeLevels = profile.UpgradeLevels
 		gemsPerRebirth *= 1 + upgradeLevels["More Gems"] * (upgrades["More Gems"].Increment / 100)
-
 		if rebirthIndex == #profile.OwnedRebirthButtons then
 			profile.RebirthTokens += 1
 			profile.TotalRebirthTokens += 1

@@ -1,13 +1,13 @@
 return {
 	["Placeholder"] = "rbxasset://textures/ui/GuiImagePlaceholder.png",
 
-	["Clicks"] = "rbxassetid://111160873357689",
-	["TotalClicks"] = "rbxassetid://111160873357689",
-	["ActualClicks"] = "rbxassetid://111160873357689",
+	["Clicks"] = "rbxassetid://130143670610388",
+	["TotalClicks"] = "rbxassetid://130143670610388",
+	["ActualClicks"] = "rbxassetid://130143670610388",
 	["Gems"] = "rbxassetid://76922093099038",
-	["Eggs"] = "rbxassetid://103327510554655",
+	["Eggs"] = "rbxassetid://85826740360024",
 	["Rebirths"] = "rbxassetid://71299478410150",
-	["RebirthTokens"] = "rbxassetid://71299478410150",
+	["RebirthTokens"] = "rbxassetid://97272830560444",
 	["Playtime"] = "rbxassetid://106471599903729",
 	["Unlock"] = "rbxassetid://127894038106695",
 	["Lock"] = "rbxassetid://130738595064691",
